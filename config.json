@@ -1,0 +1,117 @@
+{
+    "aergo-local": {
+        "bridges": {
+            "": {
+                "addr": "bridge address on mainnet",
+                "id": "bridge ContractID variable",
+                "t_anchor": "t_anchor of ethereum on aergo mainnet",
+                "t_final": "t_final of ethereum"
+            },
+            "eth-poa-local": {}
+        },
+        "ip": "localhost:7845",
+        "tokens": {
+            "aergo": {
+                "addr": "aergo",
+                "pegs": {}
+            }
+        },
+        "type": "aergo"
+    },
+    "eth-poa-local": {
+        "bridges": {
+            "": {
+                "addr": "bridge address on sidechain",
+                "id": "bridge ContractID variable",
+                "t_anchor": "t_anchor of aergo mainnet on ethereum",
+                "t_final": "t_final of aergo mainnet"
+            },
+            "aergo-local": {}
+        },
+        "ip": "localhost:8845",
+        "tokens": {
+            "ether": {
+                "addr": "ether",
+                "pegs": {}
+            }
+        },
+        "type": "ethereum"
+    },
+    "validators": [
+        {
+            "addr": "AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ",
+            "eth-addr": "",
+            "ip": "localhost:9841"
+        },
+        {
+            "addr": "AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ",
+            "eth-addr": "",
+            "ip": "localhost:9842"
+        },
+        {
+            "addr": "AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ",
+            "eth-addr": "",
+            "ip": "localhost:9843"
+        }
+    ],
+    "wallet": {
+        "broadcaster": {
+            "addr": "AmPiFGxLvETrs13QYrHUiYoFqAqqWv7TKYXG21zC8TJfJTDHc7HJ",
+            "priv_key": "47T5iXRL4M9mhCZqzxzbWUxhwnE7oDvreBkJuNRADL2DppJDroz1TcEiJF4p9qh6X6Z2ynEMo"
+        },
+        "default": {
+            "addr": "AmNMFbiVsqy6vg4njsTjgy7bKPFHFYhLV4rzQyrENUS9AM1e3tw5",
+            "priv_key": "47CLj29W96rS9SsizUz4pueeuTT2GcSpkoAsvVC3USLzQ5kKTWKmz1WLKnqor2ET7hPd73TC9"
+        },
+        "default2": {
+            "addr": "AmNyNPEqeXPfdHeECMNhsH1QcnZsqCtDAudjgFyG5qpasN6tyLPE",
+            "priv_key": "47PZc88CguT8Vm5MJXR7FAy9ewDmnHhyU6w8r2GgRpciz55wUieQVacPaVgUZP7yZGMYEs9BD"
+        },
+        "proposer": {
+            "addr": "AmPxVdu993eosN3UjnPDdN3wb7TNbHeiHDvn2dvZUcH8KXDK3RLU",
+            "priv_key": "47sDAWjMFTP7r2JP2BJ29PJRfY13yUTtVvoLjAf8knhH4GryQrpMJoTqscDjed1YPHVZXY4sN"
+        },
+        "receiver": {
+            "addr": "AmPf349iHWd6kQGU45BxFzFCzEDu75Y3FqFPd4WBMteFq4mtDuZd",
+            "priv_key": "47HzJAwuTV1akJPtsBWm4saJaQAgKgq1qSeeKfaFHnMxhjPM5ipPY8EZ3gDVRQ4oLizx1qhwh"
+        },
+        "test": {
+            "addr": "AmM6Db1e8PbDAbCfKgD4s3SfM8xJfkTvEaLZK4exVuWFnYL34S93",
+            "priv_key": "47hxG12EStVwAG6ww5DYRKaKqWB47JhmRwK6kTW9hXbN79Chh2cQAwx4qYxmYvnD3Ys9f5c1x"
+        },
+        "validator": {
+            "addr": "AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ",
+            "priv_key": "47wwDRMKXH4serxiNQcrtMSxHsGt9qX6wZTt9XNUcABBokLYpUtKuYue1ujmsBLvzy9DcD84i"
+        }
+    },
+    "wallet-eth": {
+        "broadcaster": {
+            "addr": "0x1abdc1d5568cbb639fa605e2a155480f151c0e55",
+            "keystore": "UTC--2018-12-27T07-43-50.585671000Z--1abdc1d5568cbb639fa605e2a155480f151c0e55"
+        },
+        "default": {
+            "addr": "0xfec3c905bcd3d9a5471452e53f82106844cb1e76",
+            "keystore": "UTC--2019-05-13T09-23-35.377701000Z--fec3c905bcd3d9a5471452e53f82106844cb1e76"
+        },
+        "default2": {
+            "addr": "0x429c2388cad780f8e801849cb5f1aa76389727cd",
+            "keystore": "UTC--2019-05-13T09-26-18.058577000Z--429c2388cad780f8e801849cb5f1aa76389727cd"
+        },
+        "proposer": {
+            "addr": "0xc19b69591141443676a3ee56fbf1d3ea869d53d8",
+            "keystore": "UTC--2019-05-13T09-26-29.993150000Z--c19b69591141443676a3ee56fbf1d3ea869d53d8"
+        },
+        "receiver": {
+            "addr": "0x7acb4a265bf759ec772510c2465fb7c8f4eaf54e",
+            "keystore": "UTC--2019-05-13T09-26-38.701134000Z--7acb4a265bf759ec772510c2465fb7c8f4eaf54e"
+        },
+        "test": {
+            "addr": "0xf1bf3497d98ead7f6a1bb9ee6dfbde9d448d7062",
+            "keystore": "UTC--2019-05-13T09-26-46.916719000Z--f1bf3497d98ead7f6a1bb9ee6dfbde9d448d7062"
+        },
+        "validator": {
+            "addr": "0x210467b3849a408c3a3bee14b4627aa57f34213",
+            "keystore": "UTC--2019-05-13T09-26-54.907966000Z--210467b3849a408c3a3bee14b4627aa57f342134"
+        }
+    }
+}
