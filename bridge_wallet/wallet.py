@@ -8,9 +8,7 @@ from bridge_wallet.wallet_config import (
 
 
 class BridgeWallet(WalletConfig):
-    """EthAergoWallet uses EthWallet and merkle-bridge.Wallet to transfer
-    tokens on the Eth<->Aergo Bridge
-    """
+    """EthAergoWallet transfers tokens on the Eth<->Aergo Bridge """
 
     def __init__(
         self,
@@ -53,29 +51,27 @@ class BridgeWallet(WalletConfig):
 
     ###########################################################################
     # eth_to_aergo_sidechain
-    # AergoERC20  -> lock_to_aergo -> | -> unfreeze_to_aergo -> Aer
-    # MintedAergo -> burn_to_aergo -> | -> unlock_to_aergo -> StandardToken
-    # Eth/ERC20   -> lock_to_aergo -> | -> mint_to_aergo -> MintedStdToken
+    # AergoERC20  -> lock_to_aergo -> | ->    unfreeze     -> Aer
+    # MintedERC20 -> burn_to_aergo -> | -> unlock_to_aergo -> StandardToken
+    # Eth/ERC20   -> lock_to_aergo -> | ->  mint_to_aergo  -> MintedStdToken
     ###########################################################################
 
     def lock_to_aergo(self):
         """ Initiate ERC20 token or Ether transfer to Aergo sidechain """
         pass
 
+    def burn_to_aergo(self):
+        """ Initiate minted Standard token transfer back to aergo origin"""
+        pass
+
     def mint_to_aergo(self):
         """ Finalize ERC20 token or Ether transfer to Aergo sidechain """
         pass
 
-    def unfreeze_to_aergo(self):
+    def unfreeze(self):
         """ Finalize ERC20Aergo transfer to Aergo Mainnet by unfreezing
             (aers are already minted and freezed in the bridge contract)
-            TODO call unlock_to_aergo()
         """
-        pass
-
-    def burn_to_aergo(self):
-        """ Initiate Aergo Standard token transfer back to aergo origin
-            by burning the copy minted on ethereum"""
         pass
 
     def unlock_to_aergo(self):
@@ -84,15 +80,13 @@ class BridgeWallet(WalletConfig):
 
     ###########################################################################
     # aergo_to_eth_sidechain
-    # Aer          -> freeze_to_eth -> | -> unlock_to_eth -> Aer
+    # Aer            ->    freeze   -> | -> unlock_to_eth -> Aer
     # MintedStdToken -> burn_to_eth -> | -> unlock_to_eth -> Eth/ERC20
-    # StandardToken  -> lock_to_eth -> | -> mint_to_eth -> MintedERC20
+    # StandardToken  -> lock_to_eth -> | ->  mint_to_eth  -> MintedERC20
     ###########################################################################
 
-    def freeze_to_eth(self):
-        """ Initiate Aer transfer back to Ethereum AergoERC20 sidechain.
-            TODO : call lock_to_ethereum()
-        """
+    def freeze(self):
+        """ Initiate Aer transfer back to Ethereum AergoERC20 sidechain"""
         pass
 
     def burn_to_eth(self):
@@ -100,9 +94,7 @@ class BridgeWallet(WalletConfig):
         pass
 
     def lock_to_eth(self):
-        """ Initiate Aergo Standard Token transfer to Ethereum
-            sidechain
-        """
+        """ Initiate Aergo Standard Token transfer to Ethereum sidechain"""
         pass
 
     def mint_to_eth(self):
@@ -110,6 +102,5 @@ class BridgeWallet(WalletConfig):
         pass
 
     def unlock_to_eth(self):
-        """ Finalize Minted Standard Token (ERC20 or Eth) transfer back to
-            Ethereum origin """
+        """ Finalize ERC20 or Eth transfer back to Ethereum origin """
         pass
