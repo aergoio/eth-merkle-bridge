@@ -169,12 +169,12 @@ end
 -- nonce and signature are used when making a token lockup
 -- delegated transfers to ethereum not supported
 function lock(receiver, amount, token_address, nonce, signature, fee, deadline)
+    -- not payable assert(system.getAmount() == "0", "Aer cannot be locked, must be freezed")
     local bamount = bignum.number(amount)
     local b0 = bignum.number(0)
     assert(address.isEthAddress(receiver), "invalid address format: " .. receiver)
     assert(MintedTokens[token_address] == nil, "this token was minted by the bridge so it should be burnt to transfer back to origin, not locked")
     assert(bamount > b0, "amount must be positive")
-    assert(system.getAmount() == "0", "Aer cannot be locked, must be freezed")
 
     -- Add locked amount to total
     local account_ref = receiver .. token_address
@@ -250,10 +250,10 @@ end
 -- burn a sidechain token
 -- mint_address is the token address on the sidechain
 function burn(receiver, amount, mint_address, nonce, signature)
+    -- not payable assert(system.getAmount() == "0", "burn function not payable, only tokens can be burned")
     local bamount = bignum.number(amount)
     assert(address.isEthAddress(receiver), "invalid address format: " .. receiver)
     assert(bamount > bignum.number(0), "amount must be positive")
-    assert(system.getAmount() == "0", "burn function not payable, only tokens can be burned")
     local origin_address = MintedTokens[mint_address]
     assert(origin_address ~= nil, "cannot burn token : must have been minted by bridge")
     -- Add burnt amount to total
@@ -578,4 +578,4 @@ function token_payable()
 end
 
 abi.register(set_root, update_validators, update_t_anchor, update_t_final, lock, unlock, mint, burn, freeze, unfreeze, token_payable)
-abi.payable(lock)
+abi.payable(freeze)
