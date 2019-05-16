@@ -7,7 +7,7 @@ install:
 	pip install git+ssh://git@github.com/ethereum/web3.py.git@11ef9df28dfbe4b83683a84fec184406165f18d5
 
 compile_bridge:
-	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/merkle_bridge.lua > contracts/bridge_bytecode.txt
+	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/eth_merkle_bridge.lua > contracts/lua_bridge_bytecode.txt
 
 compile_token:
 	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/standard_token.lua > contracts/token_bytecode.txt
