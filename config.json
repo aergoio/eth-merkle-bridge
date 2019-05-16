@@ -28,10 +28,14 @@
             },
             "aergo-local": {}
         },
-        "ip": "localhost:8845",
+        "ip": "localhost:8545",
         "tokens": {
             "ether": {
                 "addr": "ether",
+                "pegs": {}
+            },
+            "test_erc20": {
+                "addr": "0x3f79E699eBb125054E425BD2cce38225CB861664",
                 "pegs": {}
             }
         },
@@ -110,7 +114,7 @@
             "keystore": "UTC--2019-05-13T09-26-46.916719000Z--f1bf3497d98ead7f6a1bb9ee6dfbde9d448d7062"
         },
         "validator": {
-            "addr": "0x210467b3849a408c3a3bee14b4627aa57f34213",
+            "addr": "0x210467b3849a408c3a3bee14b4627aa57f342134",
             "keystore": "UTC--2019-05-13T09-26-54.907966000Z--210467b3849a408c3a3bee14b4627aa57f342134"
         }
     }

@@ -3,6 +3,8 @@
 install:
 	pip install git+ssh://git@github.com/aergoio/herapy.git@4aabc7d2cb45cdbf263a972f6f11857c13118a87
 	pip install pytest
+	pip install git+ssh://git@github.com/aergoio/merkle-bridge.git@a53779215e13b23afb924c4d8b2ecaae7c359631
+	pip install git+ssh://git@github.com/ethereum/web3.py.git@11ef9df28dfbe4b83683a84fec184406165f18d5
 
 compile_bridge:
 	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/merkle_bridge.lua > contracts/bridge_bytecode.txt
@@ -40,7 +42,7 @@ wallet:
 	python3 -m wallet.wallet
 
 deploy_token:
-	python3 -m wallet.token_deployer
+	python3 -m eth_wallet.token_deployer
 
 docker-aergo:
 	docker-compose -f ./docker_test_nodes/aergo/docker-compose.yml up
@@ -58,7 +60,7 @@ docker-eth:
 		ethereum/client-go \
 	 	--nodiscover --datadir ./root \
 		--unlock "0x035d4303f9508ddcab6d074cbc5ed82cd0b436ad" --password ./root/bp_pwd.txt \
-		--mine --rpcapi web3 --rpcaddr 0.0.0.0 --rpcport 8545 --rpc --allow-insecure-unlock
+		--mine --rpcapi web3,eth,net --rpcaddr 0.0.0.0 --rpcport 8545 --rpc --allow-insecure-unlock
 
 clean:
 	rm -fr docker_test_nodes/aergo/*/data
