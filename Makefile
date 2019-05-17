@@ -42,7 +42,7 @@ wallet:
 	python3 -m wallet.wallet
 
 deploy_token:
-	python3 -m eth_wallet.token_deployer
+	python3 -m eth_wallet.contract_deployer
 
 docker-aergo:
 	docker-compose -f ./docker_test_nodes/aergo/docker-compose.yml up
