@@ -1,0 +1,193 @@
+[
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "root",
+				"type": "bytes32"
+			},
+			{
+				"name": "height",
+				"type": "uint256"
+			},
+			{
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "set_root",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"name": "validators",
+				"type": "address[]"
+			},
+			{
+				"name": "t_anchor",
+				"type": "uint256"
+			},
+			{
+				"name": "t_final",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "ContractID",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "Height",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "Nonce",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "Root",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "T_anchor",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "T_final",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "message",
+				"type": "bytes32"
+			},
+			{
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "validate_signatures",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "Validators",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
