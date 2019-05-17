@@ -16,14 +16,15 @@ def deploy_contract(
     gas_limit: int,
     gas_price: int,
     privkey: bytes,
-) -> str:
+    *args,
+):
     contract_ = w3.eth.contract(
         abi=abi,
         bytecode=bytecode)
 
     acct = w3.eth.account.privateKeyToAccount(privkey)
 
-    construct_txn = contract_.constructor().buildTransaction({
+    construct_txn = contract_.constructor(*args).buildTransaction({
         'chainId': 52306,
         'from': acct.address,
         'nonce': w3.eth.getTransactionCount(acct.address),
@@ -34,7 +35,7 @@ def deploy_contract(
 
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    return receipt.contractAddress
+    return receipt
 
 
 if __name__ == '__main__':
@@ -56,19 +57,18 @@ if __name__ == '__main__':
     keystore = config_data["wallet-eth"][privkey_name]['keystore']
     with open("./keystore/" + keystore, "r") as f:
         encrypted_key = f.read()
-    privkey_pwd = getpass("Decrypt exported private key '{}'\nPassword: "
+    privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
                           .format(privkey_name))
     privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
-    print(privkey)
-    receiver = config_data["wallet-eth"][privkey_name]['addr']
     acct = w3.eth.account.privateKeyToAccount(privkey)
     sender = acct.address
     print("  > Sender Address: {}".format(sender))
 
-    sc_address = deploy_contract(bytecode, abi, w3, 1821490, 20, privkey)
+    receipt = deploy_contract(bytecode, abi, w3, 1821490, 20, privkey)
+    sc_address = receipt.contractAddress
     print("Deployed token address: ", sc_address)
 
-    print("------ Store addresse in config.json -----------")
+    print("------ Store address in config.json -----------")
     config_data['eth-poa-local']['tokens']['test_erc20'] = {}
     config_data['eth-poa-local']['tokens']['test_erc20']['addr'] = sc_address
     config_data['eth-poa-local']['tokens']['test_erc20']['pegs'] = {}
