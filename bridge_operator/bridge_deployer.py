@@ -55,6 +55,7 @@ def run(
     # aergo finalization time
     t_final_aergo = height - lib
     print("aergo finality: ", t_final_aergo)
+    print("ethereum finality: ", t_final_eth)
 
     print("------ Set Sender Account -----------")
     privkey_pwd = getpass("Decrypt Aergo private key '{}'\nPassword: "
@@ -73,7 +74,6 @@ def run(
     sender = acct.address
     print("  > Sender Address Ethereum: {}".format(sender))
 
-    print("------ Deploy Aergo SC -----------")
     # get validators from config file
     aergo_validators = []
     eth_validators = []
@@ -82,6 +82,8 @@ def run(
         aergo_validators.append(validator['addr'])
     print('aergo validators : ', aergo_validators)
     print('ethereum validators : ', eth_validators)
+
+    print("------ Deploy Aergo SC -----------")
     payload = herapy.utils.decode_address(lua_bytecode)
     aergo_erc20 = config_data[eth_net]['tokens'][aergo_erc20]
     tx, result = aergo.deploy_sc(amount=0,
@@ -100,7 +102,6 @@ def run(
 
     time.sleep(COMMIT_TIME)
 
-    print("------ Check deployment of Aergo SC -----------")
     result = aergo.get_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.CREATED:
         print("  > ERROR[{0}]:{1}: {2}"
@@ -111,26 +112,30 @@ def run(
 
     print("------ Deploy Ethereum SC -----------")
     receipt = deploy_contract(
-        sol_bytecode, sol_abi, w3, 975728, 20, privkey,
-        [],
+        sol_bytecode, sol_abi, w3, 2072502, 20, privkey,
+        eth_validators,
         25, 10
     )
+    bridge_contract = w3.eth.contract(
+        address=receipt.contractAddress,
+        abi=sol_abi
+    )
+    eth_id = bridge_contract.functions.ContractID().call().hex()
 
-    sc_address1 = receipt.contractAddress
-    sc_address2 = result.contract_address
-    sc_id1 = ""
-    sc_id2 = result.detail[1:-1]
+    eth_address = receipt.contractAddress
+    aergo_address = result.contract_address
+    aergo_id = result.detail[1:-1]
 
-    print("  > SC Address Ethereum: {}".format(sc_address1))
-    print("  > SC Address Aergo: {}".format(sc_address2))
+    print("  > SC Address Ethereum: {}".format(eth_address))
+    print("  > SC Address Aergo: {}".format(aergo_address))
 
     print("------ Store bridge addresses in config.json  -----------")
     config_data[eth_net]['bridges'][aergo_net] = {}
     config_data[aergo_net]['bridges'][eth_net] = {}
-    config_data[eth_net]['bridges'][aergo_net]['addr'] = sc_address1
-    config_data[aergo_net]['bridges'][eth_net]['addr'] = sc_address2
-    config_data[eth_net]['bridges'][aergo_net]['id'] = sc_id1
-    config_data[aergo_net]['bridges'][eth_net]['id'] = sc_id2
+    config_data[eth_net]['bridges'][aergo_net]['addr'] = eth_address
+    config_data[aergo_net]['bridges'][eth_net]['addr'] = aergo_address
+    config_data[eth_net]['bridges'][aergo_net]['id'] = eth_id
+    config_data[aergo_net]['bridges'][eth_net]['id'] = aergo_id
     config_data[eth_net]['bridges'][aergo_net]['t_anchor'] = t_anchor_eth
     config_data[eth_net]['bridges'][aergo_net]['t_final'] = t_final_aergo
     config_data[aergo_net]['bridges'][eth_net]['t_anchor'] = t_anchor_aergo

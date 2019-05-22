@@ -42,6 +42,10 @@ contract MerkleBridge {
         ContractID = blockhash(block.number - 1);
     }
 
+    function get_validators() public view returns (address[] memory) {
+        return Validators;
+    }
+
     function set_root(
         bytes32 root,
         uint height,

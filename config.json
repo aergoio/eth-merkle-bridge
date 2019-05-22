@@ -8,8 +8,8 @@
                 "t_final": "t_final of ethereum"
             },
             "eth-poa-local": {
-                "addr": "Amg3gKcqzKdp8moMKvt5vRFBzTnqyADwpGrkQPHWmhJ1j6qTqa3q",
-                "id": "0deec0e996e59fb6c7f940a8e20ea980",
+                "addr": "AmgQdbUqDuoX5krsmvSEHc9X3apBuXyJTQ4mimfWzejEsYScTo3f",
+                "id": "bd1a927216a7b7dd2b42a70e18612ee9",
                 "t_anchor": 10,
                 "t_final": 10
             }
@@ -32,8 +32,8 @@
                 "t_final": "t_final of aergo mainnet"
             },
             "aergo-local": {
-                "addr": "0x9954e44A5c3f81026beDC210e9267Ee87Ff13D5c",
-                "id": "",
+                "addr": "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
+                "id": "bcc7acbfdc6d98ec61c7687f03b99233d0045325302b5cc5662253c46bcb0a4d",
                 "t_anchor": 25,
                 "t_final": 4
             }
@@ -45,7 +45,7 @@
                 "pegs": {}
             },
             "test_erc20": {
-                "addr": "0x416ac7b876436662Dcb0FB531EfDd2fa0C9F0bad",
+                "addr": "0x3f79E699eBb125054E425BD2cce38225CB861664",
                 "pegs": {}
             }
         },

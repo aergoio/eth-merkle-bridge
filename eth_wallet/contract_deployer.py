@@ -25,7 +25,7 @@ def deploy_contract(
     acct = w3.eth.account.privateKeyToAccount(privkey)
 
     construct_txn = contract_.constructor(*args).buildTransaction({
-        'chainId': 52306,
+        'chainId': w3.eth.chainId,
         'from': acct.address,
         'nonce': w3.eth.getTransactionCount(acct.address),
         'gas': gas_limit,
@@ -35,6 +35,7 @@ def deploy_contract(
 
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
+    assert receipt.status == 1, "Deployment failed"
     return receipt
 
 
