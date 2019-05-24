@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+service BridgeOperator {
+    // Get signatures of anchoring messages from Ethereum
+    rpc GetEthAnchorSignature(EthAnchor) returns (EthApproval) {}
+    // Get signatures of anchoring messages from Aergo
+    rpc GetAergoAnchorSignature(AergoAnchor) returns (AergoApproval) {}
+}
+
+message EthAnchor {
+    // root to be merged on Aergo
+    string root = 1;
+    // height to be merged on sidechain
+    string height = 2;
+    // aergo bridge update nonce
+    string destination_nonce = 3;
+}
+
+message EthApproval {
+    // address of the private key that produced signatures
+    string address = 1;
+    // signature of anchor
+    bytes sig = 2;
+    // error message why the requested anchor is invalid
+    string error = 3;
+}
+
+message AergoAnchor {
+    // root to be merged on Aergo
+    bytes root = 1;
+    // height to be merged on sidechain
+    uint64 height = 2;
+    // ethereum bridge update nonce
+    uint64 destination_nonce = 3;
+}
+
+message AergoApproval {
+    // address of the private key that produced signatures
+    string address = 1;
+    // signature of anchor
+    bytes sig = 2;
+    // error message why the requested anchor is invalid
+    string error = 3;
+}

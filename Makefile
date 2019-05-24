@@ -16,7 +16,7 @@ deploy_bridge:
 	python3 -m bridge_operator.bridge_deployer
 
 proposer:
-	python3 -m bridge_operator.proposer_client
+	python3 -m bridge_operator.eth_proposer_client
 
 validator:
 	python3 -m bridge_operator.validator_server
@@ -30,12 +30,6 @@ protoc:
 		--python_out=. \
 		--grpc_python_out=. \
 		./proto/bridge_operator/*.proto
-	python3 -m grpc_tools.protoc \
-		-I proto \
-		--python_out=. \
-		--grpc_python_out=. \
-		./proto/broadcaster/*.proto
-
 
 #Below commands are simple tools for development only
 wallet:
@@ -60,7 +54,8 @@ docker-eth:
 		ethereum/client-go \
 	 	--nodiscover --datadir ./root \
 		--unlock "0x035d4303f9508ddcab6d074cbc5ed82cd0b436ad" --password ./root/bp_pwd.txt \
-		--mine --rpcapi web3,eth,net --rpcaddr 0.0.0.0 --rpcport 8545 --rpc --allow-insecure-unlock
+		--mine --rpcapi web3,eth,net --rpcaddr 0.0.0.0 --rpcport 8545 --rpc --allow-insecure-unlock\
+	    --verbosity 5 --rpccorsdomain="*"
 
 clean:
 	rm -fr docker_test_nodes/aergo/*/data

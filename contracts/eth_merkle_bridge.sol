@@ -49,12 +49,12 @@ contract MerkleBridge {
     function set_root(
         bytes32 root,
         uint height,
-        uint[] calldata signers,
-        uint8[] calldata vs,
-        bytes32[] calldata rs,
-        bytes32[] calldata ss
-    ) external {
-        require(height > Height, "Next anchor height not reached");
+        uint[] memory signers,
+        uint8[] memory vs,
+        bytes32[] memory rs,
+        bytes32[] memory ss
+    ) public {
+        require(height > Height + T_anchor, "Next anchor height not reached");
         bytes32 message = keccak256(abi.encodePacked(root, height, Nonce, ContractID, "R"));
         validate_signatures(message, signers, vs, rs, ss);
         Root = root;

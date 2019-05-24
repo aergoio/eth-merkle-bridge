@@ -114,7 +114,7 @@ def run(
     receipt = deploy_contract(
         sol_bytecode, sol_abi, w3, 2072502, 20, privkey,
         eth_validators,
-        25, 10
+        t_anchor_eth, t_final_aergo
     )
     bridge_contract = w3.eth.contract(
         address=receipt.contractAddress,

@@ -8,8 +8,8 @@
                 "t_final": "t_final of ethereum"
             },
             "eth-poa-local": {
-                "addr": "AmgQdbUqDuoX5krsmvSEHc9X3apBuXyJTQ4mimfWzejEsYScTo3f",
-                "id": "bd1a927216a7b7dd2b42a70e18612ee9",
+                "addr": "Amgu36F6eeWKxTCCbpsyzFvF3erw6NsQmchBDeoqbcFuvmNPLh1k",
+                "id": "f141dba211a644fc764df2f157d8c14a",
                 "t_anchor": 10,
                 "t_final": 10
             }
@@ -32,8 +32,8 @@
                 "t_final": "t_final of aergo mainnet"
             },
             "aergo-local": {
-                "addr": "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
-                "id": "bcc7acbfdc6d98ec61c7687f03b99233d0045325302b5cc5662253c46bcb0a4d",
+                "addr": "0x241E4D53425793D180858150Edd236F23b9C39F7",
+                "id": "9b2d2a12ad7e27bceb2adc46a8cfef1fef4e96e53a8bdee0fc7724bb42c56e64",
                 "t_anchor": 25,
                 "t_final": 4
             }
@@ -54,17 +54,17 @@
     "validators": [
         {
             "addr": "AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ",
-            "eth-addr": "0x210467b3849a408c3a3bee14b4627aa57f342134",
+            "eth-addr": "0x210467b3849a408c3a3bEE14b4627aa57F342134",
             "ip": "localhost:9841"
         },
         {
             "addr": "AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ",
-            "eth-addr": "0x210467b3849a408c3a3bee14b4627aa57f342134",
+            "eth-addr": "0x210467b3849a408c3a3bEE14b4627aa57F342134",
             "ip": "localhost:9842"
         },
         {
             "addr": "AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ",
-            "eth-addr": "0x210467b3849a408c3a3bee14b4627aa57f342134",
+            "eth-addr": "0x210467b3849a408c3a3bEE14b4627aa57F342134",
             "ip": "localhost:9843"
         }
     ],
