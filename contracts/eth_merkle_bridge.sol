@@ -39,7 +39,8 @@ contract MerkleBridge {
         Height = 0;
         Nonce = 0;
         Validators = validators;
-        ContractID = blockhash(block.number - 1);
+        //ContractID = blockhash(block.number - 1);
+        Root = 0x1234ee76fecb7510ee28293d41dfc061bab55da402b134142105d352190a29ed;
     }
 
     function get_validators() public view returns (address[] memory) {
@@ -79,4 +80,132 @@ contract MerkleBridge {
       }
         return true;
     }
+
+    function mint(
+        address receiver,
+        uint balance,
+        string memory asset_addr,
+        bytes32[] memory mp, // bytes[] is not yet supported so we use a bitmap of proof elements
+        bytes32 bitmap,
+        uint8 leaf_height
+    ) public returns(bool) {
+        return verify_mp("_sv_Locks-", receiver, balance, asset_addr, mp, bitmap, leaf_height);
+    }
+
+    function verify_mp(
+        string memory map_name,
+        address receiver,
+        uint balance,
+        string memory asset_addr,
+        bytes32[] memory mp, // bytes[] is not yet supported so we use a bitmap of proof elements
+        bytes32 bitmap,
+        uint8 leaf_height
+    ) public view returns(bool) {
+        bytes memory var_id = abi.encodePacked(map_name, addr_to_str(receiver), asset_addr);
+        bytes32 trie_key = sha256(var_id);
+        bytes memory value = abi.encodePacked("\"", uint_to_str(balance), "\"");
+        bytes32 trie_value = sha256(value);
+        bytes memory leaf = abi.encodePacked(trie_key, trie_value, uint8(256-leaf_height));
+        bytes32 node_hash = sha256(leaf);
+        uint proof_index = 0;
+        for (uint8 i=leaf_height; i>0; i--){
+            if (bit_is_set(bitmap, i-1)) {
+                if (bit_is_set(trie_key, i-1)) {
+                    node_hash = sha256(abi.encodePacked(mp[proof_index], node_hash));
+                } else {
+                    node_hash = sha256(abi.encodePacked(node_hash, mp[proof_index]));
+                }
+                proof_index++;
+            } else {
+                if (bit_is_set(trie_key, i-1)) {
+                    node_hash = sha256(abi.encodePacked(byte(0x00), node_hash));
+                } else {
+                    node_hash = sha256(abi.encodePacked(node_hash, byte(0x00)));
+                }
+            }
+        }
+        return Root == node_hash;
+    }
+
+    function addr_to_str(address _addr) public pure returns(string memory) {
+        //https://ethereum.stackexchange.com/questions/30290/conversion-of-address-to-string-in-solidity?rq=1
+        bytes32 value = bytes32(uint256(_addr));
+        bytes memory alphabet = "0123456789abcdef";
+        bytes memory str = new bytes(40);
+        for (uint i = 0; i < 20; i++) {
+            str[i*2] = alphabet[uint8(value[i + 12] >> 4)];
+            str[1+i*2] = alphabet[uint8(value[i + 12] & 0x0f)];
+        }
+        return string(str);
+    }
+
+    function bit_is_set(bytes32 bits, uint8 i) public pure returns (bool) {
+        return bits[i/8]&bytes1(1<<uint8(7-i%8)) != 0;
+    }
+
+    function uint_to_str(uint num) public pure returns(string memory) {
+        // https://github.com/oraclize/ethereum-api/blob/6fb6e887e7b95c496fd723a7c62ce40551f8028a/oraclizeAPI_0.5.sol#L1041
+        if (num == 0) {
+            return "0";
+        }
+        uint j = num;
+        uint len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len - 1;
+        while (num != 0) {
+            bstr[k--] = byte(uint8(48 + num % 10));
+            num /= 10;
+        }
+        return string(bstr);
+    }
+    
+    function test(uint8 num) public returns(bytes memory) {
+        bytes memory a = abi.encodePacked(uint8(256-num));
+        return a;
+    }
+    
+    
+/*
+    //https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/cryptography/MerkleProof.sol
+    // receiver is an address converted to utf8 string or vice versa
+    // balance is a uint converted to a utf8 string or vice versa
+    //https://github.com/willitscale/solidity-util/blob/master/lib/Integers.sol
+    //https://ethereum.stackexchange.com/questions/10932/how-to-convert-string-to-int
+    //http://remebit.com/converting-strings-to-integers-in-solidity/
+    //https://www.edureka.co/community/7924/how-to-convert-int-to-string-in-solidity
+    function parseAddr(string memory _a) public returns (address){
+        // https://github.com/oraclize/ethereum-api/blob/6fb6e887e7b95c496fd723a7c62ce40551f8028a/oraclizeAPI_pre0.4.sol#L157
+        bytes memory tmp = bytes(_a);
+        uint160 iaddr = 0;
+        uint8 b1;
+        uint8 b2;
+        for (uint i=2; i<2+2*20; i+=2){
+            iaddr *= 256;
+            b1 = uint8(tmp[i]);
+            b2 = uint8(tmp[i+1]);
+            if ((b1 >= 97)&&(b1 <= 102)) b1 -= 87;
+            else if ((b1 >= 48)&&(b1 <= 57)) b1 -= 48;
+            if ((b2 >= 97)&&(b2 <= 102)) b2 -= 87;
+            else if ((b2 >= 48)&&(b2 <= 57)) b2 -= 48;
+            iaddr += (b1*16+b2);
+        }
+        return address(iaddr);
+    }
+    
+    function toString(address x) public returns (string memory) {
+        bytes memory b = new bytes(20);
+        for (uint i = 0; i < 20; i++)
+            b[i] = byte(uint8(uint(x) / (2**(8*(19 - i)))));
+        return string(b);
+    }
+
+    function test() public returns (string memory) {
+        string memory senderString = toString(msg.sender);
+        return senderString;
+    }
+*/   
 }
