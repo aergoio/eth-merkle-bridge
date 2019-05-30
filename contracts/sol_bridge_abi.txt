@@ -48,12 +48,128 @@
 	},
 	{
 		"constant": true,
+		"inputs": [
+			{
+				"name": "_addr",
+				"type": "address"
+			}
+		],
+		"name": "addr_to_str",
+		"outputs": [
+			{
+				"name": "",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "map_name",
+				"type": "string"
+			},
+			{
+				"name": "account_ref",
+				"type": "bytes"
+			},
+			{
+				"name": "balance",
+				"type": "uint256"
+			},
+			{
+				"name": "mp",
+				"type": "bytes32[]"
+			},
+			{
+				"name": "bitmap",
+				"type": "bytes32"
+			},
+			{
+				"name": "leaf_height",
+				"type": "uint8"
+			}
+		],
+		"name": "verify_mp",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "receiver",
+				"type": "address"
+			},
+			{
+				"name": "balance",
+				"type": "uint256"
+			},
+			{
+				"name": "token_origin",
+				"type": "string"
+			},
+			{
+				"name": "mp",
+				"type": "bytes32[]"
+			},
+			{
+				"name": "bitmap",
+				"type": "bytes32"
+			},
+			{
+				"name": "leaf_height",
+				"type": "uint8"
+			}
+		],
+		"name": "mint",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
 		"inputs": [],
 		"name": "ContractID",
 		"outputs": [
 			{
 				"name": "",
 				"type": "bytes32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "BridgeTokens",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
 			}
 		],
 		"payable": false,
@@ -96,6 +212,25 @@
 	},
 	{
 		"constant": true,
+		"inputs": [
+			{
+				"name": "num",
+				"type": "uint256"
+			}
+		],
+		"name": "uint_to_str",
+		"outputs": [
+			{
+				"name": "",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"constant": true,
 		"inputs": [],
 		"name": "T_final",
 		"outputs": [
@@ -106,6 +241,29 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "bits",
+				"type": "bytes32"
+			},
+			{
+				"name": "i",
+				"type": "uint8"
+			}
+		],
+		"name": "bit_is_set",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "pure",
 		"type": "function"
 	},
 	{
@@ -145,6 +303,25 @@
 	},
 	{
 		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "bytes"
+			}
+		],
+		"name": "Mints",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
 		"inputs": [],
 		"name": "Height",
 		"outputs": [
@@ -169,6 +346,25 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "num",
+				"type": "uint8"
+			}
+		],
+		"name": "test",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -203,5 +399,44 @@
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"name": "origin",
+				"type": "string"
+			},
+			{
+				"indexed": true,
+				"name": "addr",
+				"type": "address"
+			}
+		],
+		"name": "newMintedERC20",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"name": "token_address",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"name": "receiver",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "mintEvent",
+		"type": "event"
 	}
 ]

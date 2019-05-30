@@ -1,4 +1,6 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.5.0;
+
+import "./minted_erc20.sol";
 
 contract MerkleBridge {
     // Trie root of the opposit side bridge contract. Mints and Unlocks require a merkle proof
@@ -12,7 +14,9 @@ contract MerkleBridge {
     // Registers unlocked balances per account reference: prevents unlocking more than was burnt
     // Registers burnt balances per account reference : user provides merkle proof of burnt balance
     // Registers minted balances per account reference : prevents minting more than what was locked
+    mapping(bytes => uint) public Mints;
     // BridgeTokens keeps track of tokens that were received through the bridge
+    mapping(string => MintedERC20) public BridgeTokens;
     // MintedTokens is the same as BridgeTokens but keys and values are swapped
     // MintedTokens is used for preventing a minted token from being locked instead of burnt.
     // T_anchor is the anchoring periode of the bridge
@@ -27,6 +31,9 @@ contract MerkleBridge {
     bytes32 public ContractID;
     // ContractID is a replay protection between sidechains as the same addresses can be validators
     // on multiple chains.
+    
+    event newMintedERC20(string indexed origin, MintedERC20 indexed addr);
+    event mintEvent(MintedERC20 indexed token_address, address indexed receiver, uint amount);
 
     constructor(
         address[] memory validators,
@@ -40,7 +47,7 @@ contract MerkleBridge {
         Nonce = 0;
         Validators = validators;
         //ContractID = blockhash(block.number - 1);
-        Root = 0x1234ee76fecb7510ee28293d41dfc061bab55da402b134142105d352190a29ed;
+        Root = 0x28c5e719dc355014473f8796511132f0abdcde3fdc9114f2e7291e0752717c37;
     }
 
     function get_validators() public view returns (address[] memory) {
@@ -84,32 +91,44 @@ contract MerkleBridge {
     function mint(
         address receiver,
         uint balance,
-        string memory asset_addr,
+        string memory token_origin,
         bytes32[] memory mp, // bytes[] is not yet supported so we use a bitmap of proof elements
         bytes32 bitmap,
         uint8 leaf_height
     ) public returns(bool) {
-        return verify_mp("_sv_Locks-", receiver, balance, asset_addr, mp, bitmap, leaf_height);
+        require(balance>0, "Balance must be positive");
+        bytes memory account_ref = abi.encodePacked(addr_to_str(receiver), token_origin);
+        require(verify_mp("_sv_Locks-", account_ref, balance, mp, bitmap, leaf_height), "Failed to verify lock proof");
+        uint minted_so_far = Mints[account_ref];
+        uint to_transfer = balance - minted_so_far;
+        require(to_transfer>0, "Lock tokens before minting");
+        MintedERC20 mint_address = BridgeTokens[token_origin];
+        if (mint_address == MintedERC20(0)) {
+            // first time bridging this token
+            mint_address = new MintedERC20();
+            BridgeTokens[token_origin] = mint_address;
+            emit newMintedERC20(token_origin, mint_address);
+        }
+        Mints[account_ref] = balance;
+        require(mint_address.mint(receiver, to_transfer), "Failed to mint");
+        emit mintEvent(mint_address, receiver, to_transfer);
+        return true;
     }
 
     function verify_mp(
         string memory map_name,
-        address receiver,
+        bytes memory account_ref,
         uint balance,
-        string memory asset_addr,
         bytes32[] memory mp, // bytes[] is not yet supported so we use a bitmap of proof elements
         bytes32 bitmap,
         uint8 leaf_height
     ) public view returns(bool) {
-        bytes memory var_id = abi.encodePacked(map_name, addr_to_str(receiver), asset_addr);
-        bytes32 trie_key = sha256(var_id);
-        bytes memory value = abi.encodePacked("\"", uint_to_str(balance), "\"");
-        bytes32 trie_value = sha256(value);
-        bytes memory leaf = abi.encodePacked(trie_key, trie_value, uint8(256-leaf_height));
-        bytes32 node_hash = sha256(leaf);
+        bytes32 trie_key = sha256(abi.encodePacked(map_name, account_ref));
+        bytes32 trie_value = sha256(abi.encodePacked("\"", uint_to_str(balance), "\""));
+        bytes32 node_hash = sha256(abi.encodePacked(trie_key, trie_value, uint8(256-leaf_height)));
         uint proof_index = 0;
         for (uint8 i=leaf_height; i>0; i--){
-            if (bit_is_set(bitmap, i-1)) {
+            if (bit_is_set(bitmap, leaf_height-i)) {
                 if (bit_is_set(trie_key, i-1)) {
                     node_hash = sha256(abi.encodePacked(mp[proof_index], node_hash));
                 } else {
@@ -163,9 +182,10 @@ contract MerkleBridge {
         return string(bstr);
     }
     
-    function test(uint8 num) public returns(bytes memory) {
-        bytes memory a = abi.encodePacked(uint8(256-num));
-        return a;
+    function test(uint8 num) public returns(bytes32) {
+        bytes memory a = abi.encodePacked(byte(0x00));
+        bytes32 b = sha256(a);
+        return b;
     }
     
     
