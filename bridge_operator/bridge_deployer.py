@@ -15,7 +15,7 @@ from web3.middleware import (
     geth_poa_middleware,
 )
 
-from eth_wallet.contract_deployer import (
+from ethaergo_wallet.eth_utils.contract_deployer import (
     deploy_contract,
 )
 
@@ -112,7 +112,7 @@ def run(
 
     print("------ Deploy Ethereum SC -----------")
     receipt = deploy_contract(
-        sol_bytecode, sol_abi, w3, 2072502, 20, privkey,
+        sol_bytecode, sol_abi, w3, 4600000, 20, privkey,
         eth_validators,
         t_anchor_eth, t_final_aergo
     )
@@ -159,11 +159,11 @@ def run(
 if __name__ == '__main__':
     with open("./config.json", "r") as f:
         config_data = json.load(f)
-    with open("./contracts/lua_bridge_bytecode.txt", "r") as f:
+    with open("./contracts/lua/bridge_bytecode.txt", "r") as f:
         lua_bytecode = f.read()[:-1]
-    with open("./contracts/sol_bridge_bytecode.txt", "r") as f:
+    with open("./contracts/solidity/bridge_bytecode.txt", "r") as f:
         sol_bytecode = f.read()
-    with open("./contracts/sol_bridge_abi.txt", "r") as f:
+    with open("./contracts/solidity/bridge_abi.txt", "r") as f:
         sol_abi = f.read()
     # NOTE t_final is the minimum time to get lib : only informative (not
     # actually used in code except for Eth bridge because Eth doesn't have LIB)

@@ -20,6 +20,7 @@ function address.isEthAddress(address)
   if 40 ~= string.len(address) then
     return false
   end
+  return true
 end
 
 

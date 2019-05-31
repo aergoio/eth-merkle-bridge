@@ -13,7 +13,6 @@ import time
 from typing import (
     Dict,
     Tuple,
-    Optional,
     List,
     Any,
 )
@@ -339,7 +338,7 @@ class EthProposerClient:
 
 
 if __name__ == '__main__':
-    with open("./contracts/sol_bridge_abi.txt", "r") as f:
+    with open("./contracts/solidity/bridge_abi.txt", "r") as f:
         abi = f.read()
     with open("./config.json", "r") as f:
         config_data = json.load(f)

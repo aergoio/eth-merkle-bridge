@@ -255,7 +255,7 @@ def _serve_all(config_file_path, aergo_net, eth_net, eth_abi,
 
 
 if __name__ == '__main__':
-    with open("./contracts/sol_bridge_abi.txt", "r") as f:
+    with open("./contracts/solidity/bridge_abi.txt", "r") as f:
         eth_abi = f.read()
     with open("./config.json", "r") as f:
         config_data = json.load(f)

@@ -1,16 +1,16 @@
-.PHONY: install compile_bridge compile_token deploy_bridge proposer validator broadcaster protoc wallet deploy_token docker clean
+.PHONY: install compile_bridge compile_token deploy_bridge proposer validator broadcaster protoc tests wallet deploy_token docker clean
 
 install:
 	pip install git+ssh://git@github.com/aergoio/herapy.git@4aabc7d2cb45cdbf263a972f6f11857c13118a87
 	pip install pytest
-	pip install git+ssh://git@github.com/aergoio/merkle-bridge.git@a53779215e13b23afb924c4d8b2ecaae7c359631
+	pip install git+ssh://git@github.com/aergoio/merkle-bridge.git@61f3163b436a46cb190ce66f319e0069a558bb94
 	pip install git+ssh://git@github.com/ethereum/web3.py.git@11ef9df28dfbe4b83683a84fec184406165f18d5
 
 compile_bridge:
-	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/eth_merkle_bridge.lua > contracts/lua_bridge_bytecode.txt
+	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/lua/eth_merkle_bridge.lua > contracts/lua/bridge_bytecode.txt
 
 compile_token:
-	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/standard_token.lua > contracts/token_bytecode.txt
+	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/lua/standard_token.lua > contracts/lua/std_token_bytecode.txt
 
 deploy_bridge:
 	python3 -m bridge_operator.bridge_deployer
@@ -21,9 +21,6 @@ proposer:
 validator:
 	python3 -m bridge_operator.validator_server
 
-broadcaster:
-	python3 -m broadcaster.broadcaster_server
-
 protoc:
 	python3 -m grpc_tools.protoc \
 		-I proto \
@@ -31,12 +28,11 @@ protoc:
 		--grpc_python_out=. \
 		./proto/bridge_operator/*.proto
 
-#Below commands are simple tools for development only
-wallet:
-	python3 -m wallet.wallet
+tests:
+	python3 -m pytest -s tests/
 
 deploy_token:
-	python3 -m eth_wallet.contract_deployer
+	python3 -m ethaergo_wallet.eth_utils.contract_deployer
 
 docker-aergo:
 	docker-compose -f ./docker_test_nodes/aergo/docker-compose.yml up

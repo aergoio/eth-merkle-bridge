@@ -35,6 +35,7 @@ def deploy_contract(
 
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
+    print(receipt)
     assert receipt.status == 1, "Deployment failed"
     return receipt
 
@@ -42,9 +43,9 @@ def deploy_contract(
 if __name__ == '__main__':
     with open("./config.json", "r") as f:
         config_data = json.load(f)
-    with open("./contracts/aergo_token_bytecode.txt", "r") as f:
+    with open("./contracts/solidity/aergo_erc20_bytecode.txt", "r") as f:
         bytecode = f.read()
-    with open("./contracts/aergo_token_abi.txt", "r") as f:
+    with open("./contracts/solidity/aergo_erc20_abi.txt", "r") as f:
         abi = f.read()
 
     print("------ Connect Web3 -----------")
