@@ -3,7 +3,7 @@
 install:
 	pip install git+ssh://git@github.com/aergoio/herapy.git@4aabc7d2cb45cdbf263a972f6f11857c13118a87
 	pip install pytest
-	pip install git+ssh://git@github.com/aergoio/merkle-bridge.git@61f3163b436a46cb190ce66f319e0069a558bb94
+	pip install git+ssh://git@github.com/aergoio/merkle-bridge.git@f9b6b367c4a6a0b002f2d3a319cbda47d031707a
 	pip install git+ssh://git@github.com/ethereum/web3.py.git@11ef9df28dfbe4b83683a84fec184406165f18d5
 
 compile_bridge:
