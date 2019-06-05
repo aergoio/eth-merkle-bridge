@@ -73,9 +73,9 @@ class ValidatorService(BridgeOperatorServicer):
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         assert self.web3.isConnected()
 
-        eth_bridge_address = config_data[eth_net]['bridges'][aergo_net]['addr']
+        self.eth_bridge_addr = config_data[eth_net]['bridges'][aergo_net]['addr']
         self.eth_bridge = self.web3.eth.contract(
-            address=eth_bridge_address,
+            address=self.eth_bridge_addr,
             abi=eth_abi
         )
         self.aergo_bridge = config_data[aergo_net]['bridges'][eth_net]['addr']
@@ -84,8 +84,15 @@ class ValidatorService(BridgeOperatorServicer):
 
         # check validators are correct
         aergo_vals = query_aergo_validators(self.hera, self.aergo_bridge)
-        eth_vals = query_eth_validators(self.web3, eth_bridge_address,
+        eth_vals = query_eth_validators(self.web3, self.eth_bridge_addr,
                                         eth_abi)
+        for i, validator in enumerate(config_data['validators']):
+            assert validator['addr'] == aergo_vals[i], \
+                "Validators in config file do not match bridge validators"\
+                "Expected aergo validators: {}".format(aergo_vals)
+            assert validator['eth-addr'] == eth_vals[i], \
+                "Validators in config file do not match bridge validators"\
+                "Expected eth validators: {}".format(eth_vals)
 
         print("Aergo validators : ", aergo_vals)
         print("Ethereum validators : ", eth_vals)
@@ -97,7 +104,7 @@ class ValidatorService(BridgeOperatorServicer):
             self.hera, self.aergo_bridge
         )
         self.t_anchor_eth, self.t_final_eth = query_eth_tempo(
-            self.web3, eth_bridge_address, eth_abi
+            self.web3, self.eth_bridge_addr, eth_abi
         )
         print("{}             <- {} (t_final={}) : t_anchor={}"
               .format(aergo_net, eth_net, self.t_final_aergo,
@@ -189,6 +196,72 @@ class ValidatorService(BridgeOperatorServicer):
         # 4- check anchored height comes after the previous one and t_anchor is
         # passed
         if last_merged_height_from + self.t_anchor_eth > int(anchor.height):
+            print("root update height is invalid: "
+                  "must be higher than previous merge + t_anchor\n", anchor)
+            return "root update height is invalid"
+        return None
+
+    def GetEthAnchorSignature(self, anchor, context):
+        """ Verifies an ethereum anchor and signs it to be broadcasted on aergo
+            aergo and ethereum nodes must be trusted.
+        """
+        err_msg = self.is_valid_eth_anchor(anchor)
+        if err_msg is not None:
+            return EthApproval(error=err_msg)
+
+        # sign anchor and return approval
+        msg = bytes(anchor.root + ',' + anchor.height + ','
+                    + anchor.destination_nonce + ',' + self.aergo_id + "R", 'utf-8')
+        h = hashlib.sha256(msg).digest()
+        sig = self.hera.account.private_key.sign_msg(h)
+        approval = EthApproval(address=self.aergo_addr, sig=sig)
+        print("{0}Validator {1} signed a new anchor for {2},\n"
+              "{0}with nonce {3}"
+              .format("\t"*5, self.validator_index, "Aergo",
+                      anchor.destination_nonce))
+        return approval
+
+    def is_valid_eth_anchor(
+        self,
+        anchor
+    ) -> Optional[str]:
+        """ An anchor is valid if :
+            1- it's height is finalized
+            2- it's root for that height is correct.
+            3- it's nonce is correct
+            4- it's height is higher than previous anchored height + t_anchor
+        """
+        # 1- get the last block height and check anchor height > LIB
+        # lib = best_height - finalized_from
+        best_height = self.web3.eth.blockNumber
+        lib = best_height - self.t_final_aergo
+        if int(anchor.height) > lib:
+            print("anchor not finalized\n", anchor)
+            return "anchor not finalized"
+
+        # 2- get contract state root at origin_height
+        # and check equals anchor root
+        state = self.web3.eth.getProof(self.eth_bridge_addr, [],
+                                       int(anchor.height))
+        root = state.storageHash.hex()[2:]
+        if root != anchor.root:
+            print("root to sign doesnt match expected root\n", anchor)
+            return "root to sign doesnt match expected root"
+
+        merge_info = self.hera.query_sc_state(
+            self.aergo_bridge, ["_sv_Nonce", "_sv_Height"]
+        )
+        last_nonce_to, last_merged_height_from = \
+            [int(proof.value) for proof in merge_info.var_proofs]
+
+        # 3- check merkle bridge nonces are correct
+        if last_nonce_to != int(anchor.destination_nonce):
+            print("anchor nonce is invalid\n", anchor)
+            return "anchor nonce is invalid"
+
+        # 4- check anchored height comes after the previous one and t_anchor is
+        # passed
+        if last_merged_height_from + self.t_anchor_aergo > int(anchor.height):
             print("root update height is invalid: "
                   "must be higher than previous merge + t_anchor\n", anchor)
             return "root update height is invalid"
