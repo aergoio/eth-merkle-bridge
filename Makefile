@@ -16,7 +16,7 @@ deploy_bridge:
 	python3 -m bridge_operator.bridge_deployer
 
 proposer:
-	python3 -m bridge_operator.eth_proposer_client
+	python3 -m bridge_operator.proposer_client
 
 validator:
 	python3 -m bridge_operator.validator_server

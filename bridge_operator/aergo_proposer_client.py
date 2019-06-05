@@ -10,6 +10,7 @@ from multiprocessing.dummy import (
     Pool,
 )
 import time
+import threading
 
 from typing import (
     Tuple,
@@ -50,7 +51,7 @@ class ValidatorMajorityError(Exception):
     pass
 
 
-class AergoProposerClient:
+class AergoProposerClient(threading.Thread):
     """The bridge proposer periodically (every t_anchor) broadcasts
     the finalized trie state root (after lib) of the bridge contract
     on both sides of the bridge after validation by the Validator servers.
@@ -67,10 +68,13 @@ class AergoProposerClient:
         eth_block_time: int,
         privkey_name: str = None,
         privkey_pwd: str = None,
-        eth_poa: bool = False
+        eth_poa: bool = False,
+        tab: str = ""
     ) -> None:
+        threading.Thread.__init__(self)
         self.config_data = config_data
         self.eth_block_time = eth_block_time
+        self.tab = tab
         print("------ Connect Aergo and Ethereum -----------")
         self.hera = herapy.Aergo()
         self.hera.connect(self.config_data[aergo_net]['ip'])
@@ -126,7 +130,6 @@ class AergoProposerClient:
         root: str,
         merge_height: int,
         nonce: int,
-        tab: str
     ) -> Tuple[List[str], List[int]]:
         """ Query all validators and gather 2/3 of their signatures. """
 
@@ -142,7 +145,7 @@ class AergoProposerClient:
 
         # get validator signatures and verify sig in worker
         validator_indexes = [i for i in range(len(self.stubs))]
-        worker = partial(self.get_signature_worker, tab, anchor, h)
+        worker = partial(self.get_signature_worker, anchor, h)
         approvals = self.pool.map(worker, validator_indexes)
 
         sigs, validator_indexes = self.extract_signatures(approvals)
@@ -151,7 +154,6 @@ class AergoProposerClient:
 
     def get_signature_worker(
         self,
-        tab: str,
         anchor,
         h: bytes,
         index: int
@@ -163,17 +165,17 @@ class AergoProposerClient:
             print(e)
             return None
         if approval.error:
-            print("{}{}".format(tab, approval.error))
+            print("{}{}".format(self.tab, approval.error))
             return None
         if approval.address != self.config_data['validators'][index]['addr']:
             # check nothing is wrong with validator address
             print("{}Unexpected validato {} address : {}"
-                  .format(tab, index, approval.address))
+                  .format(self.tab, index, approval.address))
             return None
         # validate signature
         if not verify_sig(h, approval.sig, approval.address):
             print("{}Invalid signature from validator {}"
-                  .format(tab, index))
+                  .format(self.tab, index))
             return None
         return approval
 
@@ -199,7 +201,6 @@ class AergoProposerClient:
     def wait_next_anchor(
         self,
         merged_height: int,
-        tab: str = ""
     ) -> int:
         """ Wait until t_anchor has passed after merged height.
         Return the next finalized block after t_anchor to be the next anchor
@@ -224,7 +225,6 @@ class AergoProposerClient:
         next_anchor_height: int,
         validator_indexes: List[int],
         sigs: List[str],
-        tab: str
     ) -> None:
         """Anchor a new root on chain"""
         tx, result = self.hera.call_sc(
@@ -233,21 +233,21 @@ class AergoProposerClient:
         )
         if result.status != herapy.CommitStatus.TX_OK:
             print("{}Anchor on aergo Tx commit failed : {}"
-                  .format(tab, result))
+                  .format(self.tab, result))
             return
 
         time.sleep(COMMIT_TIME)
         result = self.hera.get_tx_result(tx.tx_hash)
         if result.status != herapy.TxResultStatus.SUCCESS:
             print("{}Anchor failed: already anchored, or invalid "
-                  "signature: {}".format(tab, result))
+                  "signature: {}".format(self.tab, result))
         else:
             print("{0}Anchor success,\n{0}wait until next anchor "
-                  "time: {1}s...".format(tab, self.t_anchor * self.eth_block_time))
+                  "time: {1}s..."
+                  .format(self.tab, self.t_anchor * self.eth_block_time))
 
     def run(
         self,
-        tab: str = ""
     ) -> None:
         """ Gathers signatures from validators, verifies them, and if 2/3 majority
         is acquired, set the new anchored root in aergo_bridge.
@@ -268,35 +268,35 @@ class AergoProposerClient:
                   "{0}| last merged height: {1}\n"
                   "{0}| last merged contract trie root: {2}...\n"
                   "{0}| current update nonce: {3}\n"
-                  .format(tab, merged_height_from,
+                  .format(self.tab, merged_height_from,
                           merged_root_from.decode('utf-8')[1:20], nonce_to))
 
             while True:  # try to gather 2/3 validators
                 # Wait for the next anchor time
-                next_anchor_height = self.wait_next_anchor(merged_height_from,
-                                                           tab)
+                next_anchor_height = self.wait_next_anchor(merged_height_from)
                 # Get root of next anchor to broadcast
                 state = self.web3.eth.getProof(self.eth_bridge, [],
                                                next_anchor_height)
                 root = state.storageHash.hex()[2:]
                 if len(root) == 0:
-                    print("{}waiting deployment finalization...".format(tab))
+                    print("{}waiting deployment finalization..."
+                          .format(self.tab))
                     time.sleep(5)
                     continue
 
                 print("{}anchoring new root :'0x{}...'"
-                      .format(tab, root[:17]))
+                      .format(self.tab, root[:17]))
                 print("{}Gathering signatures from validators ..."
-                      .format(tab))
+                      .format(self.tab))
 
                 try:
                     sigs, validator_indexes = self.get_validators_signatures(
-                            root, next_anchor_height, nonce_to, tab
+                            root, next_anchor_height, nonce_to
                         )
                 except ValidatorMajorityError:
                     print("{0}Failed to gather 2/3 validators signatures,\n"
                           "{0}waiting for next anchor..."
-                          .format(tab))
+                          .format(self.tab))
                     time.sleep(self.t_anchor * self.eth_block_time)
                     continue
                 break
@@ -307,15 +307,14 @@ class AergoProposerClient:
             merged_height = int(last_merge.var_proofs[0].value)
             if merged_height + self.t_anchor >= next_anchor_height:
                 print("{}Not yet anchor time "
-                      "or another proposer already anchored".format(tab))
+                      "or another proposer already anchored".format(self.tab))
                 print(merged_height, self.t_anchor, next_anchor_height)
                 wait = merged_height + self.t_anchor - next_anchor_height
                 time.sleep(wait * self.eth_block_time)
                 continue
 
             # Broadcast finalised merge block
-            self.set_root(root, next_anchor_height, validator_indexes, sigs,
-                          tab)
+            self.set_root(root, next_anchor_height, validator_indexes, sigs)
 
             # Wait t_anchor
             # counting commit time in t_anchor often leads to 'Next anchor not
