@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import "./minted_erc20.sol";
 
-contract MerkleBridge {
+contract EthMerkleBridge {
     // Trie root of the opposit side bridge contract. Mints and Unlocks require a merkle proof
     // of state inclusion in this last Root.
     bytes32 public Root;
@@ -13,11 +13,13 @@ contract MerkleBridge {
     // Registers locked balances per account reference: user provides merkle proof of locked balance
     // Registers unlocked balances per account reference: prevents unlocking more than was burnt
     // Registers burnt balances per account reference : user provides merkle proof of burnt balance
+    mapping(bytes => uint) public Burns;
     // Registers minted balances per account reference : prevents minting more than what was locked
     mapping(bytes => uint) public Mints;
     // BridgeTokens keeps track of tokens that were received through the bridge
     mapping(string => MintedERC20) public BridgeTokens;
     // MintedTokens is the same as BridgeTokens but keys and values are swapped
+    mapping(address => string) public MintedTokens;
     // MintedTokens is used for preventing a minted token from being locked instead of burnt.
     // T_anchor is the anchoring periode of the bridge
     uint public T_anchor;
@@ -34,6 +36,8 @@ contract MerkleBridge {
     
     event newMintedERC20(string indexed origin, MintedERC20 indexed addr);
     event mintEvent(MintedERC20 indexed token_address, address indexed receiver, uint amount);
+    event burnEvent(MintedERC20 indexed token_address, string indexed receiver, uint amount);
+
 
     constructor(
         address[] memory validators,
@@ -107,11 +111,28 @@ contract MerkleBridge {
             // first time bridging this token
             mint_address = new MintedERC20();
             BridgeTokens[token_origin] = mint_address;
+            MintedTokens[address(mint_address)] = token_origin;
             emit newMintedERC20(token_origin, mint_address);
         }
         Mints[account_ref] = balance;
         require(mint_address.mint(receiver, to_transfer), "Failed to mint");
         emit mintEvent(mint_address, receiver, to_transfer);
+        return true;
+    }
+    
+    function burn(
+        string memory receiver,
+        uint amount,
+        MintedERC20 mint_address
+    ) public returns (bool) {
+        string memory origin_address = MintedTokens[address(mint_address)];
+        require(bytes(origin_address).length != 0, "cannot burn token : must have been minted by bridge");
+        // Add burnt amount to total
+        bytes memory account_ref = abi.encodePacked(receiver, origin_address);
+        Burns[account_ref] += amount;
+        // Burn token
+        require(mint_address.burn(msg.sender, amount), "Failed to burn");
+        emit burnEvent(mint_address, receiver, amount);
         return true;
     }
 
@@ -187,45 +208,4 @@ contract MerkleBridge {
         bytes32 b = sha256(a);
         return b;
     }
-    
-    
-/*
-    //https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/cryptography/MerkleProof.sol
-    // receiver is an address converted to utf8 string or vice versa
-    // balance is a uint converted to a utf8 string or vice versa
-    //https://github.com/willitscale/solidity-util/blob/master/lib/Integers.sol
-    //https://ethereum.stackexchange.com/questions/10932/how-to-convert-string-to-int
-    //http://remebit.com/converting-strings-to-integers-in-solidity/
-    //https://www.edureka.co/community/7924/how-to-convert-int-to-string-in-solidity
-    function parseAddr(string memory _a) public returns (address){
-        // https://github.com/oraclize/ethereum-api/blob/6fb6e887e7b95c496fd723a7c62ce40551f8028a/oraclizeAPI_pre0.4.sol#L157
-        bytes memory tmp = bytes(_a);
-        uint160 iaddr = 0;
-        uint8 b1;
-        uint8 b2;
-        for (uint i=2; i<2+2*20; i+=2){
-            iaddr *= 256;
-            b1 = uint8(tmp[i]);
-            b2 = uint8(tmp[i+1]);
-            if ((b1 >= 97)&&(b1 <= 102)) b1 -= 87;
-            else if ((b1 >= 48)&&(b1 <= 57)) b1 -= 48;
-            if ((b2 >= 97)&&(b2 <= 102)) b2 -= 87;
-            else if ((b2 >= 48)&&(b2 <= 57)) b2 -= 48;
-            iaddr += (b1*16+b2);
-        }
-        return address(iaddr);
-    }
-    
-    function toString(address x) public returns (string memory) {
-        bytes memory b = new bytes(20);
-        for (uint i = 0; i < 20; i++)
-            b[i] = byte(uint8(uint(x) / (2**(8*(19 - i)))));
-        return string(b);
-    }
-
-    function test() public returns (string memory) {
-        string memory senderString = toString(msg.sender);
-        return senderString;
-    }
-*/   
 }

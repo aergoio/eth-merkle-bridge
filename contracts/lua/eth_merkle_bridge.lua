@@ -167,7 +167,7 @@ end
 -- lock and burn must be distinct because tokens on both sides could have the same address. Also adds clarity because burning is only applicable to minted tokens.
 -- nonce and signature are used when making a token lockup
 -- delegated transfers to ethereum not supported
-function lock(receiver, amount, token_address, nonce, signature, fee, deadline)
+function lock(receiver, amount, token_address, nonce, signature)
     -- not payable assert(system.getAmount() == "0", "Aer cannot be locked, must be freezed")
     local bamount = bignum.number(amount)
     local b0 = bignum.number(0)
@@ -209,7 +209,7 @@ function mint(receiver, balance, token_origin, merkle_proof)
     local account_ref = receiver .. token_origin
     local balance_str = "\""..bignum.tostring(bbalance).."\""
     -- TODO : the key is determined with position of Lock in bridge_contract.sol
-    if not _verify_patricia(account_ref, balance_str, merkle_proof, root:get()) then
+    if not _verify_patricia(account_ref, 0, balance_str, merkle_proof) then
         error("failed to verify deposit balance merkle proof")
     end
 
@@ -248,7 +248,7 @@ end
 
 -- burn a sidechain token
 -- mint_address is the token address on the sidechain
-function burn(receiver, amount, mint_address, nonce, signature)
+function burn(receiver, amount, mint_address)
     -- not payable assert(system.getAmount() == "0", "burn function not payable, only tokens can be burned")
     local bamount = bignum.number(amount)
     assert(address.isEthAddress(receiver), "invalid address format: " .. receiver)
@@ -284,7 +284,7 @@ function unlock(receiver, balance, token_address, merkle_proof)
     local account_ref = receiver .. token_address
     local balance_str = "\""..bignum.tostring(bbalance).."\""
     -- TODO : the key is determined with position of Burn in bridge_contract.sol
-    if not _verify_patricia(account_ref, balance_str, merkle_proof, root:get()) then
+    if not _verify_patricia(account_ref, 3, balance_str, merkle_proof) then
         error("failed to verify burnt balance merkle proof")
     end
 
@@ -345,7 +345,7 @@ function unfreeze(receiver, balance, merkle_proof)
     local account_ref = receiver .. AergoERC20:get()
     local balance_str = "\""..bignum.tostring(bbalance).."\""
     -- TODO : the key is determined with position of Lock in bridge_contract.sol
-    if not _verify_patricia(account_ref, balance_str, merkle_proof, root:get()) then
+    if not _verify_patricia(account_ref, 0, balance_str, merkle_proof) then
         error("failed to verify burnt balance merkle proof")
     end
 
@@ -373,7 +373,7 @@ end
 -- (In solidity, only bytes32[] is supported, so byte(0) cannot be passed and it is
 -- more efficient to use a compressed proof)
 -- Ethereum Patricia State Trie Merkle proof verification
-function _verify_patricia(key, value, merkle_proof, root)
+function _verify_patricia(map_key, map_position, value, merkle_proof)
     return true
 end
 

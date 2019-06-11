@@ -112,7 +112,7 @@ def run(
 
     print("------ Deploy Ethereum SC -----------")
     receipt = deploy_contract(
-        sol_bytecode, sol_abi, w3, 4600000, 20, privkey,
+        sol_bytecode, sol_abi, w3, 6700000, 20, privkey,
         eth_validators,
         t_anchor_eth, t_final_aergo
     )

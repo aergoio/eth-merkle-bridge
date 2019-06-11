@@ -308,7 +308,6 @@ class AergoProposerClient(threading.Thread):
             if merged_height + self.t_anchor >= next_anchor_height:
                 print("{}Not yet anchor time "
                       "or another proposer already anchored".format(self.tab))
-                print(merged_height, self.t_anchor, next_anchor_height)
                 wait = merged_height + self.t_anchor - next_anchor_height
                 time.sleep(wait * self.eth_block_time)
                 continue

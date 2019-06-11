@@ -25,6 +25,11 @@ from ethaergo_wallet.aergo_to_eth import (
     build_lock_proof,
     mint
 )
+from ethaergo_wallet.eth_to_aergo import (
+    burn,
+    build_burn_proof,
+    unlock
+)
 import aergo.herapy as herapy
 from aergo.herapy.errors.general_exception import (
     GeneralException,
@@ -90,9 +95,59 @@ class EthAergoWallet(WalletConfig):
         """ Initiate ERC20 token or Ether transfer to Aergo sidechain """
         pass
 
-    def burn_to_aergo(self):
+    def burn_to_aergo(
+        self,
+        from_chain: str,
+        to_chain: str,
+        bridge_from_abi: str,
+        asset_name: str,
+        minted_erc20_abi: str,
+        amount: int,
+        receiver: str,
+        privkey_name: str = 'default',
+        privkey_pwd: str = None,
+        eth_poa: bool = False
+    ) -> Tuple[int, str]:
         """ Initiate minted Standard token transfer back to aergo origin"""
-        pass
+        w3 = self.get_web3(from_chain, eth_poa)
+        sender_keystore = self.config_data('wallet-eth', privkey_name,
+                                           'keystore')
+        with open("./keystore/" + sender_keystore, "r") as f:
+            encrypted_key = f.read()
+        if privkey_pwd is None:
+            privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
+                                  .format(privkey_name))
+        privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
+        signer_acct = w3.eth.account.privateKeyToAccount(privkey)
+        token_owner = signer_acct.address
+
+        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
+        token_pegged = self.config_data(to_chain, 'tokens', asset_name, 'pegs',
+                                        from_chain)
+        balance = get_eth_balance(token_owner, token_pegged, w3,
+                                  minted_erc20_abi)
+        print("{} balance on destination before transfer : {}"
+              .format(asset_name, balance/10**18))
+        if balance < amount:
+            raise InsufficientBalanceError("not enough token balance")
+
+        fee_limit = 0
+        eth_balance = get_eth_balance(token_owner, 'ether', w3)
+        if eth_balance < fee_limit*self.fee_price:
+            err = "not enough aer balance to pay tx fee"
+            raise InsufficientBalanceError(err)
+
+        print("\n\n------ Burn {}-----------".format(asset_name))
+        burn_height, tx_hash = burn(
+            w3, signer_acct, receiver, amount, bridge_from, bridge_from_abi,
+            token_pegged, fee_limit, self.fee_price
+        )
+
+        balance = get_eth_balance(token_owner, token_pegged, w3,
+                                  minted_erc20_abi)
+        print("remaining {} balance on origin after transfer: {}"
+              .format(asset_name, balance/10**18))
+        return burn_height, tx_hash
 
     def mint_to_aergo(self):
         """ Finalize ERC20 token or Ether transfer to Aergo sidechain """
@@ -104,9 +159,52 @@ class EthAergoWallet(WalletConfig):
         """
         pass
 
-    def unlock_to_aergo(self):
+    def unlock_to_aergo(
+        self,
+        from_chain: str,
+        to_chain: str,
+        asset_name: str,
+        receiver: str,
+        burn_height: int = 0,
+        privkey_name: str = 'default',
+        privkey_pwd: str = None,
+        eth_poa: bool = False
+    ) -> str:
         """ Finalize Aergo Standard token transfer back to Aergo Origin"""
-        pass
+        w3 = self.get_web3(from_chain, eth_poa)
+        aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
+        tx_sender = str(aergo_to.account.address)
+        bridge_to = self.config_data(to_chain, 'bridges', from_chain, 'addr')
+        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
+        asset_address = self.config_data(to_chain, 'tokens', asset_name,
+                                         'addr')
+
+        print("\n------ Get burn proof -----------")
+        burn_proof = build_burn_proof(w3, aergo_to, receiver,
+                                      bridge_from, bridge_to, burn_height,
+                                      asset_address)
+
+        print("\n\n------ Unlock {} on origin blockchain -----------"
+              .format(asset_name))
+        balance = get_aergo_balance(receiver, asset_address, aergo_to)
+        print("{} balance on destination before transfer: {}"
+              .format(asset_name, balance/10**18))
+
+        fee_limit = 0
+        aer_balance = get_aergo_balance(tx_sender, 'aergo', aergo_to)
+        if aer_balance < fee_limit*self.fee_price:
+            err = "not enough aer balance to pay tx fee"
+            raise InsufficientBalanceError(err)
+
+        tx_hash = unlock(aergo_to, receiver, burn_proof, asset_address,
+                         bridge_to, fee_limit, self.fee_price)
+
+        # new balance on origin
+        balance = get_aergo_balance(receiver, asset_address, aergo_to)
+        print("{} balance on destination after transfer: {}"
+              .format(asset_name, balance/10**18))
+
+        return tx_hash
 
     ###########################################################################
     # aergo_to_eth_sidechain
@@ -152,13 +250,14 @@ class EthAergoWallet(WalletConfig):
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
-        print("{} balance on origin before transfer: {}"
+        print("\n{} balance on origin before transfer: {}"
               .format(asset_name, balance/10**18))
 
-        print("\n\n------ Lock {} -----------".format(asset_name))
-        lock_height, tx_hash = lock(aergo_from, bridge_from,
-                                    receiver[2:], amount, asset_address, fee_limit,
-                                    self.fee_price, signed_transfer)
+        print("\n------ Lock {} -----------".format(asset_name))
+        lock_height, tx_hash = lock(
+            aergo_from, bridge_from, receiver[2:], amount, asset_address,
+            fee_limit, self.fee_price, signed_transfer
+        )
 
         # remaining balance on origin : aer or asset
         balance = get_aergo_balance(sender, asset_address, aergo_from)

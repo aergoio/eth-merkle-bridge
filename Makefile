@@ -5,6 +5,7 @@ install:
 	pip install pytest
 	pip install git+ssh://git@github.com/aergoio/merkle-bridge.git@f9b6b367c4a6a0b002f2d3a319cbda47d031707a
 	pip install git+ssh://git@github.com/ethereum/web3.py.git@11ef9df28dfbe4b83683a84fec184406165f18d5
+	pip install trie
 
 compile_bridge:
 	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/lua/eth_merkle_bridge.lua > contracts/lua/bridge_bytecode.txt
