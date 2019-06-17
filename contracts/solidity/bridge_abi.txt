@@ -181,6 +181,25 @@
 		"inputs": [
 			{
 				"name": "",
+				"type": "bytes"
+			}
+		],
+		"name": "Unlocks",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
 				"type": "string"
 			}
 		],
@@ -344,7 +363,7 @@
 		"inputs": [
 			{
 				"name": "",
-				"type": "bytes32"
+				"type": "bytes"
 			}
 		],
 		"name": "Mints",
@@ -373,6 +392,25 @@
 		"type": "function"
 	},
 	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "bytes"
+			}
+		],
+		"name": "Locks",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"constant": false,
 		"inputs": [
 			{
@@ -389,6 +427,45 @@
 			}
 		],
 		"name": "burn",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "receiver",
+				"type": "address"
+			},
+			{
+				"name": "balance",
+				"type": "uint256"
+			},
+			{
+				"name": "token",
+				"type": "address"
+			},
+			{
+				"name": "mp",
+				"type": "bytes32[]"
+			},
+			{
+				"name": "bitmap",
+				"type": "bytes32"
+			},
+			{
+				"name": "leaf_height",
+				"type": "uint8"
+			}
+		],
+		"name": "unlock",
 		"outputs": [
 			{
 				"name": "",
@@ -447,6 +524,33 @@
 		"type": "function"
 	},
 	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "receiver",
+				"type": "string"
+			},
+			{
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"name": "token",
+				"type": "address"
+			}
+		],
+		"name": "lock",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"name": "validators",
@@ -480,6 +584,50 @@
 			}
 		],
 		"name": "newMintedERC20",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"name": "token_address",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"name": "receiver",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "lockEvent",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"name": "token_address",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"name": "receiver",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "unlockEvent",
 		"type": "event"
 	},
 	{

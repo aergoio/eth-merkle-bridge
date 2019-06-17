@@ -2,7 +2,7 @@ def test_aer_transfer():
     assert True
 
 
-def test_bridge_token_transfer(bridge_wallet):
+def test_aergo_token_transfer(bridge_wallet):
     with open("./contracts/solidity/bridge_abi.txt", "r") as f:
         bridge_abi = f.read()
     with open("./contracts/solidity/minted_erc20_abi.txt", "r") as f:
@@ -30,4 +30,20 @@ def test_bridge_token_transfer(bridge_wallet):
     bridge_wallet.unlock_to_aergo(
         'eth-poa-local', 'aergo-local', 'token1', aergo_user, burn_height,
         privkey_pwd='1234', eth_poa=True
+    )
+
+
+def test_erc20_token_transfer(bridge_wallet):
+    with open("./contracts/solidity/bridge_abi.txt", "r") as f:
+        bridge_abi = f.read()
+    with open("./contracts/solidity/aergo_erc20_abi.txt", "r") as f:
+        aergo_erc20_abi = f.read()
+
+    eth_user = bridge_wallet.config_data('wallet-eth', 'default', 'addr')
+    aergo_user = bridge_wallet.config_data('wallet', 'default', 'addr')
+
+    # Aergo => Eth
+    lock_height, _ = bridge_wallet.lock_to_aergo(
+        'eth-poa-local', 'aergo-local', bridge_abi, 'test_erc20',
+        aergo_erc20_abi, 5*10**18, aergo_user, privkey_pwd='1234', eth_poa=True
     )

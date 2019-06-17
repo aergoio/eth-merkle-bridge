@@ -11,7 +11,9 @@ contract EthMerkleBridge {
     //  2/3 of validators must sign a root update
     address[] public Validators;
     // Registers locked balances per account reference: user provides merkle proof of locked balance
+    mapping(bytes => uint) public Locks;
     // Registers unlocked balances per account reference: prevents unlocking more than was burnt
+    mapping(bytes => uint) public Unlocks;
     // Registers burnt balances per account reference : user provides merkle proof of burnt balance
     mapping(bytes => uint) public Burns;
     // Registers minted balances per account reference : prevents minting more than what was locked
@@ -35,6 +37,8 @@ contract EthMerkleBridge {
     // on multiple chains.
     
     event newMintedERC20(string indexed origin, MintedERC20 indexed addr);
+    event lockEvent(IERC20 indexed token_address, string indexed receiver, uint amount);
+    event unlockEvent(IERC20 indexed token_address, address indexed receiver, uint amount);
     event mintEvent(MintedERC20 indexed token_address, address indexed receiver, uint amount);
     event burnEvent(MintedERC20 indexed token_address, string indexed receiver, uint amount);
 
@@ -89,6 +93,42 @@ contract EthMerkleBridge {
         address signer = ecrecover(message, vs[i], rs[i], ss[i]);
         require(signer == Validators[signers[i]], "Signature doesn't match validator");
       }
+        return true;
+    }
+    
+    function lock(
+        string memory receiver,
+        uint amount,
+        IERC20 token
+    ) public returns (bool) {
+        // Add locked amount to total
+        bytes memory account_ref = abi.encodePacked(receiver, token);
+        Locks[account_ref] += amount;
+        // Pull token from owner to bridge contract (owner must set approval before calling lock)
+        // using msg.sender, the owner must call lock, but we can make delegated transfers with sender
+        // address as parameter.
+        require(token.transferFrom(msg.sender, address(this), amount), "Failed to burn");
+        emit lockEvent(token, receiver, amount);
+        return true;
+    }
+    
+    function unlock(
+        address receiver,
+        uint balance,
+        IERC20 token,
+        bytes32[] memory mp, // bytes[] is not yet supported so we use a bitmap of proof elements
+        bytes32 bitmap,
+        uint8 leaf_height
+    ) public returns(bool) {
+        require(balance>0, "Balance must be positive");
+        bytes memory account_ref = abi.encodePacked(addr_to_str(receiver), token);
+        require(verify_mp("_sv_Burns-", account_ref, balance, mp, bitmap, leaf_height), "Failed to verify lock proof");
+        uint unlocked_so_far = Unlocks[account_ref];
+        uint to_transfer = balance - unlocked_so_far;
+        require(to_transfer>0, "Burn tokens before unlocking");
+        Unlocks[account_ref] = balance;
+        require(token.transfer(receiver, to_transfer), "Failed to transfer unlock");
+        emit unlockEvent(token, receiver, to_transfer);
         return true;
     }
 

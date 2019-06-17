@@ -20,6 +20,47 @@ from ethaergo_wallet.eth_utils.merkle_proof import (
 )
 
 
+def lock(
+    w3: Web3,
+    signer_acct,
+    receiver: str,
+    amount: int,
+    bridge_from: str,
+    bridge_from_abi: str,
+    erc20_address: str,
+    fee_limit: int,
+    fee_price: int
+):
+    """ Burn a token that was minted on ethereum. """
+    bridge_from = Web3.toChecksumAddress(bridge_from)
+    eth_bridge = w3.eth.contract(
+        address=bridge_from,
+        abi=bridge_from_abi
+    )
+    print(receiver, amount, erc20_address)
+    construct_txn = eth_bridge.functions.lock(
+        receiver, amount, erc20_address
+    ).buildTransaction({
+        'chainId': w3.eth.chainId,
+        'from': signer_acct.address,
+        'nonce': w3.eth.getTransactionCount(
+            signer_acct.address
+        ),
+        'gas': 4108036,
+        'gasPrice': w3.toWei(9, 'gwei')
+    })
+    signed = signer_acct.signTransaction(construct_txn)
+    tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
+    receipt = w3.eth.waitForTransactionReceipt(tx_hash)
+    print(receipt)
+    if receipt.status != 1:
+        print(receipt)
+        raise TxError("Lock asset Tx execution failed")
+    events = eth_bridge.events.lockEvent().processReceipt(receipt)
+    print("\nevents: ", events)
+    return receipt.blockNumber, tx_hash
+
+
 def burn(
     w3: Web3,
     signer_acct,
@@ -32,6 +73,7 @@ def burn(
     fee_price: int
 ):
     """ Burn a token that was minted on ethereum. """
+    bridge_from = Web3.toChecksumAddress(bridge_from)
     eth_bridge = w3.eth.contract(
         address=bridge_from,
         abi=bridge_from_abi
@@ -58,6 +100,7 @@ def burn(
     events = eth_bridge.events.burnEvent().processReceipt(receipt)
     print("\nevents: ", events)
     return receipt.blockNumber, tx_hash
+
 
 def build_burn_proof(
     w3: Web3,
@@ -92,8 +135,8 @@ def build_burn_proof(
     # get inclusion proof of lock in last merged block
     block = w3.eth.getBlock(last_merged_height_to)
     account_ref = (receiver + token_origin).encode('utf-8')
-    # 'Burns is the 4th state var defined in solitity contract
-    position = b'\x03'
+    # 'Burns is the 6th state var defined in solitity contract
+    position = b'\x05'
     print(account_ref.rjust(32, b'\0') + position.rjust(32, b'\0'))
     trie_key = keccak(account_ref + position.rjust(32, b'\0'))
     eth_proof = w3.eth.getProof(bridge_from, [trie_key], last_merged_height_to)
