@@ -47,3 +47,7 @@ def test_erc20_token_transfer(bridge_wallet):
         'eth-poa-local', 'aergo-local', bridge_abi, 'test_erc20',
         aergo_erc20_abi, 5*10**18, aergo_user, privkey_pwd='1234', eth_poa=True
     )
+    bridge_wallet.mint_to_aergo(
+        'eth-poa-local', 'aergo-local', 'test_erc20', aergo_user, lock_height,
+        privkey_pwd='1234', eth_poa=True
+    )

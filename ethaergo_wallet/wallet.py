@@ -137,6 +137,71 @@ class EthAergoWallet(WalletConfig):
               .format(asset_name, balance/10**18))
         return lock_height, tx_hash
 
+    def mint_to_aergo(
+        self,
+        from_chain: str,
+        to_chain: str,
+        asset_name: str,
+        receiver: str = None,
+        lock_height: int = 0,
+        privkey_name: str = 'default',
+        privkey_pwd: str = None,
+        eth_poa: bool = False
+    ) -> str:
+        """ Finalize ERC20 token or Ether transfer to Aergo sidechain """
+        w3 = self.get_web3(from_chain, eth_poa)
+        aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
+        tx_sender = str(aergo_to.account.address)
+        bridge_to = self.config_data(to_chain, 'bridges', from_chain, 'addr')
+        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
+        asset_address = self.config_data(from_chain, 'tokens', asset_name,
+                                         'addr')
+        if receiver is None:
+            receiver = tx_sender
+
+        save_pegged_token_address = False
+        try:
+            token_pegged = self.config_data(from_chain, 'tokens', asset_name,
+                                            'pegs', to_chain)
+            balance = aergo_u.get_balance(receiver, token_pegged, aergo_to)
+            print("{} balance on destination before transfer: {}"
+                  .format(asset_name, balance/10**18))
+        except KeyError:
+            print("Pegged token unknow by wallet")
+            save_pegged_token_address = True
+
+        fee_limit = 0
+        aer_balance = aergo_u.get_balance(tx_sender, 'aergo', aergo_to)
+        if aer_balance < fee_limit*self.fee_price:
+            err = "not enough aer balance to pay tx fee"
+            raise InsufficientBalanceError(err)
+
+        print("\n------ Get lock proof -----------")
+        lock_proof = eth_to_aergo.build_lock_proof(
+            w3, aergo_to, receiver, bridge_from, bridge_to, lock_height,
+            asset_address
+        )
+
+        print("\n\n------ Mint {} on destination blockchain -----------"
+              .format(asset_name))
+        token_pegged, tx_hash = eth_to_aergo.mint(
+            aergo_to, receiver, lock_proof, asset_address, bridge_to,
+            fee_limit, self.fee_price
+        )
+        # new balance on destination
+        balance = aergo_u.get_balance(receiver, token_pegged, aergo_to)
+        print("{} balance on destination after transfer: {}"
+              .format(asset_name, balance/10**18))
+        aergo_to.disconnect()
+
+        # record mint address in file
+        if save_pegged_token_address:
+            print("\n------ Store mint address in config.json -----------")
+            self.config_data(from_chain, 'tokens', asset_name, 'pegs',
+                             to_chain, value=token_pegged)
+            self.save_config()
+        return tx_hash
+
     def burn_to_aergo(
         self,
         from_chain: str,
@@ -190,10 +255,6 @@ class EthAergoWallet(WalletConfig):
         print("remaining {} balance on origin after transfer: {}"
               .format(asset_name, balance/10**18))
         return burn_height, tx_hash
-
-    def mint_to_aergo(self):
-        """ Finalize ERC20 token or Ether transfer to Aergo sidechain """
-        pass
 
     def unfreeze(self):
         """ Finalize ERC20Aergo transfer to Aergo Mainnet by unfreezing

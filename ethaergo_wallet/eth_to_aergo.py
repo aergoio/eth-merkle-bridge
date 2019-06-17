@@ -1,4 +1,8 @@
+import json
 import time
+from typing import (
+    Tuple,
+)
 from eth_utils import (
     keccak,
 )
@@ -59,6 +63,83 @@ def lock(
     events = eth_bridge.events.lockEvent().processReceipt(receipt)
     print("\nevents: ", events)
     return receipt.blockNumber, tx_hash
+
+
+def build_lock_proof(
+    w3: Web3,
+    aergo_to: herapy.Aergo,
+    receiver: str,
+    bridge_from: str,
+    bridge_to: str,
+    lock_height: int,
+    token_origin: str,
+):
+    """ Check the last anchored root includes the lock and build
+    a lock proof for that root
+    """
+    bridge_from = Web3.toChecksumAddress(bridge_from)
+    token_origin = Web3.toChecksumAddress(token_origin)
+    # check last merged height
+    anchor_info = aergo_to.query_sc_state(bridge_to, ["_sv_Height",
+                                                      "_sv_T_anchor"])
+    last_merged_height_to = int(anchor_info.var_proofs[0].value)
+    t_anchor = int(anchor_info.var_proofs[1].value)
+    _, current_height = aergo_to.get_blockchain_status()
+    # waite for anchor containing our transfer
+    if last_merged_height_to < lock_height:
+        print("waiting new anchor event...")
+        stream = aergo_to.receive_event_stream(bridge_to, "set_root",
+                                               start_block_no=current_height)
+        while last_merged_height_to < lock_height:
+            wait = last_merged_height_to + t_anchor - lock_height
+            print("(estimated waiting time : {}s...)".format(wait))
+            set_root_event = next(stream)
+            last_merged_height_to = set_root_event.arguments[0]
+        stream.stop()
+    # get inclusion proof of lock in last merged block
+    block = w3.eth.getBlock(last_merged_height_to)
+    account_ref = receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
+    # 'Locks is the 4th state var defined in solitity contract
+    position = b'\x03'
+    print(account_ref.rjust(32, b'\0') + position.rjust(32, b'\0'))
+    trie_key = keccak(account_ref + position.rjust(32, b'\0'))
+    eth_proof = w3.eth.getProof(bridge_from, [trie_key], last_merged_height_to)
+    if not verify_eth_getProof(eth_proof, block.stateRoot):
+        raise InvalidMerkleProofError("Unable to verify Lock proof")
+    if trie_key != eth_proof.storageProof[0].key:
+        raise InvalidMerkleProofError("Proof doesnt match requested key")
+    if len(eth_proof.storageProof[0].value) == 0:
+        raise InvalidMerkleProofError("User never deposited tokens")
+    return eth_proof
+
+
+def mint(
+    aergo_to: herapy.Aergo,
+    receiver: str,
+    lock_proof: AttributeDict,
+    token_origin: str,
+    bridge_to: str,
+    fee_limit: int,
+    fee_price: int
+) -> Tuple[str, str]:
+    """ Unlock the receiver's deposit balance on aergo_to. """
+    ap = format_proof_for_lua(lock_proof.storageProof[0].proof)
+    balance = int.from_bytes(lock_proof.storageProof[0].value, "big")
+    print(ap)
+    print(balance, lock_proof.storageProof[0].value, ap)
+    # call unlock on aergo_to with the burn proof from aergo_from
+    tx, result = aergo_to.call_sc(bridge_to, "mint",
+                                  args=[receiver, balance,
+                                        token_origin, ap])
+    if result.status != herapy.CommitStatus.TX_OK:
+        raise TxError("Mint asset Tx commit failed : {}".format(result))
+    time.sleep(3)
+
+    result = aergo_to.get_tx_result(tx.tx_hash)
+    if result.status != herapy.TxResultStatus.SUCCESS:
+        raise TxError("Mint asset Tx execution failed : {}".format(result))
+    token_pegged = json.loads(result.detail)[0]
+    return token_pegged, str(tx.tx_hash)
 
 
 def burn(
@@ -161,6 +242,7 @@ def unlock(
     """ Unlock the receiver's deposit balance on aergo_to. """
     ap = format_proof_for_lua(burn_proof.storageProof[0].proof)
     balance = int.from_bytes(burn_proof.storageProof[0].value, "big")
+    print(ap)
     print(balance, burn_proof.storageProof[0].value, ap)
     # call unlock on aergo_to with the burn proof from aergo_from
     tx, result = aergo_to.call_sc(bridge_to, "unlock",
