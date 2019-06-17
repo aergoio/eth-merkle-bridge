@@ -121,7 +121,7 @@ contract EthMerkleBridge {
         uint8 leaf_height
     ) public returns(bool) {
         require(balance>0, "Balance must be positive");
-        bytes memory account_ref = abi.encodePacked(addr_to_str(receiver), token);
+        bytes memory account_ref = abi.encodePacked(addr_to_str(receiver), addr_to_str(address(token)));
         require(verify_mp("_sv_Burns-", account_ref, balance, mp, bitmap, leaf_height), "Failed to verify lock proof");
         uint unlocked_so_far = Unlocks[account_ref];
         uint to_transfer = balance - unlocked_so_far;

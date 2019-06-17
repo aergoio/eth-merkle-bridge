@@ -130,7 +130,7 @@ def mint(
     # call unlock on aergo_to with the burn proof from aergo_from
     tx, result = aergo_to.call_sc(bridge_to, "mint",
                                   args=[receiver, balance,
-                                        token_origin, ap])
+                                        token_origin[2:].lower(), ap])
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Mint asset Tx commit failed : {}".format(result))
     time.sleep(3)
