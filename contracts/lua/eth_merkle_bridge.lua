@@ -49,7 +49,7 @@ state.var {
     -- Registers minted balances per account reference : prevents minting more than what was locked
     Mints = state.map(),
     -- Registers freezed balances per account reference : prevents unlocking more than was freezed
-    Freezes = state.map(),
+    Unfreezes = state.map(),
     -- BridgeTokens keeps track of tokens that were received through the bridge
     BridgeTokens = state.map(),
     -- MintedTokens is the same as BridgeTokens but keys and values are swapped
@@ -87,6 +87,13 @@ function constructor(aergo_erc20, addresses, t_anchor, t_final)
     id = string.sub(id, 3, 34)
     ContractID:set(id)
     return id
+end
+
+function default()
+    -- emit event
+    -- needed to send the vault funds when starting the bridge
+    -- consider disabling after 1st transfer so users don't send 
+    -- funds by mistake
 end
 
 -- signers is the index of signers in Validators
@@ -576,5 +583,5 @@ function token_payable()
     error("Cannot receive tokens, must use Lock or Burn to send tokens to the bridge contract")
 end
 
-abi.register(set_root, update_validators, update_t_anchor, update_t_final, lock, unlock, mint, burn, freeze, unfreeze, token_payable)
-abi.payable(freeze)
+abi.register(set_root, update_validators, update_t_anchor, update_t_final, lock, unlock, mint, burn, unfreeze, token_payable)
+abi.payable(freeze, default)

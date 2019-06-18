@@ -71,8 +71,8 @@ if __name__ == '__main__':
     print("Deployed token address: ", sc_address)
 
     print("------ Store address in config.json -----------")
-    config_data['eth-poa-local']['tokens']['test_erc20'] = {}
-    config_data['eth-poa-local']['tokens']['test_erc20']['addr'] = sc_address
-    config_data['eth-poa-local']['tokens']['test_erc20']['pegs'] = {}
+    config_data['eth-poa-local']['tokens']['aergo_erc20'] = {}
+    config_data['eth-poa-local']['tokens']['aergo_erc20']['addr'] = sc_address
+    config_data['eth-poa-local']['tokens']['aergo_erc20']['pegs'] = {}
     with open("./config.json", "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)

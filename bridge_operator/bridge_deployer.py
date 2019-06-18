@@ -85,10 +85,10 @@ def run(
 
     print("------ Deploy Aergo SC -----------")
     payload = herapy.utils.decode_address(lua_bytecode)
-    aergo_erc20 = config_data[eth_net]['tokens'][aergo_erc20]
+    aergo_erc20 = config_data[eth_net]['tokens'][aergo_erc20]['addr']
     tx, result = aergo.deploy_sc(amount=0,
                                  payload=payload,
-                                 args=[aergo_erc20,
+                                 args=[aergo_erc20[2:].lower(),
                                        aergo_validators,
                                        t_anchor_aergo,
                                        t_final_eth])
@@ -109,6 +109,27 @@ def run(
                       result.detail))
         aergo.disconnect()
         return
+    aergo_address = result.contract_address
+    aergo_id = result.detail[1:-1]
+
+    print("------ Freeze aergo in bridge -----------")
+    aergo_vault = config_data['wallet']['bridge-vault']['priv_key']
+    aergo.import_account(aergo_vault, privkey_pwd)
+    # NOTE watch out for tx fees, they shouldnt be deducted from the vault value.
+    tx, result = aergo.send_payload(
+        to_address=aergo_address, amount=100000000000000000000000,
+        payload=None
+    )
+    if result.status != herapy.CommitStatus.TX_OK:
+        print("Transfer aergo Tx commit failed : {}".format(result))
+        return
+
+    time.sleep(COMMIT_TIME)
+    # Check freeze success
+    result = aergo.get_tx_result(tx.tx_hash)
+    if result.status != herapy.TxResultStatus.SUCCESS:
+        print("Transfer aergo Tx execution failed : {}".format(result))
+        return
 
     print("------ Deploy Ethereum SC -----------")
     receipt = deploy_contract(
@@ -123,8 +144,6 @@ def run(
     eth_id = bridge_contract.functions.ContractID().call().hex()
 
     eth_address = receipt.contractAddress
-    aergo_address = result.contract_address
-    aergo_id = result.detail[1:-1]
 
     print("  > SC Address Ethereum: {}".format(eth_address))
     print("  > SC Address Aergo: {}".format(aergo_address))
@@ -173,5 +192,5 @@ if __name__ == '__main__':
     run(
         config_data, lua_bytecode, sol_bytecode, sol_abi, t_anchor_eth,
         t_anchor_aergo, t_final_eth, 'eth-poa-local', 'aergo-local',
-        'test_erc20'
+        'aergo_erc20'
     )

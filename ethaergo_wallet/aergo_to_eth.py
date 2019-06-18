@@ -175,6 +175,7 @@ def build_burn_proof(
         bridge_from, ["_sv_Burns-" + account_ref],
         root=merge_block_from.blocks_root_hash, compressed=True
     )
+    print(proof)
     if not proof.verify_proof(merge_block_from.blocks_root_hash):
         raise InvalidMerkleProofError("Unable to verify Burn proof")
     if not proof.var_proofs[0].inclusion:
@@ -234,3 +235,32 @@ def unlock(
     events = eth_bridge.events.unlockEvent().processReceipt(receipt)
     print("\nevents: ", events)
     return tx_hash
+
+
+def freeze(
+    aergo_from: herapy.Aergo,
+    bridge_from: str,
+    receiver: str,
+    value: int,
+    fee_limit: int,
+    fee_price: int,
+) -> Tuple[int, str]:
+    """ Burn a minted token on a sidechain. """
+    print('receiver:', receiver)
+    args = (receiver[2:].lower(), str(value))
+    tx, result = aergo_from.call_sc(
+        bridge_from, "freeze", amount=value, args=args
+    )
+
+    if result.status != herapy.CommitStatus.TX_OK:
+        raise TxError("Burn asset Tx commit failed : {}".format(result))
+    time.sleep(COMMIT_TIME)
+
+    # Check freeze success
+    result = aergo_from.get_tx_result(tx.tx_hash)
+    if result.status != herapy.TxResultStatus.SUCCESS:
+        raise TxError("Freeze Aer Tx execution failed : {}".format(result))
+    # get precise burn height
+    tx_detail = aergo_from.get_tx(tx.tx_hash)
+    freeze_height = tx_detail.block.height
+    return freeze_height, str(tx.tx_hash)

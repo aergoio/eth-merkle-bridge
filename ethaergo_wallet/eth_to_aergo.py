@@ -256,3 +256,29 @@ def unlock(
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Unlock asset Tx execution failed : {}".format(result))
     return str(tx.tx_hash)
+
+
+def unfreeze(
+    aergo_to: herapy.Aergo,
+    receiver: str,
+    lock_proof: AttributeDict,
+    bridge_to: str,
+    fee_limit: int,
+    fee_price: int
+) -> str:
+    """ Unlock the receiver's deposit balance on aergo_to. """
+    ap = format_proof_for_lua(lock_proof.storageProof[0].proof)
+    balance = int.from_bytes(lock_proof.storageProof[0].value, "big")
+    print(ap)
+    print(balance, lock_proof.storageProof[0].value, ap)
+    # call unlock on aergo_to with the burn proof from aergo_from
+    tx, result = aergo_to.call_sc(bridge_to, "unfreeze",
+                                  args=[receiver, balance, ap])
+    if result.status != herapy.CommitStatus.TX_OK:
+        raise TxError("Mint asset Tx commit failed : {}".format(result))
+    time.sleep(3)
+
+    result = aergo_to.get_tx_result(tx.tx_hash)
+    if result.status != herapy.TxResultStatus.SUCCESS:
+        raise TxError("Mint asset Tx execution failed : {}".format(result))
+    return str(tx.tx_hash)

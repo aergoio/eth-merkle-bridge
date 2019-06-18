@@ -256,11 +256,63 @@ class EthAergoWallet(WalletConfig):
               .format(asset_name, balance/10**18))
         return burn_height, tx_hash
 
-    def unfreeze(self):
+    def unfreeze(
+        self,
+        from_chain: str,
+        to_chain: str,
+        asset_name: str,
+        receiver: str = None,
+        lock_height: int = 0,
+        privkey_name: str = 'default',
+        privkey_pwd: str = None,
+        eth_poa: bool = False
+    ) -> str:
         """ Finalize ERC20Aergo transfer to Aergo Mainnet by unfreezing
             (aers are already minted and freezed in the bridge contract)
         """
-        pass
+        if asset_name != 'aergo_erc20':
+            raise InvalidArgumentsError("Only 'aergo_erc20' can be unfrozen")
+        w3 = self.get_web3(from_chain, eth_poa)
+        aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
+        tx_sender = str(aergo_to.account.address)
+        bridge_to = self.config_data(to_chain, 'bridges', from_chain, 'addr')
+        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
+        asset_address = self.config_data(from_chain, 'tokens', asset_name,
+                                         'addr')
+        if receiver is None:
+            receiver = tx_sender
+
+        balance = aergo_u.get_balance(receiver, 'aergo', aergo_to)
+        print("{} balance on destination before transfer: {}"
+              .format(asset_name, balance/10**18))
+
+        fee_limit = 0
+        if receiver != tx_sender:
+            aer_balance = aergo_u.get_balance(tx_sender, 'aergo', aergo_to)
+            if aer_balance < fee_limit*self.fee_price:
+                err = "not enough aer balance to pay tx fee"
+                raise InsufficientBalanceError(err)
+
+        print("\n------ Get lock proof -----------")
+        lock_proof = eth_to_aergo.build_lock_proof(
+            w3, aergo_to, receiver, bridge_from, bridge_to, lock_height,
+            asset_address
+        )
+
+        print("\n\n------ Unfreeze {} on destination blockchain -----------"
+              .format(asset_name))
+        tx_hash = eth_to_aergo.unfreeze(
+            aergo_to, receiver, lock_proof, bridge_to, fee_limit,
+            self.fee_price
+        )
+        # new balance on destination
+        balance = aergo_u.get_balance(receiver, 'aergo', aergo_to)
+        print("{} balance on destination after transfer: {}"
+              .format(asset_name, balance/10**18))
+        aergo_to.disconnect()
+
+        # record mint address in file
+        return tx_hash
 
     def unlock_to_aergo(
         self,
@@ -319,9 +371,43 @@ class EthAergoWallet(WalletConfig):
     # StandardToken  -> lock_to_eth -> | ->  mint_to_eth  -> MintedERC20
     ###########################################################################
 
-    def freeze(self):
+    def freeze(
+        self,
+        from_chain: str,
+        to_chain: str,
+        asset_name: str,
+        amount: int,
+        receiver: str,
+        privkey_name: str = 'default',
+        privkey_pwd: str = None,
+        eth_poa: bool = False
+    ) -> Tuple[int, str]:
         """ Initiate Aer transfer back to Ethereum AergoERC20 sidechain"""
-        pass
+        if asset_name != 'aergo_erc20':
+            raise InvalidArgumentsError("Only 'aergo_erc20' can be unfrozen")
+        aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
+        sender = str(aergo_from.account.address)
+        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
+        fee_limit = 0
+        balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
+        if balance < amount + fee_limit * self.fee_price:
+            raise InsufficientBalanceError("not enough token balance")
+        print("\n{} balance on sidechain before transfer: {}"
+              .format(asset_name, balance/10**18))
+
+        print("\n------ Freeze {} -----------".format(asset_name))
+        freeze_height, tx_hash = aergo_to_eth.freeze(
+            aergo_from, bridge_from, receiver, amount, fee_limit,
+            self.fee_price
+        )
+
+        # remaining balance on origin : aer or asset
+        balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
+        print("remaining {} balance on origin after transfer: {}"
+              .format(asset_name, balance/10**18))
+
+        aergo_from.disconnect()
+        return freeze_height, tx_hash
 
     def lock_to_eth(
         self,
@@ -472,7 +558,6 @@ class EthAergoWallet(WalletConfig):
         bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
         token_pegged = self.config_data(to_chain, 'tokens', asset_name, 'pegs',
                                         from_chain)
-        # sign transfer so bridge can pull tokens to lock.
         fee_limit = 0
         balance = aergo_u.get_balance(sender, token_pegged, aergo_from)
         if balance < amount:
