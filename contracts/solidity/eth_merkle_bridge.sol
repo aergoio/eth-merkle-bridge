@@ -41,6 +41,7 @@ contract EthMerkleBridge {
     event unlockEvent(IERC20 indexed token_address, address indexed receiver, uint amount);
     event mintEvent(MintedERC20 indexed token_address, address indexed receiver, uint amount);
     event burnEvent(MintedERC20 indexed token_address, string indexed receiver, uint amount);
+    event anchorEvent(bytes32 root, uint height);
 
 
     constructor(
@@ -76,6 +77,7 @@ contract EthMerkleBridge {
         Root = root;
         Height = height;
         Nonce += 1;
+        emit anchorEvent(root, height);
     }
 
     function validate_signatures(

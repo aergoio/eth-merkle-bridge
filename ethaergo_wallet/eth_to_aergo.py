@@ -77,40 +77,14 @@ def build_lock_proof(
     """ Check the last anchored root includes the lock and build
     a lock proof for that root
     """
-    bridge_from = Web3.toChecksumAddress(bridge_from)
-    token_origin = Web3.toChecksumAddress(token_origin)
-    # check last merged height
-    anchor_info = aergo_to.query_sc_state(bridge_to, ["_sv_Height",
-                                                      "_sv_T_anchor"])
-    last_merged_height_to = int(anchor_info.var_proofs[0].value)
-    t_anchor = int(anchor_info.var_proofs[1].value)
-    _, current_height = aergo_to.get_blockchain_status()
-    # waite for anchor containing our transfer
-    if last_merged_height_to < lock_height:
-        print("waiting new anchor event...")
-        stream = aergo_to.receive_event_stream(bridge_to, "set_root",
-                                               start_block_no=current_height)
-        while last_merged_height_to < lock_height:
-            wait = last_merged_height_to + t_anchor - lock_height
-            print("(estimated waiting time : {}s...)".format(wait))
-            set_root_event = next(stream)
-            last_merged_height_to = set_root_event.arguments[0]
-        stream.stop()
-    # get inclusion proof of lock in last merged block
-    block = w3.eth.getBlock(last_merged_height_to)
     account_ref = receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
-    # 'Locks is the 4th state var defined in solitity contract
+    # 'Burns is the 6th state var defined in solitity contract
     position = b'\x03'
     print(account_ref.rjust(32, b'\0') + position.rjust(32, b'\0'))
     trie_key = keccak(account_ref + position.rjust(32, b'\0'))
-    eth_proof = w3.eth.getProof(bridge_from, [trie_key], last_merged_height_to)
-    if not verify_eth_getProof(eth_proof, block.stateRoot):
-        raise InvalidMerkleProofError("Unable to verify Lock proof")
-    if trie_key != eth_proof.storageProof[0].key:
-        raise InvalidMerkleProofError("Proof doesnt match requested key")
-    if len(eth_proof.storageProof[0].value) == 0:
-        raise InvalidMerkleProofError("User never deposited tokens")
-    return eth_proof
+    return _build_deposit_proof(
+        w3, aergo_to, bridge_from, bridge_to, lock_height, trie_key
+    )
 
 
 def mint(
@@ -195,39 +169,14 @@ def build_burn_proof(
     """ Check the last anchored root includes the lock and build
     a lock proof for that root
     """
-    bridge_from = Web3.toChecksumAddress(bridge_from)
-    # check last merged height
-    anchor_info = aergo_to.query_sc_state(bridge_to, ["_sv_Height",
-                                                      "_sv_T_anchor"])
-    last_merged_height_to = int(anchor_info.var_proofs[0].value)
-    t_anchor = int(anchor_info.var_proofs[1].value)
-    _, current_height = aergo_to.get_blockchain_status()
-    # waite for anchor containing our transfer
-    if last_merged_height_to < burn_height:
-        print("waiting new anchor event...")
-        stream = aergo_to.receive_event_stream(bridge_to, "set_root",
-                                               start_block_no=current_height)
-        while last_merged_height_to < burn_height:
-            wait = last_merged_height_to + t_anchor - burn_height
-            print("(estimated waiting time : {}s...)".format(wait))
-            set_root_event = next(stream)
-            last_merged_height_to = set_root_event.arguments[0]
-        stream.stop()
-    # get inclusion proof of lock in last merged block
-    block = w3.eth.getBlock(last_merged_height_to)
     account_ref = (receiver + token_origin).encode('utf-8')
     # 'Burns is the 6th state var defined in solitity contract
     position = b'\x05'
     print(account_ref.rjust(32, b'\0') + position.rjust(32, b'\0'))
     trie_key = keccak(account_ref + position.rjust(32, b'\0'))
-    eth_proof = w3.eth.getProof(bridge_from, [trie_key], last_merged_height_to)
-    if not verify_eth_getProof(eth_proof, block.stateRoot):
-        raise InvalidMerkleProofError("Unable to verify Lock proof")
-    if trie_key != eth_proof.storageProof[0].key:
-        raise InvalidMerkleProofError("Proof doesnt match requested key")
-    if len(eth_proof.storageProof[0].value) == 0:
-        raise InvalidMerkleProofError("User never deposited tokens")
-    return eth_proof
+    return _build_deposit_proof(
+        w3, aergo_to, bridge_from, bridge_to, burn_height, trie_key
+    )
 
 
 def unlock(
@@ -282,3 +231,48 @@ def unfreeze(
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Mint asset Tx execution failed : {}".format(result))
     return str(tx.tx_hash)
+
+
+def _build_deposit_proof(
+    w3: Web3,
+    aergo_to: herapy.Aergo,
+    bridge_from: str,
+    bridge_to: str,
+    deposit_height: int,
+    trie_key: bytes
+):
+    """ Check the last anchored root includes the deposit and build
+    a deposit (lock or burn) proof for that root
+    """
+    bridge_from = Web3.toChecksumAddress(bridge_from)
+    # check last merged height
+    _, aergo_current_height = aergo_to.get_blockchain_status()
+    anchor_info = aergo_to.query_sc_state(bridge_to, ["_sv_Height"])
+    last_merged_height_to = int(anchor_info.var_proofs[0].value)
+    # waite for anchor containing our transfer
+    stream = aergo_to.receive_event_stream(
+        bridge_to, "set_root", start_block_no=aergo_current_height
+    )
+    while last_merged_height_to < deposit_height:
+        print("deposit not recorded in current anchor, waiting new anchor "
+              "event... / "
+              "deposit height : {} / "
+              "last anchor height : {} "
+              .format(deposit_height, last_merged_height_to)
+              )
+        set_root_event = next(stream)
+        last_merged_height_to = set_root_event.arguments[0]
+    stream.stop()
+    # get inclusion proof of lock in last merged block
+    block = w3.eth.getBlock(last_merged_height_to)
+    eth_proof = w3.eth.getProof(bridge_from, [trie_key], last_merged_height_to)
+    if not verify_eth_getProof(eth_proof, block.stateRoot):
+        raise InvalidMerkleProofError("Unable to verify deposit proof",
+                                      eth_proof)
+    if trie_key != eth_proof.storageProof[0].key:
+        raise InvalidMerkleProofError("Proof doesnt match requested key",
+                                      eth_proof, trie_key)
+    if len(eth_proof.storageProof[0].value) == 0:
+        raise InvalidMerkleProofError("Trie key {} doesn't exist"
+                                      .format(trie_key.hex()))
+    return eth_proof

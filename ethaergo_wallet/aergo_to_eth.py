@@ -26,36 +26,12 @@ def build_lock_proof(
     """ Check the last anchored root includes the lock and build
     a lock proof for that root
     """
-    # check last merged height
-    eth_bridge = w3.eth.contract(
-        address=bridge_to,
-        abi=bridge_to_abi
+    account_ref = receiver[2:].lower() + token_origin
+    trie_key = "_sv_Locks-" + account_ref
+    return _build_deposit_proof(
+        aergo_from, w3, bridge_from, bridge_to, bridge_to_abi, lock_height,
+        trie_key
     )
-    last_merged_height_to = eth_bridge.functions.Height().call()
-    t_anchor = eth_bridge.functions.T_anchor().call()
-    # waite for anchor containing our transfer
-    if last_merged_height_to < lock_height:
-        # TODO use events
-        while last_merged_height_to < lock_height:
-            print("waiting new anchor event...")
-            time.sleep(1)
-            last_merged_height_to = eth_bridge.functions.Height().call()
-    # get inclusion proof of lock in last merged block
-    print("Root: ", eth_bridge.functions.Root().call().hex())
-    merge_block_from = aergo_from.get_block(block_height=last_merged_height_to)
-    # TODO store real bytes
-    account_ref = receiver[2:] + token_origin
-    proof = aergo_from.query_sc_state(
-        bridge_from, ["_sv_Locks-" + account_ref],
-        root=merge_block_from.blocks_root_hash, compressed=True
-    )
-    if not proof.verify_proof(merge_block_from.blocks_root_hash):
-        raise InvalidMerkleProofError("Unable to verify Lock proof")
-    if not proof.var_proofs[0].inclusion:
-        err = "No tokens deposited for this account reference: {}".format(
-            account_ref)
-        raise InvalidMerkleProofError(err)
-    return proof
 
 
 def mint(
@@ -145,45 +121,18 @@ def build_burn_proof(
     bridge_from: str,
     bridge_to: str,
     bridge_to_abi: str,
-    lock_height: int,
+    burn_height: int,
     token_origin: str,
 ):
-    """ Check the last anchored root includes the lock and build
-    a lock proof for that root
+    """ Check the last anchored root includes the burn and build
+    a burn proof for that root
     """
-    # check last merged height
-    eth_bridge = w3.eth.contract(
-        address=bridge_to,
-        abi=bridge_to_abi
-    )
-    last_merged_height_to = eth_bridge.functions.Height().call()
-    t_anchor = eth_bridge.functions.T_anchor().call()
-    # waite for anchor containing our transfer
-    if last_merged_height_to < lock_height:
-        # TODO use events
-        while last_merged_height_to < lock_height:
-            print("waiting new anchor event...")
-            time.sleep(1)
-            last_merged_height_to = eth_bridge.functions.Height().call()
-    # get inclusion proof of lock in last merged block
-    print("Root: ", eth_bridge.functions.Root().call().hex())
-    merge_block_from = aergo_from.get_block(block_height=last_merged_height_to)
-    # TODO store real bytes
     account_ref = receiver[2:].lower() + token_origin[2:].lower()
-    print('accountref :', account_ref)
-    proof = aergo_from.query_sc_state(
-        bridge_from, ["_sv_Burns-" + account_ref],
-        root=merge_block_from.blocks_root_hash, compressed=True
+    trie_key = "_sv_Burns-" + account_ref
+    return _build_deposit_proof(
+        aergo_from, w3, bridge_from, bridge_to, bridge_to_abi, burn_height,
+        trie_key
     )
-    print(proof)
-    if not proof.verify_proof(merge_block_from.blocks_root_hash):
-        raise InvalidMerkleProofError("Unable to verify Burn proof")
-    if not proof.var_proofs[0].inclusion:
-        err = "No tokens deposited for this account reference: {}".format(
-            account_ref)
-        raise InvalidMerkleProofError(err)
-    print(proof)
-    return proof
 
 
 def unlock(
@@ -197,7 +146,7 @@ def unlock(
     fee_limit: int,
     fee_price: int
 ) -> Tuple[str, str]:
-    """ Mint the receiver's deposit balance on aergo_to. """
+    """ Unlock the receiver's burnt balance on aergo_to. """
     receiver = Web3.toChecksumAddress(receiver)
     print("version:", w3.clientVersion)
     balance = int(burn_proof.var_proofs[0].value.decode('utf-8')[1:-1])
@@ -245,7 +194,7 @@ def freeze(
     fee_limit: int,
     fee_price: int,
 ) -> Tuple[int, str]:
-    """ Burn a minted token on a sidechain. """
+    """ Freeze aergo native """
     print('receiver:', receiver)
     args = (receiver[2:].lower(), str(value))
     tx, result = aergo_from.call_sc(
@@ -264,3 +213,49 @@ def freeze(
     tx_detail = aergo_from.get_tx(tx.tx_hash)
     freeze_height = tx_detail.block.height
     return freeze_height, str(tx.tx_hash)
+
+
+def _build_deposit_proof(
+    aergo_from: herapy.Aergo,
+    w3: Web3,
+    bridge_from: str,
+    bridge_to: str,
+    bridge_to_abi: str,
+    lock_height: int,
+    trie_key: str,
+):
+    """ Check the last anchored root includes the deposit and build
+    a deposit proof for that root
+    """
+    # check last merged height
+    eth_bridge = w3.eth.contract(
+        address=bridge_to,
+        abi=bridge_to_abi
+    )
+    last_merged_height_to = eth_bridge.functions.Height().call()
+    # waite for anchor containing our transfer
+    if last_merged_height_to < lock_height:
+        print("deposit not recorded in current anchor, waiting new anchor "
+              "event... / "
+              "deposit height : {} / "
+              "last anchor height : {} / "
+              .format(lock_height, last_merged_height_to)
+              )
+        while last_merged_height_to < lock_height:
+            time.sleep(1)
+            last_merged_height_to = eth_bridge.functions.Height().call()
+    # get inclusion proof of lock in last merged block
+    print("Root: ", eth_bridge.functions.Root().call().hex())
+    merge_block_from = aergo_from.get_block(block_height=last_merged_height_to)
+    # TODO store real bytes
+    proof = aergo_from.query_sc_state(
+        bridge_from, [trie_key],
+        root=merge_block_from.blocks_root_hash, compressed=True
+    )
+    if not proof.verify_proof(merge_block_from.blocks_root_hash):
+        raise InvalidMerkleProofError("Unable to verify deposit proof",
+                                      proof)
+    if not proof.var_proofs[0].inclusion:
+        raise InvalidMerkleProofError("Trie key {} doesn't exist"
+                                      .format(trie_key))
+    return proof
