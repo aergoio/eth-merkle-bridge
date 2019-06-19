@@ -22,7 +22,7 @@ def deploy_contract(
         abi=abi,
         bytecode=bytecode)
 
-    acct = w3.eth.account.privateKeyToAccount(privkey)
+    acct = w3.eth.account.from_key(privkey)
 
     construct_txn = contract_.constructor(*args).buildTransaction({
         'chainId': w3.eth.chainId,
@@ -31,7 +31,7 @@ def deploy_contract(
         'gas': gas_limit,
         'gasPrice': w3.toWei(gas_price, 'gwei')})
 
-    signed = acct.signTransaction(construct_txn)
+    signed = acct.sign_transaction(construct_txn)
 
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
                           .format(privkey_name))
     privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
-    acct = w3.eth.account.privateKeyToAccount(privkey)
+    acct = w3.eth.account.from_key(privkey)
     sender = acct.address
     print("  > Sender Address: {}".format(sender))
 

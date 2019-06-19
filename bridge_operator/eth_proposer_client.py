@@ -122,7 +122,7 @@ class EthProposerClient(threading.Thread):
             privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\n"
                                   "Password: ".format(privkey_name))
         privkey = self.web3.eth.account.decrypt(encrypted_key, privkey_pwd)
-        self.proposer_acct = self.web3.eth.account.privateKeyToAccount(privkey)
+        self.proposer_acct = self.web3.eth.account.from_key(privkey)
 
         print("  > Proposer Address: {}".format(self.proposer_acct.address))
 
@@ -249,7 +249,7 @@ class EthProposerClient(threading.Thread):
             'gas': 108036,
             'gasPrice': self.web3.toWei(9, 'gwei')
         })
-        signed = self.proposer_acct.signTransaction(construct_txn)
+        signed = self.proposer_acct.sign_transaction(construct_txn)
         tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
         receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
 

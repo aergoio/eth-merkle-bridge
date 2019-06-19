@@ -102,7 +102,7 @@ class EthAergoWallet(WalletConfig):
             privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
                                   .format(privkey_name))
         privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
-        signer_acct = w3.eth.account.privateKeyToAccount(privkey)
+        signer_acct = w3.eth.account.from_key(privkey)
         token_owner = signer_acct.address
 
         bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
@@ -225,7 +225,7 @@ class EthAergoWallet(WalletConfig):
             privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
                                   .format(privkey_name))
         privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
-        signer_acct = w3.eth.account.privateKeyToAccount(privkey)
+        signer_acct = w3.eth.account.from_key(privkey)
         token_owner = signer_acct.address
 
         bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
@@ -485,7 +485,7 @@ class EthAergoWallet(WalletConfig):
             privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
                                   .format(privkey_name))
         privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
-        signer_acct = w3.eth.account.privateKeyToAccount(privkey)
+        signer_acct = w3.eth.account.from_key(privkey)
         tx_sender = signer_acct.address
 
         if receiver is None:
@@ -608,7 +608,7 @@ class EthAergoWallet(WalletConfig):
             privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
                                   .format(privkey_name))
         privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
-        signer_acct = w3.eth.account.privateKeyToAccount(privkey)
+        signer_acct = w3.eth.account.from_key(privkey)
         tx_sender = signer_acct.address
 
         if receiver is None:

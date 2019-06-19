@@ -72,7 +72,7 @@ def mint(
         'gas': 4108036,
         'gasPrice': w3.toWei(9, 'gwei')
     })
-    signed = signer_acct.signTransaction(construct_txn)
+    signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     print(receipt)
@@ -173,7 +173,7 @@ def unlock(
         'gas': 4108036,
         'gasPrice': w3.toWei(9, 'gwei')
     })
-    signed = signer_acct.signTransaction(construct_txn)
+    signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     print(receipt)

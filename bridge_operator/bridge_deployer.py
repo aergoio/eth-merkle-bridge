@@ -70,7 +70,7 @@ def run(
     privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
                           .format(privkey_name))
     privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
-    acct = w3.eth.account.privateKeyToAccount(privkey)
+    acct = w3.eth.account.from_key(privkey)
     sender = acct.address
     print("  > Sender Address Ethereum: {}".format(sender))
 

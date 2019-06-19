@@ -32,9 +32,9 @@ contract EthMerkleBridge {
 
     // Nonce is a replay protection for validator and root updates.
     uint public Nonce;
-    bytes32 public ContractID;
     // ContractID is a replay protection between sidechains as the same addresses can be validators
     // on multiple chains.
+    bytes32 public ContractID;
     
     event newMintedERC20(string indexed origin, MintedERC20 indexed addr);
     event lockEvent(IERC20 indexed token_address, string indexed receiver, uint amount);

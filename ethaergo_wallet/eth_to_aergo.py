@@ -53,7 +53,7 @@ def lock(
         'gas': 4108036,
         'gasPrice': w3.toWei(9, 'gwei')
     })
-    signed = signer_acct.signTransaction(construct_txn)
+    signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     print(receipt)
@@ -78,7 +78,7 @@ def build_lock_proof(
     a lock proof for that root
     """
     account_ref = receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
-    # 'Burns is the 6th state var defined in solitity contract
+    # 'Burns is the 4th state var defined in solitity contract
     position = b'\x03'
     print(account_ref.rjust(32, b'\0') + position.rjust(32, b'\0'))
     trie_key = keccak(account_ref + position.rjust(32, b'\0'))
@@ -145,7 +145,7 @@ def burn(
         'gas': 4108036,
         'gasPrice': w3.toWei(9, 'gwei')
     })
-    signed = signer_acct.signTransaction(construct_txn)
+    signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     print(receipt)
