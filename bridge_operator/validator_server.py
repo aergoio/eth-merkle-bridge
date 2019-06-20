@@ -65,22 +65,22 @@ class ValidatorService(BridgeOperatorServicer):
         self.validator_index = validator_index
         print("------ Connect Aergo and Ethereum -----------")
         self.hera = herapy.Aergo()
-        self.hera.connect(config_data[aergo_net]['ip'])
+        self.hera.connect(config_data['networks'][aergo_net]['ip'])
 
-        ip = config_data[eth_net]['ip']
+        ip = config_data['networks'][eth_net]['ip']
         self.web3 = Web3(Web3.HTTPProvider("http://" + ip))
         if eth_poa:
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         assert self.web3.isConnected()
 
-        self.eth_bridge_addr = config_data[eth_net]['bridges'][aergo_net]['addr']
+        self.eth_bridge_addr = config_data['networks'][eth_net]['bridges'][aergo_net]['addr']
         self.eth_bridge = self.web3.eth.contract(
             address=self.eth_bridge_addr,
             abi=eth_abi
         )
-        self.aergo_bridge = config_data[aergo_net]['bridges'][eth_net]['addr']
-        self.aergo_id = config_data[aergo_net]['bridges'][eth_net]['id']
-        self.eth_id = config_data[eth_net]['bridges'][aergo_net]['id']
+        self.aergo_bridge = config_data['networks'][aergo_net]['bridges'][eth_net]['addr']
+        self.aergo_id = config_data['networks'][aergo_net]['bridges'][eth_net]['id']
+        self.eth_id = config_data['networks'][eth_net]['bridges'][aergo_net]['id']
 
         # check validators are correct
         aergo_vals = query_aergo_validators(self.hera, self.aergo_bridge)
@@ -151,7 +151,8 @@ class ValidatorService(BridgeOperatorServicer):
             + bytes("R", 'utf-8')
         h = keccak(msg_bytes)
         sig = self.web3.eth.account.signHash(h, private_key=self.eth_privkey)
-        approval = AergoApproval(address=self.eth_address, sig=bytes(sig.signature))
+        approval = AergoApproval(
+            address=self.eth_address, sig=bytes(sig.signature))
         print("{0}Validator {1} signed a new anchor for {2},\n"
               "{0}with nonce {3}"
               .format("\t"*5, self.validator_index, "Ethereum",
@@ -210,8 +211,9 @@ class ValidatorService(BridgeOperatorServicer):
             return EthApproval(error=err_msg)
 
         # sign anchor and return approval
-        msg = bytes(anchor.root + ',' + anchor.height + ','
-                    + anchor.destination_nonce + ',' + self.aergo_id + "R", 'utf-8')
+        msg = bytes(
+            anchor.root + ',' + anchor.height + ',' + anchor.destination_nonce
+            + ',' + self.aergo_id + "R", 'utf-8')
         h = hashlib.sha256(msg).digest()
         sig = self.hera.account.private_key.sign_msg(h)
         approval = EthApproval(address=self.aergo_addr, sig=sig)

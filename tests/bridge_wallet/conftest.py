@@ -37,7 +37,7 @@ def bridge_wallet(aergo_wallet):
         bytecode = f.read()
     with open("./contracts/solidity/aergo_erc20_abi.txt", "r") as f:
         abi = f.read()
-    ip = config_data['eth-poa-local']['ip']
+    ip = config_data['networks']['eth-poa-local']['ip']
     w3 = Web3(Web3.HTTPProvider("http://" + ip))
     w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     assert w3.isConnected()
@@ -48,9 +48,9 @@ def bridge_wallet(aergo_wallet):
     privkey = w3.eth.account.decrypt(encrypted_key, '1234')
     receipt = deploy_contract(bytecode, abi, w3, 1821490, 20, privkey)
     sc_address = receipt.contractAddress
-    config_data['eth-poa-local']['tokens']['test_erc20'] = {}
-    config_data['eth-poa-local']['tokens']['test_erc20']['addr'] = sc_address
-    config_data['eth-poa-local']['tokens']['test_erc20']['pegs'] = {}
+    config_data['networks']['eth-poa-local']['tokens']['test_erc20'] = {}
+    config_data['networks']['eth-poa-local']['tokens']['test_erc20']['addr'] = sc_address
+    config_data['networks']['eth-poa-local']['tokens']['test_erc20']['pegs'] = {}
     with open("./config.json", "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)
     wallet = EthAergoWallet("./config.json")

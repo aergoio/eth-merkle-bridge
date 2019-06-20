@@ -42,9 +42,9 @@ def run(
 
     print("------ Connect AERGO -----------")
     aergo = herapy.Aergo()
-    aergo.connect(config_data[aergo_net]['ip'])
+    aergo.connect(config_data['networks'][aergo_net]['ip'])
     print("------ Connect Web3 -----------")
-    ip = config_data[eth_net]['ip']
+    ip = config_data['networks'][eth_net]['ip']
     w3 = Web3(Web3.HTTPProvider("http://" + ip))
     w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     assert w3.isConnected()
@@ -85,7 +85,7 @@ def run(
 
     print("------ Deploy Aergo SC -----------")
     payload = herapy.utils.decode_address(lua_bytecode)
-    aergo_erc20 = config_data[eth_net]['tokens'][aergo_erc20]['addr']
+    aergo_erc20 = config_data['networks'][eth_net]['tokens'][aergo_erc20]['addr']
     tx, result = aergo.deploy_sc(amount=0,
                                  payload=payload,
                                  args=[aergo_erc20[2:].lower(),
@@ -149,16 +149,16 @@ def run(
     print("  > SC Address Aergo: {}".format(aergo_address))
 
     print("------ Store bridge addresses in config.json  -----------")
-    config_data[eth_net]['bridges'][aergo_net] = {}
-    config_data[aergo_net]['bridges'][eth_net] = {}
-    config_data[eth_net]['bridges'][aergo_net]['addr'] = eth_address
-    config_data[aergo_net]['bridges'][eth_net]['addr'] = aergo_address
-    config_data[eth_net]['bridges'][aergo_net]['id'] = eth_id
-    config_data[aergo_net]['bridges'][eth_net]['id'] = aergo_id
-    config_data[eth_net]['bridges'][aergo_net]['t_anchor'] = t_anchor_eth
-    config_data[eth_net]['bridges'][aergo_net]['t_final'] = t_final_aergo
-    config_data[aergo_net]['bridges'][eth_net]['t_anchor'] = t_anchor_aergo
-    config_data[aergo_net]['bridges'][eth_net]['t_final'] = t_final_eth
+    config_data['networks'][eth_net]['bridges'][aergo_net] = {}
+    config_data['networks'][aergo_net]['bridges'][eth_net] = {}
+    config_data['networks'][eth_net]['bridges'][aergo_net]['addr'] = eth_address
+    config_data['networks'][aergo_net]['bridges'][eth_net]['addr'] = aergo_address
+    config_data['networks'][eth_net]['bridges'][aergo_net]['id'] = eth_id
+    config_data['networks'][aergo_net]['bridges'][eth_net]['id'] = aergo_id
+    config_data['networks'][eth_net]['bridges'][aergo_net]['t_anchor'] = t_anchor_eth
+    config_data['networks'][eth_net]['bridges'][aergo_net]['t_final'] = t_final_aergo
+    config_data['networks'][aergo_net]['bridges'][eth_net]['t_anchor'] = t_anchor_aergo
+    config_data['networks'][aergo_net]['bridges'][eth_net]['t_final'] = t_final_eth
     try:
         config_data[eth_net]['tokens']['aergo']
     except KeyError:
@@ -166,7 +166,7 @@ def run(
     else:
         # this is a new bridge, so remove any old pegged aergo with same name
         # bridge
-        config_data[eth_net]['tokens']['aergo']['pegs'] = {}
+        config_data['networks'][eth_net]['tokens']['aergo']['pegs'] = {}
 
     with open(path, "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)

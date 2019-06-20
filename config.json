@@ -1,67 +1,69 @@
 {
-    "aergo-local": {
-        "bridges": {
-            "": {
-                "addr": "bridge address on mainnet",
-                "id": "bridge ContractID variable",
-                "t_anchor": "t_anchor of ethereum on aergo mainnet",
-                "t_final": "t_final of ethereum"
-            },
-            "eth-poa-local": {
-                "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
-                "id": "3fc9e7d1d9c55493ff0300607f84f8af",
-                "t_anchor": 10,
-                "t_final": 10
-            }
-        },
-        "ip": "localhost:7845",
-        "tokens": {
-            "aergo": {
-                "addr": "aergo",
-                "pegs": {}
-            },
-            "token1": {
-                "addr": "AmgoQojtQxmBjtS3o2XG4kE7H4zBRTUtWZXHkuSCywSd5MqjUw3t",
-                "pegs": {
-                    "eth-poa-local": "0x65c88DF2c72a6730a9bA0642e24C545fC13e70F3"
+    "networks": {
+        "aergo-local": {
+            "bridges": {
+                "": {
+                    "addr": "bridge address on mainnet",
+                    "id": "bridge ContractID variable",
+                    "t_anchor": "t_anchor of ethereum on aergo mainnet",
+                    "t_final": "t_final of ethereum"
+                },
+                "eth-poa-local": {
+                    "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
+                    "id": "85f77b026708042e0396915dd5600a27",
+                    "t_anchor": 10,
+                    "t_final": 10
                 }
-            }
-        },
-        "type": "aergo"
-    },
-    "eth-poa-local": {
-        "bridges": {
-            "": {
-                "addr": "bridge address on sidechain",
-                "id": "bridge ContractID variable",
-                "t_anchor": "t_anchor of aergo mainnet on ethereum",
-                "t_final": "t_final of aergo mainnet"
             },
-            "aergo-local": {
-                "addr": "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
-                "id": "0000000000000000000000000000000000000000000000000000000000000000",
-                "t_anchor": 25,
-                "t_final": 4
-            }
-        },
-        "ip": "localhost:8545",
-        "tokens": {
-            "aergo_erc20": {
-                "addr": "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
-                "pegs": {}
-            },
-            "ether": {
-                "addr": "ether",
-                "pegs": {}
-            },
-            "test_erc20": {
-                "addr": "0x914d0D88eB9578e0353d0446d7021065F951F1A6",
-                "pegs": {
-                    "aergo-local": "AmhoYqbizfrTLCx1QCXKoQuyuwtjyWQRwVEfVPMPLkZJEcAY2nSa"
+            "ip": "localhost:7845",
+            "tokens": {
+                "aergo": {
+                    "addr": "aergo",
+                    "pegs": {}
+                },
+                "token1": {
+                    "addr": "AmgGiC9CVGghVVGDWqbq5fTvD3UTuBJVhYfjkoEAma531PWDPA6h",
+                    "pegs": {
+                        "eth-poa-local": "0x65c88DF2c72a6730a9bA0642e24C545fC13e70F3"
+                    }
                 }
-            }
+            },
+            "type": "aergo"
         },
-        "type": "ethereum"
+        "eth-poa-local": {
+            "bridges": {
+                "": {
+                    "addr": "bridge address on sidechain",
+                    "id": "bridge ContractID variable",
+                    "t_anchor": "t_anchor of aergo mainnet on ethereum",
+                    "t_final": "t_final of aergo mainnet"
+                },
+                "aergo-local": {
+                    "addr": "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
+                    "id": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "t_anchor": 25,
+                    "t_final": 4
+                }
+            },
+            "ip": "localhost:8545",
+            "tokens": {
+                "aergo_erc20": {
+                    "addr": "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
+                    "pegs": {}
+                },
+                "ether": {
+                    "addr": "ether",
+                    "pegs": {}
+                },
+                "test_erc20": {
+                    "addr": "0x5A1756b0F987B86364D6a8eF9D47A0bA325bB8fC",
+                    "pegs": {
+                        "aergo-local": "AmhBHSywcSWoFSzsbqGWyAECtYszYpYYX7Ws7LyoX5XVkQBX7gVg"
+                    }
+                }
+            },
+            "type": "ethereum"
+        }
     },
     "validators": [
         {

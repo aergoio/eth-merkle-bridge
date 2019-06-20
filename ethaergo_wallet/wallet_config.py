@@ -58,12 +58,12 @@ class WalletConfig():
         """ Get the address of a time in config_data given it's name"""
         if asset_origin_chain is None:
             # query a token issued on network_name
-            asset_addr = self.config_data(network_name, 'tokens',
+            asset_addr = self.config_data('networks', network_name, 'tokens',
                                           asset_name, 'addr')
         else:
             # query a pegged token (from asset_origin_chain) balance
             # on network_name sidechain (token or aer)
-            asset_addr = self.config_data(asset_origin_chain, 'tokens',
-                                          asset_name, 'pegs',
+            asset_addr = self.config_data('networks', asset_origin_chain,
+                                          'tokens', asset_name, 'pegs',
                                           network_name)
         return asset_addr

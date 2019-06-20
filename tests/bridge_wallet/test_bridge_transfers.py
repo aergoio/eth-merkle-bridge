@@ -10,7 +10,7 @@ def test_standard_token_transfer(bridge_wallet):
 
     eth_user = bridge_wallet.config_data('wallet-eth', 'default', 'addr')
     aergo_user = bridge_wallet.config_data('wallet', 'default', 'addr')
-    
+
     # Aergo => Eth
     lock_height, _ = bridge_wallet.lock_to_eth(
         'aergo-local', 'eth-poa-local', 'token1', 5*10**18,
@@ -91,4 +91,3 @@ def test_aergo_erc20_unfreeze(bridge_wallet):
         aergo_erc20_abi, eth_user, freeze_height,
         privkey_pwd='1234', eth_poa=True
     )
-

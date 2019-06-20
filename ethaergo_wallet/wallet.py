@@ -94,8 +94,8 @@ class EthAergoWallet(WalletConfig):
     ) -> Tuple[int, str]:
         """ Initiate ERC20 token or Ether transfer to Aergo sidechain """
         w3 = self.get_web3(from_chain, eth_poa)
-        sender_keystore = self.config_data('wallet-eth', privkey_name,
-                                           'keystore')
+        sender_keystore = self.config_data(
+            'wallet-eth', privkey_name, 'keystore')
         with open("./keystore/" + sender_keystore, "r") as f:
             encrypted_key = f.read()
         if privkey_pwd is None:
@@ -105,9 +105,10 @@ class EthAergoWallet(WalletConfig):
         signer_acct = w3.eth.account.from_key(privkey)
         token_owner = signer_acct.address
 
-        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
-        erc20_address = self.config_data(from_chain, 'tokens', asset_name,
-                                         'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        erc20_address = self.config_data(
+            'networks', from_chain, 'tokens', asset_name, 'addr')
         balance = eth_u.get_balance(token_owner, erc20_address, w3,
                                     erc20_abi)
         print("{} balance on destination before transfer : {}"
@@ -152,17 +153,19 @@ class EthAergoWallet(WalletConfig):
         w3 = self.get_web3(from_chain, eth_poa)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
-        bridge_to = self.config_data(to_chain, 'bridges', from_chain, 'addr')
-        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
-        asset_address = self.config_data(from_chain, 'tokens', asset_name,
-                                         'addr')
+        bridge_to = self.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        asset_address = self.config_data(
+            'networks', from_chain, 'tokens', asset_name, 'addr')
         if receiver is None:
             receiver = tx_sender
 
         save_pegged_token_address = False
         try:
-            token_pegged = self.config_data(from_chain, 'tokens', asset_name,
-                                            'pegs', to_chain)
+            token_pegged = self.config_data(
+                'networks', from_chain, 'tokens', asset_name, 'pegs', to_chain)
             balance = aergo_u.get_balance(receiver, token_pegged, aergo_to)
             print("{} balance on destination before transfer: {}"
                   .format(asset_name, balance/10**18))
@@ -197,8 +200,9 @@ class EthAergoWallet(WalletConfig):
         # record mint address in file
         if save_pegged_token_address:
             print("\n------ Store mint address in config.json -----------")
-            self.config_data(from_chain, 'tokens', asset_name, 'pegs',
-                             to_chain, value=token_pegged)
+            self.config_data(
+                'networks', from_chain, 'tokens', asset_name, 'pegs', to_chain,
+                value=token_pegged)
             self.save_config()
         return tx_hash
 
@@ -217,8 +221,8 @@ class EthAergoWallet(WalletConfig):
     ) -> Tuple[int, str]:
         """ Initiate minted Standard token transfer back to aergo origin"""
         w3 = self.get_web3(from_chain, eth_poa)
-        sender_keystore = self.config_data('wallet-eth', privkey_name,
-                                           'keystore')
+        sender_keystore = self.config_data(
+            'wallet-eth', privkey_name, 'keystore')
         with open("./keystore/" + sender_keystore, "r") as f:
             encrypted_key = f.read()
         if privkey_pwd is None:
@@ -228,9 +232,10 @@ class EthAergoWallet(WalletConfig):
         signer_acct = w3.eth.account.from_key(privkey)
         token_owner = signer_acct.address
 
-        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
-        token_pegged = self.config_data(to_chain, 'tokens', asset_name, 'pegs',
-                                        from_chain)
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        token_pegged = self.config_data(
+            'networks', to_chain, 'tokens', asset_name, 'pegs', from_chain)
         balance = eth_u.get_balance(token_owner, token_pegged, w3,
                                     minted_erc20_abi)
         print("{} balance on destination before transfer : {}"
@@ -275,10 +280,12 @@ class EthAergoWallet(WalletConfig):
         w3 = self.get_web3(from_chain, eth_poa)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
-        bridge_to = self.config_data(to_chain, 'bridges', from_chain, 'addr')
-        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
-        asset_address = self.config_data(from_chain, 'tokens', asset_name,
-                                         'addr')
+        bridge_to = self.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        asset_address = self.config_data(
+            'networks', from_chain, 'tokens', asset_name, 'addr')
         if receiver is None:
             receiver = tx_sender
 
@@ -329,10 +336,12 @@ class EthAergoWallet(WalletConfig):
         w3 = self.get_web3(from_chain, eth_poa)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
-        bridge_to = self.config_data(to_chain, 'bridges', from_chain, 'addr')
-        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
-        asset_address = self.config_data(to_chain, 'tokens', asset_name,
-                                         'addr')
+        bridge_to = self.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        asset_address = self.config_data(
+            'networks', to_chain, 'tokens', asset_name, 'addr')
 
         print("\n------ Get burn proof -----------")
         burn_proof = eth_to_aergo.build_burn_proof(
@@ -387,7 +396,8 @@ class EthAergoWallet(WalletConfig):
             raise InvalidArgumentsError("Only 'aergo_erc20' can be unfrozen")
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
         sender = str(aergo_from.account.address)
-        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
         fee_limit = 0
         balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
         if balance < amount + fee_limit * self.fee_price:
@@ -422,9 +432,10 @@ class EthAergoWallet(WalletConfig):
         """ Initiate Aergo Standard Token transfer to Ethereum sidechain"""
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
         sender = str(aergo_from.account.address)
-        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
-        asset_address = self.config_data(from_chain, 'tokens',
-                                         asset_name, 'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        asset_address = self.config_data(
+            'networks', from_chain, 'tokens', asset_name, 'addr')
         # sign transfer so bridge can pull tokens to lock.
         fee_limit = 0
         signed_transfer, balance = \
@@ -477,8 +488,8 @@ class EthAergoWallet(WalletConfig):
         aergo_from = self._connect_aergo(from_chain)
         # get ethereum tx signer
         w3 = self.get_web3(to_chain, eth_poa)
-        sender_keystore = self.config_data('wallet-eth', privkey_name,
-                                           'keystore')
+        sender_keystore = self.config_data(
+            'wallet-eth', privkey_name, 'keystore')
         with open("./keystore/" + sender_keystore, "r") as f:
             encrypted_key = f.read()
         if privkey_pwd is None:
@@ -491,14 +502,16 @@ class EthAergoWallet(WalletConfig):
         if receiver is None:
             receiver = tx_sender
 
-        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
-        bridge_to = self.config_data(to_chain, 'bridges', from_chain, 'addr')
-        asset_address = self.config_data(from_chain, 'tokens',
-                                         asset_name, 'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        bridge_to = self.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
+        asset_address = self.config_data(
+            'networks', from_chain, 'tokens', asset_name, 'addr')
         save_pegged_token_address = False
         try:
-            token_pegged = self.config_data(from_chain, 'tokens', asset_name,
-                                            'pegs', to_chain)
+            token_pegged = self.config_data(
+                'networks', from_chain, 'tokens', asset_name, 'pegs', to_chain)
             balance = eth_u.get_balance(receiver, token_pegged, w3,
                                         minted_erc20_abi)
             print("{} balance on destination before transfer : {}"
@@ -536,8 +549,9 @@ class EthAergoWallet(WalletConfig):
         # record mint address in file
         if save_pegged_token_address:
             print("\n------ Store mint address in config.json -----------")
-            self.config_data(from_chain, 'tokens', asset_name, 'pegs',
-                             to_chain, value=token_pegged)
+            self.config_data(
+                'networks', from_chain, 'tokens', asset_name, 'pegs', to_chain,
+                value=token_pegged)
             self.save_config()
         return token_pegged, tx_hash
 
@@ -555,9 +569,10 @@ class EthAergoWallet(WalletConfig):
         """ Initiate minted token transfer back to ethereum origin"""
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
         sender = str(aergo_from.account.address)
-        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
-        token_pegged = self.config_data(to_chain, 'tokens', asset_name, 'pegs',
-                                        from_chain)
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        token_pegged = self.config_data(
+            'networks', to_chain, 'tokens', asset_name, 'pegs', from_chain)
         fee_limit = 0
         balance = aergo_u.get_balance(sender, token_pegged, aergo_from)
         if balance < amount:
@@ -600,8 +615,8 @@ class EthAergoWallet(WalletConfig):
         aergo_from = self._connect_aergo(from_chain)
         # get ethereum tx signer
         w3 = self.get_web3(to_chain, eth_poa)
-        sender_keystore = self.config_data('wallet-eth', privkey_name,
-                                           'keystore')
+        sender_keystore = self.config_data(
+            'wallet-eth', privkey_name, 'keystore')
         with open("./keystore/" + sender_keystore, "r") as f:
             encrypted_key = f.read()
         if privkey_pwd is None:
@@ -614,10 +629,12 @@ class EthAergoWallet(WalletConfig):
         if receiver is None:
             receiver = tx_sender
 
-        bridge_from = self.config_data(from_chain, 'bridges', to_chain, 'addr')
-        bridge_to = self.config_data(to_chain, 'bridges', from_chain, 'addr')
-        asset_address = self.config_data(to_chain, 'tokens', asset_name,
-                                         'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        bridge_to = self.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
+        asset_address = self.config_data(
+            'networks', to_chain, 'tokens', asset_name, 'addr')
         balance = eth_u.get_balance(receiver, asset_address, w3, erc20_abi)
         print("{} balance on destination before transfer : {}"
               .format(asset_name, balance/10**18))
@@ -651,7 +668,7 @@ class EthAergoWallet(WalletConfig):
 
     def _connect_aergo(self, network_name: str) -> herapy.Aergo:
         aergo = herapy.Aergo()
-        aergo.connect(self.config_data(network_name, 'ip'))
+        aergo.connect(self.config_data('networks', network_name, 'ip'))
         return aergo
 
     def get_aergo(
@@ -687,7 +704,7 @@ class EthAergoWallet(WalletConfig):
         network_name: str,
         eth_poa: bool = False
     ) -> Web3:
-        ip = self.config_data(network_name, 'ip')
+        ip = self.config_data('networks', network_name, 'ip')
         w3 = Web3(Web3.HTTPProvider("http://" + ip))
         if eth_poa:
             w3.middleware_onion.inject(geth_poa_middleware, layer=0)

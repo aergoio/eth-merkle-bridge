@@ -77,18 +77,18 @@ class AergoProposerClient(threading.Thread):
         self.tab = tab
         print("------ Connect Aergo and Ethereum -----------")
         self.hera = herapy.Aergo()
-        self.hera.connect(self.config_data[aergo_net]['ip'])
+        self.hera.connect(self.config_data['networks'][aergo_net]['ip'])
 
-        ip = config_data[eth_net]['ip']
+        ip = config_data['networks'][eth_net]['ip']
         self.web3 = Web3(Web3.HTTPProvider("http://" + ip))
         if eth_poa:
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         assert self.web3.isConnected()
 
-        self.eth_bridge = config_data[eth_net]['bridges'][aergo_net]['addr']
-        self.aergo_bridge = config_data[aergo_net]['bridges'][eth_net]['addr']
-        self.aergo_id = config_data[aergo_net]['bridges'][eth_net]['id']
-        self.eth_id = config_data[eth_net]['bridges'][aergo_net]['id']
+        self.eth_bridge = config_data['networks'][eth_net]['bridges'][aergo_net]['addr']
+        self.aergo_bridge = config_data['networks'][aergo_net]['bridges'][eth_net]['addr']
+        self.aergo_id = config_data['networks'][aergo_net]['bridges'][eth_net]['id']
+        self.eth_id = config_data['networks'][eth_net]['bridges'][aergo_net]['id']
 
         print("------ Connect to Validators -----------")
         validators = query_aergo_validators(self.hera, self.aergo_bridge)
