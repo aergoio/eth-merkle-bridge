@@ -16,7 +16,11 @@ from web3 import (
 import aergo.herapy as herapy
 from ethaergo_wallet.exceptions import (
     InvalidMerkleProofError,
-    TxError
+    TxError,
+    InvalidArgumentsError
+)
+from ethaergo_wallet.wallet_utils import (
+    is_aergo_address
 )
 from ethaergo_wallet.eth_utils.merkle_proof import (
     verify_eth_getProof,
@@ -35,7 +39,11 @@ def lock(
     fee_limit: int,
     fee_price: int
 ):
-    """ Burn a token that was minted on ethereum. """
+    """ Lock an Ethereum ERC20 token. """
+    if not is_aergo_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an aergo address".format(receiver)
+        )
     bridge_from = Web3.toChecksumAddress(bridge_from)
     eth_bridge = w3.eth.contract(
         address=bridge_from,
@@ -77,6 +85,10 @@ def build_lock_proof(
     """ Check the last anchored root includes the lock and build
     a lock proof for that root
     """
+    if not is_aergo_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an aergo address".format(receiver)
+        )
     account_ref = receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
     # 'Burns is the 4th state var defined in solitity contract
     position = b'\x03'
@@ -97,6 +109,10 @@ def mint(
     fee_price: int
 ) -> Tuple[str, str]:
     """ Unlock the receiver's deposit balance on aergo_to. """
+    if not is_aergo_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an aergo address".format(receiver)
+        )
     ap = format_proof_for_lua(lock_proof.storageProof[0].proof)
     balance = int.from_bytes(lock_proof.storageProof[0].value, "big")
     print(ap)
@@ -111,6 +127,7 @@ def mint(
 
     result = aergo_to.get_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
+        print(lock_proof, result)
         raise TxError("Mint asset Tx execution failed : {}".format(result))
     token_pegged = json.loads(result.detail)[0]
     return token_pegged, str(tx.tx_hash)
@@ -128,6 +145,10 @@ def burn(
     fee_price: int
 ):
     """ Burn a token that was minted on ethereum. """
+    if not is_aergo_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an aergo address".format(receiver)
+        )
     bridge_from = Web3.toChecksumAddress(bridge_from)
     eth_bridge = w3.eth.contract(
         address=bridge_from,
@@ -169,6 +190,10 @@ def build_burn_proof(
     """ Check the last anchored root includes the lock and build
     a lock proof for that root
     """
+    if not is_aergo_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an aergo address".format(receiver)
+        )
     account_ref = (receiver + token_origin).encode('utf-8')
     # 'Burns is the 6th state var defined in solitity contract
     position = b'\x05'
@@ -189,6 +214,10 @@ def unlock(
     fee_price: int
 ) -> str:
     """ Unlock the receiver's deposit balance on aergo_to. """
+    if not is_aergo_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an aergo address".format(receiver)
+        )
     ap = format_proof_for_lua(burn_proof.storageProof[0].proof)
     balance = int.from_bytes(burn_proof.storageProof[0].value, "big")
     print(ap)
@@ -203,6 +232,7 @@ def unlock(
 
     result = aergo_to.get_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
+        print(burn_proof, result)
         raise TxError("Unlock asset Tx execution failed : {}".format(result))
     return str(tx.tx_hash)
 
@@ -216,6 +246,10 @@ def unfreeze(
     fee_price: int
 ) -> str:
     """ Unlock the receiver's deposit balance on aergo_to. """
+    if not is_aergo_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an aergo address".format(receiver)
+        )
     ap = format_proof_for_lua(lock_proof.storageProof[0].proof)
     balance = int.from_bytes(lock_proof.storageProof[0].value, "big")
     print(ap)

@@ -389,11 +389,10 @@ class EthAergoWallet(WalletConfig):
         receiver: str,
         privkey_name: str = 'default',
         privkey_pwd: str = None,
-        eth_poa: bool = False
     ) -> Tuple[int, str]:
         """ Initiate Aer transfer back to Ethereum AergoERC20 sidechain"""
         if asset_name != 'aergo_erc20':
-            raise InvalidArgumentsError("Only 'aergo_erc20' can be unfrozen")
+            raise InvalidArgumentsError("Only 'aergo_erc20' can be frozen")
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
         sender = str(aergo_from.account.address)
         bridge_from = self.config_data(
@@ -564,7 +563,6 @@ class EthAergoWallet(WalletConfig):
         receiver: str,
         privkey_name: str = 'default',
         privkey_pwd: str = None,
-        eth_poa: bool = False
     ) -> Tuple[int, str]:
         """ Initiate minted token transfer back to ethereum origin"""
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)

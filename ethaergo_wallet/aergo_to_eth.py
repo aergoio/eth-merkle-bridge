@@ -6,9 +6,13 @@ from web3 import (
     Web3,
 )
 import aergo.herapy as herapy
-from wallet.exceptions import (
+from ethaergo_wallet.exceptions import (
     InvalidMerkleProofError,
-    TxError
+    TxError,
+    InvalidArgumentsError
+)
+from ethaergo_wallet.wallet_utils import (
+    is_ethereum_address
 )
 COMMIT_TIME = 3
 
@@ -26,6 +30,10 @@ def build_lock_proof(
     """ Check the last anchored root includes the lock and build
     a lock proof for that root
     """
+    if not is_ethereum_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an ethereum address".format(receiver)
+        )
     account_ref = receiver[2:].lower() + token_origin
     trie_key = "_sv_Locks-" + account_ref
     return _build_deposit_proof(
@@ -46,6 +54,10 @@ def mint(
     fee_price: int
 ) -> Tuple[str, str]:
     """ Mint the receiver's deposit balance on aergo_to. """
+    if not is_ethereum_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an ethereum address".format(receiver)
+        )
     receiver = Web3.toChecksumAddress(receiver)
     print("version:", w3.clientVersion)
     balance = int(lock_proof.var_proofs[0].value.decode('utf-8')[1:-1])
@@ -78,7 +90,7 @@ def mint(
     print(receipt)
 
     if receipt.status != 1:
-        print(receipt)
+        print(lock_proof, receipt)
         raise TxError("Mint asset Tx execution failed")
     events = eth_bridge.events.mintEvent().processReceipt(receipt)
     print("\nevents: ", events)
@@ -97,6 +109,10 @@ def burn(
     fee_price: int,
 ) -> Tuple[int, str]:
     """ Burn a minted token on a sidechain. """
+    if not is_ethereum_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an ethereum address".format(receiver)
+        )
     args = (receiver[2:].lower(), str(value), token_pegged)
     tx, result = aergo_from.call_sc(bridge_from, "burn", args=args)
 
@@ -127,6 +143,10 @@ def build_burn_proof(
     """ Check the last anchored root includes the burn and build
     a burn proof for that root
     """
+    if not is_ethereum_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an ethereum address".format(receiver)
+        )
     account_ref = receiver[2:].lower() + token_origin[2:].lower()
     trie_key = "_sv_Burns-" + account_ref
     return _build_deposit_proof(
@@ -147,6 +167,10 @@ def unlock(
     fee_price: int
 ) -> Tuple[str, str]:
     """ Unlock the receiver's burnt balance on aergo_to. """
+    if not is_ethereum_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an ethereum address".format(receiver)
+        )
     receiver = Web3.toChecksumAddress(receiver)
     print("version:", w3.clientVersion)
     balance = int(burn_proof.var_proofs[0].value.decode('utf-8')[1:-1])
@@ -179,8 +203,8 @@ def unlock(
     print(receipt)
 
     if receipt.status != 1:
-        print(receipt)
-        raise TxError("Mint asset Tx execution failed")
+        print(burn_proof, receipt)
+        raise TxError("Unlock asset Tx execution failed")
     events = eth_bridge.events.unlockEvent().processReceipt(receipt)
     print("\nevents: ", events)
     return tx_hash
@@ -195,6 +219,10 @@ def freeze(
     fee_price: int,
 ) -> Tuple[int, str]:
     """ Freeze aergo native """
+    if not is_ethereum_address(receiver):
+        raise InvalidArgumentsError(
+            "Receiver {} must be an ethereum address".format(receiver)
+        )
     print('receiver:', receiver)
     args = (receiver[2:].lower(), str(value))
     tx, result = aergo_from.call_sc(

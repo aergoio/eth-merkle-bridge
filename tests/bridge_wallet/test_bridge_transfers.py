@@ -54,7 +54,7 @@ def test_erc20_token_transfer(bridge_wallet):
     # Aergo => Eth
     burn_height, _ = bridge_wallet.burn_to_eth(
         'aergo-local', 'eth-poa-local', 'test_erc20', 5*10**18, eth_user,
-        privkey_pwd='1234', eth_poa=True
+        privkey_pwd='1234'
     )
     bridge_wallet.unlock_to_eth(
         'aergo-local', 'eth-poa-local', bridge_abi, 'test_erc20',
@@ -84,7 +84,7 @@ def test_aergo_erc20_unfreeze(bridge_wallet):
     # Aergo => Eth
     freeze_height, _ = bridge_wallet.freeze(
         'aergo-local', 'eth-poa-local', 'aergo_erc20', 5*10**18, eth_user,
-        privkey_pwd='1234', eth_poa=True
+        privkey_pwd='1234'
     )
     bridge_wallet.unlock_to_eth(
         'aergo-local', 'eth-poa-local', bridge_abi, 'aergo_erc20',
