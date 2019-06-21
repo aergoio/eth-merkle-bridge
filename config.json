@@ -10,7 +10,7 @@
                 },
                 "eth-poa-local": {
                     "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
-                    "id": "85f77b026708042e0396915dd5600a27",
+                    "id": "2fe93066a22b86cd3a109d2893701fd0",
                     "t_anchor": 10,
                     "t_final": 10
                 }
@@ -22,9 +22,9 @@
                     "pegs": {}
                 },
                 "token1": {
-                    "addr": "AmgGiC9CVGghVVGDWqbq5fTvD3UTuBJVhYfjkoEAma531PWDPA6h",
+                    "addr": "AmhZavWRfPfRQZcGyQDLBi9rVah1gGsXkhbLRKeNCa9evxGZX9id",
                     "pegs": {
-                        "eth-poa-local": "0x65c88DF2c72a6730a9bA0642e24C545fC13e70F3"
+                        "eth-poa-local": "0x0855Db9370244F9229ceab15160a8b565d7242c3"
                     }
                 }
             },
@@ -46,19 +46,23 @@
                 }
             },
             "ip": "localhost:8545",
+            "isPOA": true,
             "tokens": {
                 "aergo_erc20": {
+                    "abi": "./contracts/solidity/aergo_erc20_abi.txt",
                     "addr": "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
-                    "pegs": {}
+                    "pegs": {
+                        "aergo-local": "aergo"
+                    }
                 },
                 "ether": {
                     "addr": "ether",
                     "pegs": {}
                 },
                 "test_erc20": {
-                    "addr": "0x5A1756b0F987B86364D6a8eF9D47A0bA325bB8fC",
+                    "addr": "0xd1C468446C0B94A67a8f2C289b48e371e8A68FDE",
                     "pegs": {
-                        "aergo-local": "AmhBHSywcSWoFSzsbqGWyAECtYszYpYYX7Ws7LyoX5XVkQBX7gVg"
+                        "aergo-local": "Amh6cc2zqNU1FENcvxZN5s894bxDWq7ArSA8V7JC8PWKFSkqeTVi"
                     }
                 }
             },

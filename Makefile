@@ -6,6 +6,8 @@ install:
 	pip install git+ssh://git@github.com/aergoio/merkle-bridge.git@0393a251c56858d87e8968c9bdce157417d0af5e
 	pip install git+ssh://git@github.com/ethereum/web3.py.git@11ef9df28dfbe4b83683a84fec184406165f18d5
 	pip install trie
+	pip install inquirer
+	pip install pyfiglet
 
 compile_bridge:
 	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/lua/eth_merkle_bridge.lua > contracts/lua/bridge_bytecode.txt

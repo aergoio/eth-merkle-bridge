@@ -74,5 +74,8 @@ if __name__ == '__main__':
     config_data['networks']['eth-poa-local']['tokens']['aergo_erc20'] = {}
     config_data['networks']['eth-poa-local']['tokens']['aergo_erc20']['addr'] = sc_address
     config_data['networks']['eth-poa-local']['tokens']['aergo_erc20']['pegs'] = {}
+    config_data['networks']['eth-poa-local']['tokens']['aergo_erc20']['pegs']['aergo-local'] = 'aergo'
+    abi_path = "./contracts/solidity/aergo_erc20_abi.txt"
+    config_data['networks']['eth-poa-local']['tokens']['aergo_erc20']['abi'] = abi_path
     with open("./config.json", "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)
