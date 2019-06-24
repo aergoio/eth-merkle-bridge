@@ -14,7 +14,13 @@ from cli.utils import (
     confirm_transfer,
     get_amount,
     get_asset_abi,
-    get_deposit_height
+    get_deposit_height,
+    get_bridge,
+    get_network,
+    get_eth_privkey,
+    get_aergo_privkey,
+    get_new_asset,
+    get_validators,
 )
 
 
@@ -39,7 +45,7 @@ class EthMerkleBridgeCli():
                 inquirer.List('YesNo',
                               message="Do you have a config.json? ",
                               choices=[('Yes, find it with the path', 'Y'),
-                                       ('No, create one from scratch TODO', 'N'),
+                                       ('No, create one from scratch', 'N'),
                                        'Quit'])
             ]
             answers = inquirer.prompt(questions)
@@ -49,9 +55,6 @@ class EthMerkleBridgeCli():
                 self.create_config()
             else:
                 return
-    
-    def create_config(self):
-        print('Not implemented')
 
     def load_config(self):
         while 1:
@@ -78,7 +81,7 @@ class EthMerkleBridgeCli():
                         ('Check pending transfer TODO', 'P'),
                         ('Initiate transfer (Lock/Burn)', 'I'),
                         ('Finalize transfer (Mint/Unlock)', 'F'),
-                        ('Settings (Register Assets and Networks) TODO', 'S'),
+                        ('Settings (Register Assets and Networks)', 'S'),
                         'Back',
                         ])
             ]
@@ -103,7 +106,198 @@ class EthMerkleBridgeCli():
                 print(e)
 
     def edit_settings(self):
-        pass
+        while 1:
+            questions = [
+                inquirer.List(
+                    'action',
+                    message="What would you like to do ? ",
+                    choices=[
+                        ('Register new asset', 'A'),
+                        ('Register new network', 'N'),
+                        ('Register new bridge', 'B'),
+                        ('Register new set of validators', 'V'),
+                        'Back',
+                        ])
+            ]
+            answers = inquirer.prompt(questions)
+            try:
+                if answers['action'] == 'Back':
+                    return
+                elif answers['action'] == 'A':
+                    self.register_asset()
+                elif answers['action'] == 'N':
+                    self.register_network()
+                elif answers['action'] == 'V':
+                    self.register_new_validators()
+                elif answers['action'] == 'B':
+                    self.register_bridge()
+            except (TypeError, KeyboardInterrupt):
+                print('Someting went wrong, check the status of you pending '
+                      'transfers')
+            except InvalidArgumentsError as e:
+                print('Someting went wrong, check the status of you pending '
+                      'transfers')
+                print(e)
+
+    def create_config(self):
+        new_config = {}
+        print("Let's register 2 networks, "
+              "validators(optional) and a private key for interacting with "
+              "each network.")
+        # Register 2 networks
+        answers = get_network()
+        net1 = answers['name']
+        net1_type = answers['type']
+        new_config['networks'] = {net1: {'ip': answers['ip'],
+                                         'type': net1_type,
+                                         'tokens': {}
+                                         }
+                                  }
+        if net1_type == 'ethereum':
+            new_config['networks'][net1]['isPOA'] = answers['isPOA']
+        answers = get_network()
+        net2 = answers['name']
+        net2_type = answers['type']
+        new_config['networks'][net2] = {'ip': answers['ip'],
+                                        'type': net2_type,
+                                        'tokens': {}
+                                        }
+        if net2_type == 'ethereum':
+            new_config['networks'][net2]['isPOA'] = answers['isPOA']
+        # Register bridge contracts on each network
+        answers = get_bridge(net1, net2)
+        new_config['networks'][net1]['bridges'] = {
+            net2: {'addr': answers['bridge1'],
+                   't_anchor': int(answers['t_anchor1']),
+                   't_final': int(answers['t_final1'])
+                   }
+        }
+        new_config['networks'][net2]['bridges'] = {
+            net1: {'addr': answers['bridge2'],
+                   't_anchor': int(answers['t_anchor2']),
+                   't_final': int(answers['t_final2'])
+                   }
+        }
+        # Register a new private key (ethereum + aergo)
+        print("Register a private key for {}".format(net1))
+        new_config['wallet-eth'] = {}
+        new_config['wallet'] = {}
+        if net1_type == 'ethereum':
+            name, addr, privkey = get_eth_privkey()
+            new_config['wallet-eth'][name] = {"addr": addr,
+                                              "keystore": privkey}
+        else:
+            name, addr, privkey = get_aergo_privkey()
+            new_config['wallet'][name] = {"addr": addr,
+                                          "priv_key": privkey}
+        print("Register a private key for {}".format(net2))
+        if net2_type == 'ethereum':
+            name, addr, privkey = get_eth_privkey()
+            new_config['wallet-eth'][name] = {"addr": addr,
+                                              "keystore": privkey}
+        else:
+            name, addr, privkey = get_aergo_privkey()
+            new_config['wallet'][name] = {"addr": addr,
+                                          "priv_key": privkey}
+
+        # Register bridge validators
+        questions = [
+            inquirer.List(
+                'YN',
+                message='Would you like to register validators ? '
+                        '(not needed for bridge users)',
+                choices=['Yes', 'No']
+            )
+        ]
+        if inquirer.prompt(questions)['YN'] == 'Yes':
+            validators = get_validators()
+            new_config['validators'] = validators
+        else:
+            new_config['validators'] = {}
+
+        questions = [
+            inquirer.Text(
+                'path',
+                message="Path to save new config file"
+            )
+        ]
+        path = inquirer.prompt(questions)['path']
+
+        with open(path, "w") as f:
+            json.dump(new_config, f, indent=4, sort_keys=True)
+
+    def register_bridge(self):
+        net1, net2 = self.get_directions()
+        answers = get_bridge(net1, net2)
+        self.wallet.config_data(
+            'networks', net1, 'bridges', net2,
+            value={'addr': answers['bridge1'],
+                   't_anchor': int(answers['t_anchor1']),
+                   't_final': int(answers['t_final1'])
+                   }
+        )
+        self.wallet.config_data(
+            'networks', net2, 'bridges', net1,
+            value={'addr': answers['bridge2'],
+                   't_anchor': int(answers['t_anchor2']),
+                   't_final': int(answers['t_final2'])
+                   }
+        )
+        self.wallet.save_config()
+
+    def register_asset(self):
+        networks = self.get_networks()
+        name, origin, origin_addr, pegs, peg_addrs = get_new_asset(networks)
+        try:
+            self.wallet.config_data('networks', origin, 'tokens', name)
+            questions = [
+                inquirer.List(
+                    'YN',
+                    message="Warning : override existing asset with same name",
+                    choices=['Yes', 'No']
+                )
+            ]
+            if inquirer.prompt(questions)['YN'] == 'No':
+                return
+            self.wallet.config_data('networks', origin, 'tokens', name,
+                                    value={'pegs': {}})
+        except KeyError:
+            self.wallet.config_data('networks', origin, 'tokens', name,
+                                    value={'pegs': {}})
+        self.wallet.config_data(
+            'networks', origin, 'tokens', name, 'addr', value=origin_addr)
+        for i, peg_net in enumerate(pegs):
+            self.wallet.config_data(
+                'networks', origin, 'tokens', name, 'pegs', peg_net,
+                value=peg_addrs[i])
+        self.wallet.save_config()
+
+    def register_network(self):
+        answers = get_network()
+        net = answers['name']
+        net_type = answers['type']
+        ip = answers['ip']
+        if net_type == 'ethereum':
+            self.wallet.config_data(
+                'networks', net, value={'ip': ip,
+                                        'type': net_type,
+                                        'tokens': {},
+                                        'isPOA': answers['isPOA'],
+                                        'bridges': {}}
+            )
+        else:
+            self.wallet.config_data(
+                'networks', net, value={'ip': ip, 'type': net_type,
+                                        'tokens': {}, 'bridges': {}}
+            )
+        self.wallet.save_config()
+
+    def register_new_validators(self):
+        print("WARNING: current validators will be overridden in the config "
+              "file")
+        validators = get_validators()
+        self.wallet.config_data('validators', value=validators)
+        self.wallet.save_config()
 
     def initiate_transfer(self):
         from_chain, to_chain, from_assets, to_assets, asset_name, \

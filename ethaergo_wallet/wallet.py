@@ -15,7 +15,7 @@ from wallet.transfer_to_sidechain import (
 from ethaergo_wallet.wallet_config import (
     WalletConfig,
 )
-import ethaergo_wallet.eth_utils.wallet_utils as eth_u
+import ethaergo_wallet.eth_utils.erc20 as eth_u
 import ethaergo_wallet.aergo_to_eth as aergo_to_eth
 import ethaergo_wallet.eth_to_aergo as eth_to_aergo
 import aergo.herapy as herapy
