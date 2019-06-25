@@ -78,7 +78,7 @@ class EthMerkleBridgeCli():
                     'action',
                     message="What would you like to do ? ",
                     choices=[
-                        ('Check pending transfer TODO', 'P'),
+                        ('Check pending transfer', 'P'),
                         ('Initiate transfer (Lock/Burn)', 'I'),
                         ('Finalize transfer (Mint/Unlock)', 'F'),
                         ('Settings (Register Assets and Networks)', 'S'),
@@ -331,7 +331,7 @@ class EthMerkleBridgeCli():
             elif (asset_name in to_assets and
                   from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
-                # if transfering a pegged assed Burn
+                # if transfering a pegged asset Burn
                 deposit_height, tx_hash = self.wallet.burn_to_aergo(
                     from_chain, to_chain, self.bridge_abi, asset_name,
                     self.minted_erc20_abi, amount, receiver, privkey_name,
@@ -347,8 +347,7 @@ class EthMerkleBridgeCli():
                 # if transfering a native asset Lock
                 if asset_name == 'aergo':
                     deposit_height, tx_hash = self.wallet.freeze(
-                        from_chain, to_chain, 'aergo_erc20', amount, receiver,
-                        privkey_name
+                        from_chain, to_chain, amount, receiver, privkey_name
                     )
                 else:
                     deposit_height, tx_hash = self.wallet.lock_to_eth(
@@ -358,7 +357,7 @@ class EthMerkleBridgeCli():
             elif (asset_name in to_assets and
                   from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
-                # if transfering a pegged assed Burn
+                # if transfering a pegged asset Burn
                 if asset_name == 'aergo_erc20':
                     deposit_height, tx_hash = self.wallet.freeze(
                         from_chain, to_chain, asset_name, amount, receiver,
@@ -387,7 +386,7 @@ class EthMerkleBridgeCli():
         questions = [
             inquirer.List(
                 'transfer',
-                message="Choose a pending transfer to finalize",
+                message="Choose a pending transfer",
                 choices=choices
                 )
         ]
@@ -425,11 +424,11 @@ class EthMerkleBridgeCli():
             privkey_name = self.get_privkey_name('wallet')
             eth_poa = self.wallet.config_data('networks', from_chain, 'isPOA')
             if asset_name in from_assets:
-                # if transfering a native assed mint
+                # if transfering a native asset mint
                 if asset_name == 'aergo_erc20':
                     self.wallet.unfreeze(
-                        from_chain, to_chain, asset_name, receiver,
-                        deposit_height, privkey_name, eth_poa=eth_poa
+                        from_chain, to_chain, receiver, deposit_height,
+                        privkey_name, eth_poa=eth_poa
                     )
                 else:
                     self.wallet.mint_to_aergo(
@@ -439,7 +438,7 @@ class EthMerkleBridgeCli():
             elif (asset_name in to_assets and
                   from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
-                # if transfering a pegged assed unlock
+                # if transfering a pegged asset unlock
                 self.wallet.unlock_to_aergo(
                     from_chain, to_chain, asset_name, receiver, deposit_height,
                     privkey_name, eth_poa=eth_poa
@@ -462,7 +461,7 @@ class EthMerkleBridgeCli():
                     eth_poa=eth_poa
                 )
             elif asset_name in from_assets:
-                # if transfering a native assed mint
+                # if transfering a native asset mint
                 self.wallet.mint_to_eth(
                     from_chain, to_chain, self.bridge_abi, asset_name,
                     self.minted_erc20_abi, receiver, deposit_height,
@@ -472,7 +471,7 @@ class EthMerkleBridgeCli():
                   from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')
                   ):
-                # if transfering a pegged assed unlock
+                # if transfering a pegged asset unlock
                 asset_abi = get_asset_abi(
                     self.wallet.config_data(
                         'networks', to_chain, 'tokens', asset_name, 'abi')
@@ -493,7 +492,74 @@ class EthMerkleBridgeCli():
         self.store_pending_transfers()
 
     def check_withdrawable_balance(self):
-        pass
+        choices = [val for _, val in self.pending_transfers.items()]
+        choices.extend([("Check another custom transfer", "custom"), "Back"])
+        questions = [
+            inquirer.List(
+                'transfer',
+                message="Choose a pending transfer to finalize",
+                choices=choices
+                )
+        ]
+        answers = inquirer.prompt(questions)
+        if answers['transfer'] == 'custom':
+            from_chain, to_chain, from_assets, to_assets, asset_name, \
+                receiver = self.commun_transfer_params()
+        elif answers['transfer'] == 'Back':
+            return
+        else:
+            from_chain, to_chain, asset_name, receiver, _ = \
+                answers['transfer']
+            from_assets, to_assets = self.get_assets(from_chain, to_chain)
+        if self.wallet.config_data('networks',
+                                   from_chain, 'type') == 'ethereum':
+            eth_poa = self.wallet.config_data('networks', from_chain, 'isPOA')
+            if asset_name in from_assets:
+                # if native asset check minteable
+                if asset_name == 'aergo_erc20':
+                    withdrawable, pending = self.wallet.unfreezeable(
+                        from_chain, to_chain, receiver, eth_poa=eth_poa)
+                else:
+                    withdrawable, pending = self.wallet.minteable_to_aergo(
+                        from_chain, to_chain, asset_name, receiver,
+                        eth_poa=eth_poa
+                    )
+            elif (asset_name in to_assets and
+                  from_chain in self.wallet.config_data(
+                      'networks', to_chain, 'tokens', asset_name, 'pegs')):
+                # if pegged asset check unlockeable
+                withdrawable, pending = self.wallet.unlockeable_to_aergo(
+                    from_chain, to_chain, asset_name, receiver, eth_poa=eth_poa
+                )
+            else:
+                print('asset not properly registered in config.json')
+                return
+        elif self.wallet.config_data('networks',
+                                     from_chain, 'type') == 'aergo':
+            eth_poa = self.wallet.config_data('networks', to_chain, 'isPOA')
+            if asset_name == 'aergo':
+                withdrawable, pending = self.wallet.unlockeable_to_eth(
+                    from_chain, to_chain, 'aergo_erc20', receiver,
+                    eth_poa=eth_poa
+                )
+            elif asset_name in from_assets:
+                # if native asset check minteable
+                withdrawable, pending = self.wallet.minteable_to_eth(
+                    from_chain, to_chain, asset_name, receiver, eth_poa=eth_poa
+                )
+            elif (asset_name in to_assets and
+                  from_chain in self.wallet.config_data(
+                      'networks', to_chain, 'tokens', asset_name, 'pegs')
+                  ):
+                # if pegged asset check unlockeable
+                withdrawable, pending = self.wallet.unlockeable_to_eth(
+                    from_chain, to_chain, asset_name, receiver, eth_poa=eth_poa
+                )
+            else:
+                print('asset not properly registered in config.json')
+                return
+        print("Withdrawable: {}  Pending: {}"
+              .format(withdrawable/10**18, pending/10**18))
 
     def commun_transfer_params(self):
         from_chain, to_chain = self.get_directions()
