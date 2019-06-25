@@ -51,6 +51,8 @@ def bridge_wallet(aergo_wallet):
     config_data['networks']['eth-poa-local']['tokens']['test_erc20'] = {}
     config_data['networks']['eth-poa-local']['tokens']['test_erc20']['addr'] = sc_address
     config_data['networks']['eth-poa-local']['tokens']['test_erc20']['pegs'] = {}
+    config_data['networks']['eth-poa-local']['tokens']['test_erc20']['abi'] = \
+        "./contracts/solidity/aergo_erc20_abi.txt"
     with open("./config.json", "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)
     wallet = EthAergoWallet("./config.json")

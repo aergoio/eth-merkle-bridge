@@ -11,6 +11,9 @@ import wallet.wallet_utils as aergo_u
 from wallet.transfer_to_sidechain import (
     lock,
 )
+from eth_utils import (
+    keccak,
+)
 
 from ethaergo_wallet.wallet_config import (
     WalletConfig,
@@ -265,7 +268,6 @@ class EthAergoWallet(WalletConfig):
         self,
         from_chain: str,
         to_chain: str,
-        asset_name: str,
         receiver: str = None,
         lock_height: int = 0,
         privkey_name: str = 'default',
@@ -275,8 +277,7 @@ class EthAergoWallet(WalletConfig):
         """ Finalize ERC20Aergo transfer to Aergo Mainnet by unfreezing
             (aers are already minted and freezed in the bridge contract)
         """
-        if asset_name != 'aergo_erc20':
-            raise InvalidArgumentsError("Only 'aergo_erc20' can be unfrozen")
+        asset_name = 'aergo_erc20'
         w3 = self.get_web3(from_chain, eth_poa)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
@@ -373,6 +374,81 @@ class EthAergoWallet(WalletConfig):
 
         return tx_hash
 
+    def minteable_to_aergo(
+        self,
+        from_chain: str,
+        to_chain: str,
+        asset_name: str,
+        receiver: str,
+        eth_poa: bool = False
+    ) -> Tuple[int, int]:
+        token_origin = self.config_data(
+            'networks', from_chain, 'tokens', asset_name, 'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        bridge_to = self.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
+        hera = self.connect_aergo(to_chain)
+        w3 = self.get_web3(from_chain, eth_poa=eth_poa)
+        account_ref_eth = \
+            receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
+        position = b'\x03'  # Locks
+        eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
+        aergo_storage_key = '_sv_Mints-' + receiver + token_origin[2:].lower()
+        return eth_to_aergo.withdrawable(
+            bridge_from, bridge_to, w3, hera, eth_trie_key, aergo_storage_key
+        )
+
+    def unlockeable_to_aergo(
+        self,
+        from_chain: str,
+        to_chain: str,
+        asset_name: str,
+        receiver: str,
+        eth_poa: bool = False
+    ) -> Tuple[int, int]:
+        token_origin = self.config_data(
+            'networks', to_chain, 'tokens', asset_name, 'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        bridge_to = self.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
+        hera = self.connect_aergo(to_chain)
+        w3 = self.get_web3(from_chain, eth_poa=eth_poa)
+        account_ref = receiver + token_origin
+        position = b'\x05'  # Burns
+        eth_trie_key = keccak(account_ref.encode('utf-8')
+                              + position.rjust(32, b'\0'))
+        aergo_storage_key = '_sv_Unlocks-' + account_ref
+        return eth_to_aergo.withdrawable(
+            bridge_from, bridge_to, w3, hera, eth_trie_key, aergo_storage_key
+        )
+
+    def unfreezeable(
+        self,
+        from_chain: str,
+        to_chain: str,
+        receiver: str,
+        eth_poa: bool = False
+    ) -> Tuple[int, int]:
+        token_origin = self.config_data(
+            'networks', from_chain, 'tokens', 'aergo_erc20', 'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        bridge_to = self.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
+        hera = self.connect_aergo(to_chain)
+        w3 = self.get_web3(from_chain, eth_poa=eth_poa)
+        account_ref_eth = \
+            receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
+        position = b'\x03'  # Locks
+        eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
+        aergo_storage_key = \
+            '_sv_Unfreezes-' + receiver + token_origin[2:].lower()
+        return eth_to_aergo.withdrawable(
+            bridge_from, bridge_to, w3, hera, eth_trie_key, aergo_storage_key
+        )
+
     ###########################################################################
     # aergo_to_eth_sidechain
     # Aer            ->    freeze   -> | -> unlock_to_eth -> Aer
@@ -384,15 +460,13 @@ class EthAergoWallet(WalletConfig):
         self,
         from_chain: str,
         to_chain: str,
-        asset_name: str,
         amount: int,
         receiver: str,
         privkey_name: str = 'default',
         privkey_pwd: str = None,
     ) -> Tuple[int, str]:
         """ Initiate Aer transfer back to Ethereum AergoERC20 sidechain"""
-        if asset_name != 'aergo_erc20':
-            raise InvalidArgumentsError("Only 'aergo_erc20' can be frozen")
+        asset_name = 'aergo_erc20'
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
         sender = str(aergo_from.account.address)
         bridge_from = self.config_data(
@@ -484,7 +558,7 @@ class EthAergoWallet(WalletConfig):
         already minted amount.
         Bridge tempo is taken from config_data
         """
-        aergo_from = self._connect_aergo(from_chain)
+        aergo_from = self.connect_aergo(from_chain)
         # get ethereum tx signer
         w3 = self.get_web3(to_chain, eth_poa)
         sender_keystore = self.config_data(
@@ -610,7 +684,7 @@ class EthAergoWallet(WalletConfig):
         eth_poa: bool = False
     ) -> Tuple[str, str]:
         """ Finalize ERC20 or Eth transfer back to Ethereum origin """
-        aergo_from = self._connect_aergo(from_chain)
+        aergo_from = self.connect_aergo(from_chain)
         # get ethereum tx signer
         w3 = self.get_web3(to_chain, eth_poa)
         sender_keystore = self.config_data(
@@ -664,7 +738,61 @@ class EthAergoWallet(WalletConfig):
         aergo_from.disconnect()
         return tx_hash
 
-    def _connect_aergo(self, network_name: str) -> herapy.Aergo:
+    def minteable_to_eth(
+        self,
+        from_chain: str,
+        to_chain: str,
+        asset_name: str,
+        receiver: str,
+        eth_poa: bool = False
+    ) -> Tuple[int, int]:
+        token_origin = self.config_data(
+            'networks', from_chain, 'tokens', asset_name, 'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        bridge_to = self.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
+        hera = self.connect_aergo(from_chain)
+        w3 = self.get_web3(to_chain, eth_poa=eth_poa)
+        # TODO bytes.fromhex(receiver[2:]) + token_origin.encode('utf-8')
+        # TODO change this when real bytes are stored
+        account_ref_eth = \
+            receiver[2:].lower().encode('utf-8') + token_origin.encode('utf-8')
+        position = b'\x06'  # Mints
+        eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
+        aergo_storage_key = '_sv_Locks-' + receiver[2:].lower() + token_origin
+        return aergo_to_eth.withdrawable(
+            bridge_from, bridge_to, hera, w3, aergo_storage_key, eth_trie_key
+        )
+
+    def unlockeable_to_eth(
+        self,
+        from_chain: str,
+        to_chain: str,
+        asset_name: str,
+        receiver: str,
+        eth_poa: bool = False
+    ) -> Tuple[int, int]:
+        token_origin = self.config_data(
+            'networks', to_chain, 'tokens', asset_name, 'addr')
+        bridge_from = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        bridge_to = self.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
+        hera = self.connect_aergo(from_chain)
+        w3 = self.get_web3(to_chain, eth_poa=eth_poa)
+        account_ref = (receiver[2:] + token_origin[2:]).lower()
+        position = b'\x04'  # Unlocks
+        # TODO change when real bytes are used
+        # TODO eth_trie_key = keccak(bytes.fromhex(account_ref)
+        eth_trie_key = keccak(account_ref.encode('utf-8')
+                              + position.rjust(32, b'\0'))
+        aergo_storage_key = '_sv_Burns-' + account_ref
+        return aergo_to_eth.withdrawable(
+            bridge_from, bridge_to, hera, w3, aergo_storage_key, eth_trie_key
+        )
+
+    def connect_aergo(self, network_name: str) -> herapy.Aergo:
         aergo = herapy.Aergo()
         aergo.connect(self.config_data('networks', network_name, 'ip'))
         return aergo
@@ -680,7 +808,7 @@ class EthAergoWallet(WalletConfig):
         priv_key
         """
         exported_privkey = self.config_data('wallet', privkey_name, 'priv_key')
-        aergo = self._connect_aergo(network_name)
+        aergo = self.connect_aergo(network_name)
         if privkey_pwd is None:
             print("Decrypt exported private key '{}'".format(privkey_name))
             while True:

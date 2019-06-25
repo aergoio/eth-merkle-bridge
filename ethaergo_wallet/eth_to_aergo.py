@@ -310,3 +310,40 @@ def _build_deposit_proof(
         raise InvalidMerkleProofError("Trie key {} doesn't exist"
                                       .format(trie_key.hex()))
     return eth_proof
+
+
+def withdrawable(
+    bridge_from: str,
+    bridge_to: str,
+    w3: Web3,
+    hera: herapy.Aergo,
+    eth_trie_key: bytes,
+    aergo_storage_key: str
+) -> Tuple[int, int]:
+    # total_deposit : total latest deposit including pending
+    bridge_from = Web3.toChecksumAddress(bridge_from)
+    storage_value = w3.eth.getStorageAt(bridge_from, eth_trie_key, 'latest')
+    total_deposit = int.from_bytes(storage_value, "big")
+
+    # get total withdrawn and last anchor height
+    withdraw_proof = hera.query_sc_state(
+        bridge_to, ["_sv_Height", aergo_storage_key],
+        compressed=False
+    )
+    if not withdraw_proof.var_proofs[0].inclusion:
+        raise InvalidMerkleProofError("Cannot query last anchored height",
+                                      withdraw_proof)
+    total_withdrawn = 0
+    if withdraw_proof.var_proofs[1].inclusion:
+        total_withdrawn = int(withdraw_proof.var_proofs[1].value
+                              .decode('utf-8')[1:-1])
+    last_anchor_height = int(withdraw_proof.var_proofs[0].value)
+
+    # get anchored deposit : total deposit before the last anchor
+    storage_value = w3.eth.getStorageAt(bridge_from, eth_trie_key,
+                                        last_anchor_height)
+    anchored_deposit = int.from_bytes(storage_value, "big")
+
+    withdrawable_balance = anchored_deposit - total_withdrawn
+    pending = total_deposit - anchored_deposit
+    return withdrawable_balance, pending

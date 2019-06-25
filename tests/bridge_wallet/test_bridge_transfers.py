@@ -78,12 +78,12 @@ def test_aergo_erc20_unfreeze(bridge_wallet):
         aergo_erc20_abi, 5*10**18, aergo_user, privkey_pwd='1234', eth_poa=True
     )
     bridge_wallet.unfreeze(
-        'eth-poa-local', 'aergo-local', 'aergo_erc20', aergo_user, lock_height,
+        'eth-poa-local', 'aergo-local', aergo_user, lock_height,
         privkey_pwd='1234', eth_poa=True
     )
     # Aergo => Eth
     freeze_height, _ = bridge_wallet.freeze(
-        'aergo-local', 'eth-poa-local', 'aergo_erc20', 5*10**18, eth_user,
+        'aergo-local', 'eth-poa-local', 5*10**18, eth_user,
         privkey_pwd='1234'
     )
     bridge_wallet.unlock_to_eth(

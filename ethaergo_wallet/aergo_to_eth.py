@@ -287,3 +287,51 @@ def _build_deposit_proof(
         raise InvalidMerkleProofError("Trie key {} doesn't exist"
                                       .format(trie_key))
     return proof
+
+
+def withdrawable(
+    bridge_from: str,
+    bridge_to: str,
+    hera: herapy.Aergo,
+    w3: Web3,
+    aergo_storage_key: str,
+    eth_trie_key: bytes,
+) -> Tuple[int, int]:
+    # total_deposit : total latest deposit including pending
+    _, block_height = hera.get_blockchain_status()
+    block_from = hera.get_block(
+        block_height=block_height
+    )
+    deposit_proof = hera.query_sc_state(
+        bridge_from, [aergo_storage_key],
+        root=block_from.blocks_root_hash, compressed=False
+    )
+    total_deposit = 0
+    if deposit_proof.var_proofs[0].inclusion:
+        total_deposit = int(deposit_proof.var_proofs[0].value
+                            .decode('utf-8')[1:-1])
+
+    # get total withdrawn and last anchor height
+    bridge_to = Web3.toChecksumAddress(bridge_to)
+    storage_value = w3.eth.getStorageAt(bridge_to, eth_trie_key, 'latest')
+    total_withdrawn = int.from_bytes(storage_value, "big")
+    # Height is at position 1 in solidity contract
+    storage_value = w3.eth.getStorageAt(bridge_to, 1, 'latest')
+    last_anchor_height = int.from_bytes(storage_value, "big")
+
+    # get anchored deposit : total deposit before the last anchor
+    block_from = hera.get_block(
+        block_height=last_anchor_height
+    )
+    deposit_proof = hera.query_sc_state(
+        bridge_from, [aergo_storage_key],
+        root=block_from.blocks_root_hash, compressed=False
+    )
+    anchored_deposit = 0
+    if deposit_proof.var_proofs[0].inclusion:
+        anchored_deposit = int(deposit_proof.var_proofs[0].value
+                               .decode('utf-8')[1:-1])
+                               
+    withdrawable_balance = anchored_deposit - total_withdrawn
+    pending = total_deposit - anchored_deposit
+    return withdrawable_balance, pending
