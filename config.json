@@ -10,7 +10,7 @@
                 },
                 "eth-poa-local": {
                     "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
-                    "id": "2fe93066a22b86cd3a109d2893701fd0",
+                    "id": "1de0fa4890faaf2cbf39ecdb1d1a8c42",
                     "t_anchor": 10,
                     "t_final": 10
                 }
@@ -22,9 +22,9 @@
                     "pegs": {}
                 },
                 "token1": {
-                    "addr": "AmhZavWRfPfRQZcGyQDLBi9rVah1gGsXkhbLRKeNCa9evxGZX9id",
+                    "addr": "AmhMB4P4XkSCCMhqBVHGg2MN5DxXfnd4KJd4U2RhDgbSJnnpaHL4",
                     "pegs": {
-                        "eth-poa-local": "0x0855Db9370244F9229ceab15160a8b565d7242c3"
+                        "eth-poa-local": "0x41c3a2534E93B25Dab9cd0630d4D9b312564f417"
                     }
                 }
             },
@@ -60,9 +60,10 @@
                     "pegs": {}
                 },
                 "test_erc20": {
-                    "addr": "0xd1C468446C0B94A67a8f2C289b48e371e8A68FDE",
+                    "abi": "./contracts/solidity/aergo_erc20_abi.txt",
+                    "addr": "0x9CbF770D81a42B9c049Cb15B67036Ff26B31717d",
                     "pegs": {
-                        "aergo-local": "Amh6cc2zqNU1FENcvxZN5s894bxDWq7ArSA8V7JC8PWKFSkqeTVi"
+                        "aergo-local": "Amg8GTZH4oAZKQvGzDLLLLuCpv6xtq2ro6AMWkS4amoox89JdCyQ"
                     }
                 }
             },

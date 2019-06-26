@@ -7,7 +7,9 @@ from ethaergo_wallet.wallet import (
     EthAergoWallet,
 )
 from ethaergo_wallet.exceptions import (
-    InvalidArgumentsError
+    InvalidArgumentsError,
+    TxError,
+    InsufficientBalanceError,
 )
 
 from cli.utils import (
@@ -97,13 +99,10 @@ class EthMerkleBridgeCli():
                     self.finalize_transfer()
                 elif answers['action'] == 'S':
                     self.edit_settings()
-            except (TypeError, KeyboardInterrupt):
-                print('Someting went wrong, check the status of you pending '
-                      'transfers')
-            except InvalidArgumentsError as e:
-                print('Someting went wrong, check the status of you pending '
-                      'transfers')
-                print(e)
+            except (TypeError, KeyboardInterrupt, InvalidArgumentsError,
+                    TxError, InsufficientBalanceError) as e:
+                print('Someting went wrong, check the status of your pending '
+                      'transfers\nError msg: {}'.format(e))
 
     def edit_settings(self):
         while 1:
@@ -131,13 +130,9 @@ class EthMerkleBridgeCli():
                     self.register_new_validators()
                 elif answers['action'] == 'B':
                     self.register_bridge()
-            except (TypeError, KeyboardInterrupt):
+            except (TypeError, KeyboardInterrupt, InvalidArgumentsError) as e:
                 print('Someting went wrong, check the status of you pending '
-                      'transfers')
-            except InvalidArgumentsError as e:
-                print('Someting went wrong, check the status of you pending '
-                      'transfers')
-                print(e)
+                      'transfers\nError msg: {}'.format(e))
 
     def create_config(self):
         new_config = {}

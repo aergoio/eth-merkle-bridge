@@ -48,7 +48,7 @@ state.var {
     Burns = state.map(),
     -- Registers minted balances per account reference : prevents minting more than what was locked
     Mints = state.map(),
-    -- Registers freezed balances per account reference : prevents unlocking more than was freezed
+    -- Registers unfreezed balances per account reference : prevents unfreezing more than was locked
     Unfreezes = state.map(),
     -- BridgeTokens keeps track of tokens that were received through the bridge
     BridgeTokens = state.map(),

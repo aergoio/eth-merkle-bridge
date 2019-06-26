@@ -3,14 +3,7 @@ from typing import (
     Dict,
     Tuple
 )
-from wallet.exceptions import (
-    InsufficientBalanceError,
-    InvalidArgumentsError,
-)
 import wallet.wallet_utils as aergo_u
-from wallet.transfer_to_sidechain import (
-    lock,
-)
 from eth_utils import (
     keccak,
 )
@@ -21,6 +14,14 @@ from ethaergo_wallet.wallet_config import (
 import ethaergo_wallet.eth_utils.erc20 as eth_u
 import ethaergo_wallet.aergo_to_eth as aergo_to_eth
 import ethaergo_wallet.eth_to_aergo as eth_to_aergo
+from ethaergo_wallet.wallet_utils import (
+    is_aergo_address,
+    is_ethereum_address
+)
+from ethaergo_wallet.exceptions import (
+    InsufficientBalanceError,
+    InvalidArgumentsError,
+)
 import aergo.herapy as herapy
 from aergo.herapy.errors.general_exception import (
     GeneralException,
@@ -388,6 +389,15 @@ class EthAergoWallet(WalletConfig):
             'networks', from_chain, 'bridges', to_chain, 'addr')
         bridge_to = self.config_data(
             'networks', to_chain, 'bridges', from_chain, 'addr')
+        if not is_ethereum_address(token_origin):
+            raise InvalidArgumentsError(
+                "token_origin {} must be an Ethereum address"
+                .format(token_origin)
+            )
+        if not is_aergo_address(receiver):
+            raise InvalidArgumentsError(
+                "Receiver {} must be an Aergo address".format(receiver)
+            )
         hera = self.connect_aergo(to_chain)
         w3 = self.get_web3(from_chain, eth_poa=eth_poa)
         account_ref_eth = \
@@ -413,6 +423,15 @@ class EthAergoWallet(WalletConfig):
             'networks', from_chain, 'bridges', to_chain, 'addr')
         bridge_to = self.config_data(
             'networks', to_chain, 'bridges', from_chain, 'addr')
+        if not is_aergo_address(token_origin):
+            raise InvalidArgumentsError(
+                "token_origin {} must be an Aergo address"
+                .format(token_origin)
+            )
+        if not is_aergo_address(receiver):
+            raise InvalidArgumentsError(
+                "Receiver {} must be an Aergo address".format(receiver)
+            )
         hera = self.connect_aergo(to_chain)
         w3 = self.get_web3(from_chain, eth_poa=eth_poa)
         account_ref = receiver + token_origin
@@ -437,6 +456,15 @@ class EthAergoWallet(WalletConfig):
             'networks', from_chain, 'bridges', to_chain, 'addr')
         bridge_to = self.config_data(
             'networks', to_chain, 'bridges', from_chain, 'addr')
+        if not is_ethereum_address(token_origin):
+            raise InvalidArgumentsError(
+                "token_origin {} must be an Ethereum address"
+                .format(token_origin)
+            )
+        if not is_aergo_address(receiver):
+            raise InvalidArgumentsError(
+                "Receiver {} must be an Aergo address".format(receiver)
+            )
         hera = self.connect_aergo(to_chain)
         w3 = self.get_web3(from_chain, eth_poa=eth_poa)
         account_ref_eth = \
@@ -503,6 +531,10 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None
     ) -> Tuple[int, str]:
         """ Initiate Aergo Standard Token transfer to Ethereum sidechain"""
+        if asset_name == 'aergo':
+            raise InvalidArgumentsError(
+                'aer cannot be locked on Aergo, must be frozen'
+            )
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
         sender = str(aergo_from.account.address)
         bridge_from = self.config_data(
@@ -526,8 +558,8 @@ class EthAergoWallet(WalletConfig):
               .format(asset_name, balance/10**18))
 
         print("\n------ Lock {} -----------".format(asset_name))
-        lock_height, tx_hash = lock(
-            aergo_from, bridge_from, receiver[2:].lower(), amount,
+        lock_height, tx_hash = aergo_to_eth.lock(
+            aergo_from, bridge_from, receiver, amount,
             asset_address, fee_limit, self.fee_price, signed_transfer
         )
 
@@ -752,6 +784,14 @@ class EthAergoWallet(WalletConfig):
             'networks', from_chain, 'bridges', to_chain, 'addr')
         bridge_to = self.config_data(
             'networks', to_chain, 'bridges', from_chain, 'addr')
+        if not is_aergo_address(token_origin):
+            raise InvalidArgumentsError(
+                "token_origin {} must be an Aergo address".format(token_origin)
+            )
+        if not is_ethereum_address(receiver):
+            raise InvalidArgumentsError(
+                "Receiver {} must be an Ethereum address".format(receiver)
+            )
         hera = self.connect_aergo(from_chain)
         w3 = self.get_web3(to_chain, eth_poa=eth_poa)
         # TODO bytes.fromhex(receiver[2:]) + token_origin.encode('utf-8')
@@ -779,6 +819,15 @@ class EthAergoWallet(WalletConfig):
             'networks', from_chain, 'bridges', to_chain, 'addr')
         bridge_to = self.config_data(
             'networks', to_chain, 'bridges', from_chain, 'addr')
+        if not is_ethereum_address(token_origin):
+            raise InvalidArgumentsError(
+                "token_origin {} must be an Ethereum address"
+                .format(token_origin)
+            )
+        if not is_ethereum_address(receiver):
+            raise InvalidArgumentsError(
+                "Receiver {} must be an Ethereum address".format(receiver)
+            )
         hera = self.connect_aergo(from_chain)
         w3 = self.get_web3(to_chain, eth_poa=eth_poa)
         account_ref = (receiver[2:] + token_origin[2:]).lower()

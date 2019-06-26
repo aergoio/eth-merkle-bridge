@@ -43,6 +43,7 @@ def get_deposit_height():
     answers = inquirer.prompt(questions)
     return int(answers['height'])
 
+
 def get_bridge(net1, net2):
     print('Bridge between {} and {}'.format(net1, net2))
     questions = [

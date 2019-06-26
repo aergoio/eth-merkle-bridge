@@ -20,7 +20,8 @@ from ethaergo_wallet.exceptions import (
     InvalidArgumentsError
 )
 from ethaergo_wallet.wallet_utils import (
-    is_aergo_address
+    is_aergo_address,
+    is_ethereum_address
 )
 from ethaergo_wallet.eth_utils.merkle_proof import (
     verify_eth_getProof,
@@ -42,7 +43,7 @@ def lock(
     """ Lock an Ethereum ERC20 token. """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an aergo address".format(receiver)
+            "Receiver {} must be an Aergo address".format(receiver)
         )
     bridge_from = Web3.toChecksumAddress(bridge_from)
     eth_bridge = w3.eth.contract(
@@ -64,7 +65,6 @@ def lock(
     signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    print(receipt)
     if receipt.status != 1:
         print(receipt)
         raise TxError("Lock asset Tx execution failed")
@@ -87,7 +87,11 @@ def build_lock_proof(
     """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an aergo address".format(receiver)
+            "Receiver {} must be an Aergo address".format(receiver)
+        )
+    if not is_ethereum_address(token_origin):
+        raise InvalidArgumentsError(
+            "token_origin {} must be an Ethereum address".format(token_origin)
         )
     account_ref = receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
     # 'Burns is the 4th state var defined in solitity contract
@@ -111,7 +115,11 @@ def mint(
     """ Unlock the receiver's deposit balance on aergo_to. """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an aergo address".format(receiver)
+            "Receiver {} must be an Aergo address".format(receiver)
+        )
+    if not is_ethereum_address(token_origin):
+        raise InvalidArgumentsError(
+            "token_origin {} must be an Ethereum address".format(token_origin)
         )
     ap = format_proof_for_lua(lock_proof.storageProof[0].proof)
     balance = int.from_bytes(lock_proof.storageProof[0].value, "big")
@@ -147,7 +155,11 @@ def burn(
     """ Burn a token that was minted on ethereum. """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an aergo address".format(receiver)
+            "Receiver {} must be an Aergo address".format(receiver)
+        )
+    if not is_ethereum_address(token_pegged):
+        raise InvalidArgumentsError(
+            "token_pegged {} must be an Ethereum address".format(token_pegged)
         )
     bridge_from = Web3.toChecksumAddress(bridge_from)
     eth_bridge = w3.eth.contract(
@@ -192,7 +204,11 @@ def build_burn_proof(
     """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an aergo address".format(receiver)
+            "Receiver {} must be an Aergo address".format(receiver)
+        )
+    if not is_aergo_address(token_origin):
+        raise InvalidArgumentsError(
+            "token_origin {} must be an Aergo address".format(token_origin)
         )
     account_ref = (receiver + token_origin).encode('utf-8')
     # 'Burns is the 6th state var defined in solitity contract
@@ -216,7 +232,11 @@ def unlock(
     """ Unlock the receiver's deposit balance on aergo_to. """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an aergo address".format(receiver)
+            "Receiver {} must be an Aergo address".format(receiver)
+        )
+    if not is_aergo_address(token_origin):
+        raise InvalidArgumentsError(
+            "token_origin {} must be an Aergo address".format(token_origin)
         )
     ap = format_proof_for_lua(burn_proof.storageProof[0].proof)
     balance = int.from_bytes(burn_proof.storageProof[0].value, "big")
@@ -248,7 +268,7 @@ def unfreeze(
     """ Unlock the receiver's deposit balance on aergo_to. """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an aergo address".format(receiver)
+            "Receiver {} must be an Aergo address".format(receiver)
         )
     ap = format_proof_for_lua(lock_proof.storageProof[0].proof)
     balance = int.from_bytes(lock_proof.storageProof[0].value, "big")

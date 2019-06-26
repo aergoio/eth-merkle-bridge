@@ -12,9 +12,50 @@ from ethaergo_wallet.exceptions import (
     InvalidArgumentsError
 )
 from ethaergo_wallet.wallet_utils import (
-    is_ethereum_address
+    is_ethereum_address,
+    is_aergo_address
 )
 COMMIT_TIME = 3
+
+
+def lock(
+    aergo_from: herapy.Aergo,
+    bridge_from: str,
+    receiver: str,
+    value: int,
+    asset: str,
+    fee_limit: int,
+    fee_price: int,
+    signed_transfer: Tuple[int, str],
+) -> Tuple[int, str]:
+    """ Lock can be called to lock aer or tokens.
+        it supports delegated transfers when tx broadcaster is not
+        the same as the token owner
+    """
+    if not is_ethereum_address(receiver):
+        raise InvalidArgumentsError(
+            "receiver {} must be an Ethereum address".format(receiver)
+        )
+    if not is_aergo_address(asset):
+        raise InvalidArgumentsError(
+            "asset {} must be an Aergo address".format(asset)
+        )
+    args = (receiver[2:].lower(), str(value), asset) + signed_transfer
+    tx, result = aergo_from.call_sc(bridge_from, "lock",
+                                    args=args,
+                                    amount=0)
+    if result.status != herapy.CommitStatus.TX_OK:
+        raise TxError("Lock asset Tx commit failed : {}".format(result))
+    time.sleep(COMMIT_TIME)
+
+    # Check lock success
+    result = aergo_from.get_tx_result(tx.tx_hash)
+    if result.status != herapy.TxResultStatus.SUCCESS:
+        raise TxError("Lock asset Tx execution failed : {}".format(result))
+    # get precise lock height
+    tx_detail = aergo_from.get_tx(tx.tx_hash)
+    lock_height = tx_detail.block.height
+    return lock_height, str(tx.tx_hash)
 
 
 def build_lock_proof(
@@ -33,6 +74,10 @@ def build_lock_proof(
     if not is_ethereum_address(receiver):
         raise InvalidArgumentsError(
             "Receiver {} must be an ethereum address".format(receiver)
+        )
+    if not is_aergo_address(token_origin):
+        raise InvalidArgumentsError(
+            "token_origin {} must be an Aergo address".format(token_origin)
         )
     account_ref = receiver[2:].lower() + token_origin
     trie_key = "_sv_Locks-" + account_ref
@@ -56,7 +101,11 @@ def mint(
     """ Mint the receiver's deposit balance on aergo_to. """
     if not is_ethereum_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an ethereum address".format(receiver)
+            "Receiver {} must be an Ethereum address".format(receiver)
+        )
+    if not is_aergo_address(token_origin):
+        raise InvalidArgumentsError(
+            "token_origin {} must be an Aergo address".format(token_origin)
         )
     receiver = Web3.toChecksumAddress(receiver)
     print("version:", w3.clientVersion)
@@ -111,7 +160,11 @@ def burn(
     """ Burn a minted token on a sidechain. """
     if not is_ethereum_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an ethereum address".format(receiver)
+            "Receiver {} must be an Ethereum address".format(receiver)
+        )
+    if not is_aergo_address(token_pegged):
+        raise InvalidArgumentsError(
+            "token_pegged {} must be an Aergo address".format(token_pegged)
         )
     args = (receiver[2:].lower(), str(value), token_pegged)
     tx, result = aergo_from.call_sc(bridge_from, "burn", args=args)
@@ -145,7 +198,11 @@ def build_burn_proof(
     """
     if not is_ethereum_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an ethereum address".format(receiver)
+            "Receiver {} must be an Ethereum address".format(receiver)
+        )
+    if not is_ethereum_address(token_origin):
+        raise InvalidArgumentsError(
+            "token_origin {} must be an Ethereum address".format(token_origin)
         )
     account_ref = receiver[2:].lower() + token_origin[2:].lower()
     trie_key = "_sv_Burns-" + account_ref
@@ -169,7 +226,11 @@ def unlock(
     """ Unlock the receiver's burnt balance on aergo_to. """
     if not is_ethereum_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an ethereum address".format(receiver)
+            "Receiver {} must be an Ethereum address".format(receiver)
+        )
+    if not is_ethereum_address(token_origin):
+        raise InvalidArgumentsError(
+            "token_origin {} must be an Ethereum address".format(token_origin)
         )
     receiver = Web3.toChecksumAddress(receiver)
     print("version:", w3.clientVersion)
@@ -221,7 +282,7 @@ def freeze(
     """ Freeze aergo native """
     if not is_ethereum_address(receiver):
         raise InvalidArgumentsError(
-            "Receiver {} must be an ethereum address".format(receiver)
+            "Receiver {} must be an Ethereum address".format(receiver)
         )
     print('receiver:', receiver)
     args = (receiver[2:].lower(), str(value))
