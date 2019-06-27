@@ -885,3 +885,54 @@ class EthAergoWallet(WalletConfig):
             w3.middleware_onion.inject(geth_poa_middleware, layer=0)
         assert w3.isConnected()
         return w3
+
+    def get_balance_aergo(
+        self,
+        asset_name: str,
+        network_name: str,
+        asset_origin_chain: str = None,
+        account_name: str = 'default',
+        account_addr: str = None
+    ) -> Tuple[int, str]:
+        """ Get account name balance of asset_name on network_name,
+        and specify asset_origin_chain for a pegged asset query,
+        """
+        if account_addr is None:
+            account_addr = self.config_data('wallet', account_name, 'addr')
+        aergo = self.connect_aergo(network_name)
+        asset_addr = self.get_asset_address(asset_name, network_name,
+                                            asset_origin_chain)
+        balance = aergo_u.get_balance(account_addr, asset_addr, aergo)
+        aergo.disconnect()
+        return balance, asset_addr
+
+    def get_balance_eth(
+        self,
+        asset_name: str,
+        network_name: str,
+        asset_origin_chain: str = None,
+        account_name: str = 'default',
+        account_addr: str = None,
+        eth_poa: bool = False
+    ) -> Tuple[int, str]:
+        """ Get account name balance of asset_name on network_name,
+        and specify asset_origin_chain for a pegged asset query,
+        """
+        if account_addr is None:
+            account_addr = self.get_wallet_address(account_name)
+        w3 = self.get_web3(network_name, eth_poa)
+        asset_addr = self.get_asset_address(asset_name, network_name,
+                                            asset_origin_chain)
+        if asset_origin_chain is None:
+            if asset_addr == 'ether':
+                balance = eth_u.get_balance(account_addr, asset_addr, w3)
+                return balance, asset_addr
+            abi_path = self.config_data('networks', network_name, 'tokens',
+                                        asset_name, 'abi')
+        else:
+            abi_path = './contracts/solidity/minted_erc20_abi.txt'
+
+        with open(abi_path, "r") as f:
+            abi = f.read()
+        balance = eth_u.get_balance(account_addr, asset_addr, w3, abi)
+        return balance, asset_addr

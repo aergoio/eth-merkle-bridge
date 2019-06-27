@@ -81,6 +81,7 @@ class EthMerkleBridgeCli():
                     message="What would you like to do ? ",
                     choices=[
                         ('Check pending transfer', 'P'),
+                        ('Check balances', 'B'),
                         ('Initiate transfer (Lock/Burn)', 'I'),
                         ('Finalize transfer (Mint/Unlock)', 'F'),
                         ('Settings (Register Assets and Networks)', 'S'),
@@ -93,6 +94,8 @@ class EthMerkleBridgeCli():
                     return
                 elif answers['action'] == 'P':
                     self.check_withdrawable_balance()
+                elif answers['action'] == 'B':
+                    self.check_balances()
                 elif answers['action'] == 'I':
                     self.initiate_transfer()
                 elif answers['action'] == 'F':
@@ -103,6 +106,71 @@ class EthMerkleBridgeCli():
                     TxError, InsufficientBalanceError) as e:
                 print('Someting went wrong, check the status of your pending '
                       'transfers\nError msg: {}'.format(e))
+
+    def check_balances(self):
+        print('Ethereum wallet: ')
+        for wallet, info in self.wallet.config_data('wallet-eth').items():
+            print('{}{}: {}'.format('\t', wallet, info['addr']))
+            for net_name, net in self.wallet.config_data('networks').items():
+                print('{}network: {}'.format('\t'*2, net_name))
+                for token_name, token in net['tokens'].items():
+                    print('{}{}'.format('\t'*3, token_name))
+                    if net['type'] == 'ethereum':
+                        eth_poa = net['isPOA']
+                        balance, addr = self.wallet.get_balance_eth(
+                            token_name, net_name, account_name=wallet,
+                            eth_poa=eth_poa
+                        )
+                        if balance != 0:
+                            print("{}{} balance: {}{}"
+                                  .format('\t'*4, addr, balance/10**18,
+                                          u'\U0001f604'))
+                    print("{}{} pegged on other chains:"
+                          .format('\t'*4, token_name))
+                    for peg in token['pegs']:
+                        print('{}Pegged network: {}'.format('\t'*5, peg))
+                        pegged_network = self.wallet.config_data('networks',
+                                                                 peg)
+                        if pegged_network['type'] == 'ethereum':
+                            eth_poa = pegged_network['isPOA']
+                            balance, addr = self.wallet.get_balance_eth(
+                                token_name, peg, net_name, wallet,
+                                eth_poa=eth_poa
+                            )
+                            if balance != 0:
+                                print("{}{} balance: {}{}"
+                                      .format('\t'*6, addr, balance/10**18,
+                                              u'\U0001f604'))
+        print('Aergo wallet: ')
+        for wallet, info in self.wallet.config_data('wallet').items():
+            print('{}{}: {}'.format('\t', wallet, info['addr']))
+            for net_name, net in self.wallet.config_data('networks').items():
+                print('{}network: {}'.format('\t'*2, net_name))
+                for token_name, token in net['tokens'].items():
+                    print('{}{}'.format('\t'*3, token_name))
+                    if net['type'] == 'aergo':
+                        balance, addr = self.wallet.get_balance_aergo(
+                            token_name, net_name, account_name=wallet
+                        )
+                        if balance != 0:
+                            print("{}{} balance: {}{}"
+                                  .format('\t'*4, addr, balance/10**18,
+                                          u'\U0001f604'))
+                    print("{}{} pegged on other chains:"
+                          .format('\t'*4, token_name))
+                    for peg in token['pegs']:
+                        print('{}Pegged network: {}'.format('\t'*5, peg))
+                        pegged_network = self.wallet.config_data('networks',
+                                                                 peg)
+                        if pegged_network['type'] == 'aergo' and \
+                                token_name != 'aergo_erc20':
+                            balance, addr = self.wallet.get_balance_aergo(
+                                token_name, peg, net_name, wallet
+                            )
+                            if balance != 0:
+                                print("{}{} balance: {}{}"
+                                      .format('\t'*6, addr, balance/10**18,
+                                              u'\U0001f604'))
 
     def edit_settings(self):
         while 1:
