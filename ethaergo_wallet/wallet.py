@@ -97,6 +97,10 @@ class EthAergoWallet(WalletConfig):
         eth_poa: bool = False
     ) -> Tuple[int, str]:
         """ Initiate ERC20 token or Ether transfer to Aergo sidechain """
+        if not is_aergo_address(receiver):
+            raise InvalidArgumentsError(
+                "Receiver {} must be an Aergo address".format(receiver)
+            )
         w3 = self.get_web3(from_chain, eth_poa)
         sender_keystore = self.config_data(
             'wallet-eth', privkey_name, 'keystore')
@@ -154,6 +158,10 @@ class EthAergoWallet(WalletConfig):
         eth_poa: bool = False
     ) -> str:
         """ Finalize ERC20 token or Ether transfer to Aergo sidechain """
+        if not is_aergo_address(receiver):
+            raise InvalidArgumentsError(
+                "Receiver {} must be an Aergo address".format(receiver)
+            )
         w3 = self.get_web3(from_chain, eth_poa)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
@@ -224,6 +232,10 @@ class EthAergoWallet(WalletConfig):
         eth_poa: bool = False
     ) -> Tuple[int, str]:
         """ Initiate minted Standard token transfer back to aergo origin"""
+        if not is_aergo_address(receiver):
+            raise InvalidArgumentsError(
+                "Receiver {} must be an Aergo address".format(receiver)
+            )
         w3 = self.get_web3(from_chain, eth_poa)
         sender_keystore = self.config_data(
             'wallet-eth', privkey_name, 'keystore')
@@ -278,6 +290,10 @@ class EthAergoWallet(WalletConfig):
         """ Finalize ERC20Aergo transfer to Aergo Mainnet by unfreezing
             (aers are already minted and freezed in the bridge contract)
         """
+        if not is_aergo_address(receiver):
+            raise InvalidArgumentsError(
+                "Receiver {} must be an Aergo address".format(receiver)
+            )
         asset_name = 'aergo_erc20'
         w3 = self.get_web3(from_chain, eth_poa)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
@@ -335,6 +351,10 @@ class EthAergoWallet(WalletConfig):
         eth_poa: bool = False
     ) -> str:
         """ Finalize Aergo Standard token transfer back to Aergo Origin"""
+        if not is_aergo_address(receiver):
+            raise InvalidArgumentsError(
+                "Receiver {} must be an Aergo address".format(receiver)
+            )
         w3 = self.get_web3(from_chain, eth_poa)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
@@ -494,6 +514,10 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
     ) -> Tuple[int, str]:
         """ Initiate Aer transfer back to Ethereum AergoERC20 sidechain"""
+        if not is_ethereum_address(receiver):
+            raise InvalidArgumentsError(
+                "receiver {} must be an Ethereum address".format(receiver)
+            )
         asset_name = 'aergo_erc20'
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
         sender = str(aergo_from.account.address)
@@ -531,6 +555,10 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None
     ) -> Tuple[int, str]:
         """ Initiate Aergo Standard Token transfer to Ethereum sidechain"""
+        if not is_ethereum_address(receiver):
+            raise InvalidArgumentsError(
+                "receiver {} must be an Ethereum address".format(receiver)
+            )
         if asset_name == 'aergo':
             raise InvalidArgumentsError(
                 'aer cannot be locked on Aergo, must be frozen'
@@ -590,6 +618,10 @@ class EthAergoWallet(WalletConfig):
         already minted amount.
         Bridge tempo is taken from config_data
         """
+        if not is_ethereum_address(receiver):
+            raise InvalidArgumentsError(
+                "receiver {} must be an Ethereum address".format(receiver)
+            )
         aergo_from = self.connect_aergo(from_chain)
         # get ethereum tx signer
         w3 = self.get_web3(to_chain, eth_poa)
@@ -671,6 +703,10 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
     ) -> Tuple[int, str]:
         """ Initiate minted token transfer back to ethereum origin"""
+        if not is_ethereum_address(receiver):
+            raise InvalidArgumentsError(
+                "receiver {} must be an Ethereum address".format(receiver)
+            )
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
         sender = str(aergo_from.account.address)
         bridge_from = self.config_data(
@@ -716,6 +752,10 @@ class EthAergoWallet(WalletConfig):
         eth_poa: bool = False
     ) -> Tuple[str, str]:
         """ Finalize ERC20 or Eth transfer back to Ethereum origin """
+        if not is_ethereum_address(receiver):
+            raise InvalidArgumentsError(
+                "receiver {} must be an Ethereum address".format(receiver)
+            )
         aergo_from = self.connect_aergo(from_chain)
         # get ethereum tx signer
         w3 = self.get_web3(to_chain, eth_poa)
@@ -899,6 +939,10 @@ class EthAergoWallet(WalletConfig):
         """
         if account_addr is None:
             account_addr = self.config_data('wallet', account_name, 'addr')
+        if not is_aergo_address(account_addr):
+            raise InvalidArgumentsError(
+                "Account {} must be an Aergo address".format(account_addr)
+            )
         aergo = self.connect_aergo(network_name)
         asset_addr = self.get_asset_address(asset_name, network_name,
                                             asset_origin_chain)
@@ -920,6 +964,10 @@ class EthAergoWallet(WalletConfig):
         """
         if account_addr is None:
             account_addr = self.get_wallet_address(account_name)
+        if not is_ethereum_address(account_addr):
+            raise InvalidArgumentsError(
+                "Account {} must be an Ethereum address".format(account_addr)
+            )
         w3 = self.get_web3(network_name, eth_poa)
         asset_addr = self.get_asset_address(asset_name, network_name,
                                             asset_origin_chain)

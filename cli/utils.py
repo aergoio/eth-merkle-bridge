@@ -20,7 +20,7 @@ def get_amount():
     questions = [
         inquirer.Text(
             'amount',
-            message="Amount of assets to transfer : ",
+            message="Amount of assets to transfer",
         )
     ]
     answers = inquirer.prompt(questions)

@@ -5,6 +5,9 @@ from wallet.exceptions import (
     InvalidArgumentsError,
     TxError
 )
+from ethaergo_wallet.wallet_utils import (
+    is_ethereum_address
+)
 
 
 def get_balance(
@@ -13,6 +16,10 @@ def get_balance(
     w3: Web3,
     erc20_abi: str = None
 ) -> int:
+    if not is_ethereum_address(account_addr):
+        raise InvalidArgumentsError(
+            "Account {} must be an Ethereum address".format(account_addr)
+        )
     account_addr = Web3.toChecksumAddress(account_addr)
     balance = 0
     if asset_addr == "ether":
