@@ -38,7 +38,8 @@ def lock(
     bridge_from_abi: str,
     erc20_address: str,
     fee_limit: int,
-    fee_price: int
+    fee_price: int,
+    next_nonce: int = None
 ):
     """ Lock an Ethereum ERC20 token. """
     if not is_aergo_address(receiver):
@@ -51,14 +52,14 @@ def lock(
         abi=bridge_from_abi
     )
     print(receiver, amount, erc20_address)
+    if next_nonce is None:
+        next_nonce = w3.eth.getTransactionCount(signer_acct.address)
     construct_txn = eth_bridge.functions.lock(
         receiver, amount, erc20_address
     ).buildTransaction({
         'chainId': w3.eth.chainId,
         'from': signer_acct.address,
-        'nonce': w3.eth.getTransactionCount(
-            signer_acct.address
-        ),
+        'nonce': next_nonce,
         'gas': 4108036,
         'gasPrice': w3.toWei(9, 'gwei')
     })

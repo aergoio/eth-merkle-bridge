@@ -131,13 +131,14 @@ class EthAergoWallet(WalletConfig):
             raise InsufficientBalanceError(err)
 
         print("\n\n------ Approve token transfer -----------")
-        eth_u.increase_approval(bridge_from, erc20_address, amount, w3,
-                                erc20_abi, signer_acct)
+        next_nonce = eth_u.increase_approval(
+            bridge_from, erc20_address, amount, w3, erc20_abi, signer_acct
+        )
 
         print("\n\n------ Lock {}-----------".format(asset_name))
         lock_height, tx_hash = eth_to_aergo.lock(
             w3, signer_acct, receiver, amount, bridge_from, bridge_from_abi,
-            erc20_address, fee_limit, self.fee_price
+            erc20_address, fee_limit, self.fee_price, next_nonce
         )
 
         balance = eth_u.get_balance(token_owner, erc20_address, w3,

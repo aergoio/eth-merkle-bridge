@@ -43,7 +43,7 @@ def increase_approval(
     w3: Web3,
     erc20_abi: str,
     signer_acct
-):
+) -> int:
     """ Increase approval increases the amount of tokens that spender
         can withdraw. For older tokens without the increaseApproval
         function in the abi, approval should be set to 0 and then to amount.
@@ -55,14 +55,13 @@ def increase_approval(
         address=asset_addr,
         abi=erc20_abi
     )
+    approval_nonce = w3.eth.getTransactionCount(signer_acct.address)
     construct_txn = token_contract.functions.increaseApproval(
         spender, amount
     ).buildTransaction({
         'chainId': w3.eth.chainId,
         'from': signer_acct.address,
-        'nonce': w3.eth.getTransactionCount(
-            signer_acct.address
-        ),
+        'nonce': approval_nonce,
         'gas': 4108036,
         'gasPrice': w3.toWei(9, 'gwei')
     })
@@ -73,3 +72,4 @@ def increase_approval(
     if receipt.status != 1:
         print(receipt)
         raise TxError("Mint asset Tx execution failed")
+    return approval_nonce + 1
