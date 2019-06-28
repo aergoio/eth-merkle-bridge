@@ -366,16 +366,17 @@ class EthMerkleBridgeCli():
         from_chain, to_chain, from_assets, to_assets, asset_name, \
             receiver = self.commun_transfer_params()
         amount = get_amount()
-        print("Initialize transfer summary:\n"
-              "Departure chain: {}\n"
-              "Destination chain: {}\n"
-              "Asset name: {}\n"
-              "Receiver at destination: {}\n"
-              "Amount: {}\n"
-              .format(from_chain, to_chain, asset_name, receiver, amount))
-        if not confirm_transfer():
-            print('Finalize transfer canceled')
-            return
+        bridge_from = self.wallet.config_data('networks', from_chain, 'bridges',
+                                              to_chain, 'addr')
+        bridge_to = self.wallet.config_data('networks', to_chain, 'bridges',
+                                            from_chain, 'addr')
+        summary = "Departure chain: {} ({})\n" \
+                  "Destination chain: {} ({})\n" \
+                  "Asset name: {}\n" \
+                  "Receiver at destination: {}\n" \
+                  "Amount: {}\n".format(from_chain, bridge_from, to_chain,
+                                        bridge_to, asset_name, receiver,
+                                        amount)
         deposit_height, tx_hash = 0, ""
         if self.wallet.config_data('networks',
                                    from_chain, 'type') == 'ethereum':
@@ -383,6 +384,10 @@ class EthMerkleBridgeCli():
             eth_poa = self.wallet.config_data('networks', from_chain, 'isPOA')
             if asset_name in from_assets:
                 # if transfering a native asset Lock
+                print("Lock transfer summary:\n{}".format(summary))
+                if not confirm_transfer():
+                    print('Initialize transfer canceled')
+                    return
                 asset_abi = get_asset_abi(
                     self.wallet.config_data(
                         'networks', from_chain, 'tokens', asset_name, 'abi')
@@ -395,6 +400,10 @@ class EthMerkleBridgeCli():
                   from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
                 # if transfering a pegged asset Burn
+                print("Burn transfer summary:\n{}".format(summary))
+                if not confirm_transfer():
+                    print('Initialize transfer canceled')
+                    return
                 deposit_height, tx_hash = self.wallet.burn_to_aergo(
                     from_chain, to_chain, self.bridge_abi, asset_name,
                     self.minted_erc20_abi, amount, receiver, privkey_name,
@@ -409,10 +418,19 @@ class EthMerkleBridgeCli():
             if asset_name in from_assets:
                 # if transfering a native asset Lock
                 if asset_name == 'aergo':
+                    print("Freeze Mainnet Aergo transfer summary:\n{}"
+                          .format(summary))
+                    if not confirm_transfer():
+                        print('Initialize transfer canceled')
+                        return
                     deposit_height, tx_hash = self.wallet.freeze(
                         from_chain, to_chain, amount, receiver, privkey_name
                     )
                 else:
+                    print("Lock transfer summary:\n{}".format(summary))
+                    if not confirm_transfer():
+                        print('Initialize transfer canceled')
+                        return
                     deposit_height, tx_hash = self.wallet.lock_to_eth(
                         from_chain, to_chain, asset_name, amount, receiver,
                         privkey_name
@@ -422,11 +440,20 @@ class EthMerkleBridgeCli():
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
                 # if transfering a pegged asset Burn
                 if asset_name == 'aergo_erc20':
+                    print("Freeze Mainnet Aergo transfer summary:\n{}"
+                          .format(summary))
+                    if not confirm_transfer():
+                        print('Initialize transfer canceled')
+                        return
                     deposit_height, tx_hash = self.wallet.freeze(
                         from_chain, to_chain, asset_name, amount, receiver,
                         privkey_name
                     )
                 else:
+                    print("Burn transfer summary:\n{}".format(summary))
+                    if not confirm_transfer():
+                        print('Initialize transfer canceled')
+                        return
                     deposit_height, tx_hash = self.wallet.burn_to_eth(
                         from_chain, to_chain, asset_name, amount, receiver,
                         privkey_name
@@ -458,19 +485,8 @@ class EthMerkleBridgeCli():
             from_chain, to_chain, from_assets, to_assets, asset_name, \
                 receiver = self.commun_transfer_params()
             deposit_height = get_deposit_height()
-            print("Finalize transfer summary:\n"
-                  "Departure chain: {}\n"
-                  "Arrival chain: {}\n"
-                  "Asset name: {}\n"
-                  "Receiver at destination: {}\n"
-                  "Block height of lock/burn/freeze: {}\n"
-                  .format(from_chain, to_chain, asset_name, receiver,
-                          deposit_height))
-            if not confirm_transfer():
-                print('Finalize transfer canceled')
-                return
         elif answers['transfer'] == 'Back':
-            return
+            return None
         else:
             from_chain, to_chain, asset_name, receiver, deposit_height = \
                 answers['transfer']
@@ -480,8 +496,22 @@ class EthMerkleBridgeCli():
                 receiver, deposit_height)
 
     def finalize_transfer(self):
+        arguments = self.finalize_transfer_arguments()
+        if arguments is None:
+            return
         from_chain, to_chain, from_assets, to_assets, asset_name, receiver, \
-            deposit_height = self.finalize_transfer_arguments()
+            deposit_height = arguments
+        bridge_from = self.wallet.config_data('networks', from_chain, 'bridges',
+                                              to_chain, 'addr')
+        bridge_to = self.wallet.config_data('networks', to_chain, 'bridges',
+                                            from_chain, 'addr')
+        summary = "Departure chain: {} ({})\n" \
+                  "Destination chain: {} ({})\n" \
+                  "Asset name: {}\n" \
+                  "Receiver at destination: {}\n" \
+                  "Block height of lock/burn/freeze: {}\n"\
+                  .format(from_chain, bridge_from, to_chain, bridge_to,
+                          asset_name, receiver, deposit_height)
         if self.wallet.config_data('networks',
                                    from_chain, 'type') == 'ethereum':
             privkey_name = self.get_privkey_name('wallet')
@@ -489,11 +519,20 @@ class EthMerkleBridgeCli():
             if asset_name in from_assets:
                 # if transfering a native asset mint
                 if asset_name == 'aergo_erc20':
+                    print("Unfreeze Mainnet Aergo transfer summary:\n{}"
+                          .format(summary))
+                    if not confirm_transfer():
+                        print('Finalize transfer canceled')
+                        return
                     self.wallet.unfreeze(
                         from_chain, to_chain, receiver, deposit_height,
                         privkey_name, eth_poa=eth_poa
                     )
                 else:
+                    print("Mint transfer summary:\n{}".format(summary))
+                    if not confirm_transfer():
+                        print('Finalize transfer canceled')
+                        return
                     self.wallet.mint_to_aergo(
                         from_chain, to_chain, asset_name, receiver,
                         deposit_height, privkey_name, eth_poa=eth_poa
@@ -502,6 +541,10 @@ class EthMerkleBridgeCli():
                   from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
                 # if transfering a pegged asset unlock
+                print("Unlock transfer summary:\n{}".format(summary))
+                if not confirm_transfer():
+                    print('Finalize transfer canceled')
+                    return
                 self.wallet.unlock_to_aergo(
                     from_chain, to_chain, asset_name, receiver, deposit_height,
                     privkey_name, eth_poa=eth_poa
@@ -514,6 +557,10 @@ class EthMerkleBridgeCli():
             privkey_name = self.get_privkey_name('wallet')
             eth_poa = self.wallet.config_data('networks', to_chain, 'isPOA')
             if asset_name == 'aergo':
+                print("Unlock transfer summary:\n{}".format(summary))
+                if not confirm_transfer():
+                    print('Finalize transfer canceled')
+                    return
                 asset_abi = get_asset_abi(
                     self.wallet.config_data(
                         'networks', to_chain, 'tokens', 'aergo_erc20', 'abi')
@@ -525,6 +572,10 @@ class EthMerkleBridgeCli():
                 )
             elif asset_name in from_assets:
                 # if transfering a native asset mint
+                print("Mint transfer summary:\n{}".format(summary))
+                if not confirm_transfer():
+                    print('Finalize transfer canceled')
+                    return
                 self.wallet.mint_to_eth(
                     from_chain, to_chain, self.bridge_abi, asset_name,
                     self.minted_erc20_abi, receiver, deposit_height,
@@ -535,6 +586,10 @@ class EthMerkleBridgeCli():
                       'networks', to_chain, 'tokens', asset_name, 'pegs')
                   ):
                 # if transfering a pegged asset unlock
+                print("Unlock transfer summary:\n{}".format(summary))
+                if not confirm_transfer():
+                    print('Finalize transfer canceled')
+                    return
                 asset_abi = get_asset_abi(
                     self.wallet.config_data(
                         'networks', to_chain, 'tokens', asset_name, 'abi')

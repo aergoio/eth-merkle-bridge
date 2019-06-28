@@ -17,14 +17,20 @@ def confirm_transfer():
 
 
 def get_amount():
-    questions = [
-        inquirer.Text(
-            'amount',
-            message="Amount of assets to transfer",
-        )
-    ]
-    answers = inquirer.prompt(questions)
-    return int(answers['amount']) * 10**18
+    while 1:
+        try:
+            questions = [
+                inquirer.Text(
+                    'amount',
+                    message="Amount of assets to transfer",
+                )
+            ]
+            answers = inquirer.prompt(questions)
+            amount = int(answers['amount']) * 10**18
+            break
+        except ValueError:
+            print("Invalid amount")
+    return amount
 
 
 def get_asset_abi(path):
