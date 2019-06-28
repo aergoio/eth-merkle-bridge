@@ -35,6 +35,7 @@ def run(
     aergo_erc20,
     path: str = "./config.json",
     privkey_name: str = None,
+    privkey_pwd: str = None,
 ) -> None:
     if privkey_name is None:
         privkey_name = 'proposer'
@@ -58,8 +59,9 @@ def run(
     print("ethereum finality: ", t_final_eth)
 
     print("------ Set Sender Account -----------")
-    privkey_pwd = getpass("Decrypt Aergo private key '{}'\nPassword: "
-                          .format(privkey_name))
+    if privkey_pwd is None:
+        privkey_pwd = getpass("Decrypt Aergo private key '{}'\nPassword: "
+                            .format(privkey_name))
     sender_priv_key = config_data['wallet'][privkey_name]['priv_key']
     aergo.import_account(sender_priv_key, privkey_pwd)
     print("  > Sender Address Aergo: {}".format(aergo.account.address))
@@ -67,8 +69,9 @@ def run(
     keystore = config_data["wallet-eth"][privkey_name]['keystore']
     with open("./keystore/" + keystore, "r") as f:
         encrypted_key = f.read()
-    privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
-                          .format(privkey_name))
+    if privkey_pwd is None:
+        privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
+                            .format(privkey_name))
     privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
     acct = w3.eth.account.from_key(privkey)
     sender = acct.address
@@ -109,7 +112,7 @@ def run(
                       result.detail))
         aergo.disconnect()
         return
-    aergo_address = result.contract_address
+    aergo_bridge = result.contract_address
     aergo_id = result.detail[1:-1]
 
     print("------ Freeze aergo in bridge -----------")
@@ -117,7 +120,7 @@ def run(
     aergo.import_account(aergo_vault, privkey_pwd)
     # NOTE watch out for tx fees, they shouldnt be deducted from the vault value.
     tx, result = aergo.send_payload(
-        to_address=aergo_address, amount=100000000000000000000000,
+        to_address=aergo_bridge, amount=100000000000000000000000,
         payload=None
     )
     if result.status != herapy.CommitStatus.TX_OK:
@@ -146,27 +149,25 @@ def run(
     eth_address = receipt.contractAddress
 
     print("  > SC Address Ethereum: {}".format(eth_address))
-    print("  > SC Address Aergo: {}".format(aergo_address))
+    print("  > SC Address Aergo: {}".format(aergo_bridge))
 
     print("------ Store bridge addresses in config.json  -----------")
     config_data['networks'][eth_net]['bridges'][aergo_net] = {}
     config_data['networks'][aergo_net]['bridges'][eth_net] = {}
-    config_data['networks'][eth_net]['bridges'][aergo_net]['addr'] = eth_address
-    config_data['networks'][aergo_net]['bridges'][eth_net]['addr'] = aergo_address
+    (config_data['networks'][eth_net]['bridges'][aergo_net]
+        ['addr']) = eth_address
+    (config_data['networks'][aergo_net]['bridges'][eth_net]
+        ['addr']) = aergo_bridge
     config_data['networks'][eth_net]['bridges'][aergo_net]['id'] = eth_id
     config_data['networks'][aergo_net]['bridges'][eth_net]['id'] = aergo_id
-    config_data['networks'][eth_net]['bridges'][aergo_net]['t_anchor'] = t_anchor_eth
-    config_data['networks'][eth_net]['bridges'][aergo_net]['t_final'] = t_final_aergo
-    config_data['networks'][aergo_net]['bridges'][eth_net]['t_anchor'] = t_anchor_aergo
-    config_data['networks'][aergo_net]['bridges'][eth_net]['t_final'] = t_final_eth
-    try:
-        config_data[eth_net]['tokens']['aergo']
-    except KeyError:
-        pass
-    else:
-        # this is a new bridge, so remove any old pegged aergo with same name
-        # bridge
-        config_data['networks'][eth_net]['tokens']['aergo']['pegs'] = {}
+    (config_data['networks'][eth_net]['bridges'][aergo_net]
+        ['t_anchor']) = t_anchor_eth
+    (config_data['networks'][eth_net]['bridges'][aergo_net]
+        ['t_final']) = t_final_aergo
+    (config_data['networks'][aergo_net]['bridges'][eth_net]
+        ['t_anchor']) = t_anchor_aergo
+    (config_data['networks'][aergo_net]['bridges'][eth_net]
+        ['t_final']) = t_final_eth
 
     with open(path, "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)
@@ -192,5 +193,5 @@ if __name__ == '__main__':
     run(
         config_data, lua_bytecode, sol_bytecode, sol_abi, t_anchor_eth,
         t_anchor_aergo, t_final_eth, 'eth-poa-local', 'aergo-local',
-        'aergo_erc20'
+        'aergo_erc20', privkey_pwd='1234'
     )
