@@ -48,5 +48,6 @@ $ make clean
 ```
 
 ## TODO
-Updata merkle proof verification, tx fees, and delegated fee minting when Aergo v2
+Update merkle proof verification, tx fees, and delegated fee minting when Aergo v2
+
 Implement bridge multisig

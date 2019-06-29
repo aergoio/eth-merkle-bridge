@@ -1,6 +1,7 @@
 import hashlib
 import inquirer
 import json
+import os
 from pyfiglet import Figlet
 
 from ethaergo_wallet.wallet import (
@@ -23,16 +24,23 @@ from cli.utils import (
     get_aergo_privkey,
     get_new_asset,
     get_validators,
+    get_abi,
 )
 
 
 class EthMerkleBridgeCli():
     def __init__(self):
-        with open("./contracts/solidity/bridge_abi.txt", "r") as f:
+        file_path = os.path.dirname(os.path.realpath(__file__))
+        # root_path is the path/to/eth-merkle-bridge from which files are 
+        # tracked
+        self.root_path = os.path.dirname(file_path) + '/'
+        with open(self.root_path
+                  + "/contracts/solidity/bridge_abi.txt", "r") as f:
             self.bridge_abi = f.read()
-        with open("./contracts/solidity/minted_erc20_abi.txt", "r") as f:
+        with open(self.root_path +
+                  "/contracts/solidity/minted_erc20_abi.txt", "r") as f:
             self.minted_erc20_abi = f.read()
-        with open('cli/pending_transfers.json', 'r') as file:
+        with open(file_path + '/pending_transfers.json', 'r') as file:
             self.pending_transfers = json.load(file)
 
     def start(self):
@@ -53,6 +61,7 @@ class EthMerkleBridgeCli():
             answers = inquirer.prompt(questions)
             if answers['YesNo'] == 'Y':
                 self.load_config()
+                self.root()
             elif answers['YesNo'] == 'N':
                 self.create_config()
             else:
@@ -68,10 +77,9 @@ class EthMerkleBridgeCli():
             config_file_path = inquirer.prompt(questions)['config_file_path']
             try:
                 self.wallet = EthAergoWallet(config_file_path)
-                return self.root()
+                break
             except (IsADirectoryError, FileNotFoundError):
                 print("Invalid path/to/config.json")
-                return
 
     def root(self):
         while 1:
@@ -246,18 +254,20 @@ class EthMerkleBridgeCli():
         new_config['wallet-eth'] = {}
         new_config['wallet'] = {}
         if net1_type == 'ethereum':
-            name, addr, privkey = get_eth_privkey()
+            name, addr, privkey_path = get_eth_privkey()
+            privkey_path = os.path.relpath(privkey_path, self.root_path)
             new_config['wallet-eth'][name] = {"addr": addr,
-                                              "keystore": privkey}
+                                              "keystore": privkey_path}
         else:
             name, addr, privkey = get_aergo_privkey()
             new_config['wallet'][name] = {"addr": addr,
                                           "priv_key": privkey}
         print("Register a private key for {}".format(net2))
         if net2_type == 'ethereum':
-            name, addr, privkey = get_eth_privkey()
+            name, addr, privkey_path = get_eth_privkey()
+            privkey_path = os.path.relpath(privkey_path, self.root_path)
             new_config['wallet-eth'][name] = {"addr": addr,
-                                              "keystore": privkey}
+                                              "keystore": privkey_path}
         else:
             name, addr, privkey = get_aergo_privkey()
             new_config['wallet'][name] = {"addr": addr,
@@ -288,6 +298,8 @@ class EthMerkleBridgeCli():
 
         with open(path, "w") as f:
             json.dump(new_config, f, indent=4, sort_keys=True)
+        
+        print("Config file stored in: {}".format(os.path.abspath(path)))
 
     def register_bridge(self):
         net1, net2 = self.get_directions()
@@ -329,6 +341,12 @@ class EthMerkleBridgeCli():
                                     value={'pegs': {}})
         self.wallet.config_data(
             'networks', origin, 'tokens', name, 'addr', value=origin_addr)
+        # if ethereum query abi path
+        if self.wallet.config_data('networks', origin, 'type') == 'ethereum':
+            abi_path = get_abi()
+            abi_path = os.path.relpath(abi_path, self.root_path)
+            self.wallet.config_data(
+                'networks', origin, 'tokens', name, 'abi', value=abi_path)
         for i, peg_net in enumerate(pegs):
             self.wallet.config_data(
                 'networks', origin, 'tokens', name, 'pegs', peg_net,
@@ -389,7 +407,7 @@ class EthMerkleBridgeCli():
                     print('Initialize transfer canceled')
                     return
                 asset_abi = get_asset_abi(
-                    self.wallet.config_data(
+                    self.root_path + self.wallet.config_data(
                         'networks', from_chain, 'tokens', asset_name, 'abi')
                 )
                 deposit_height, tx_hash = self.wallet.lock_to_aergo(
@@ -562,7 +580,7 @@ class EthMerkleBridgeCli():
                     print('Finalize transfer canceled')
                     return
                 asset_abi = get_asset_abi(
-                    self.wallet.config_data(
+                    self.root_path + self.wallet.config_data(
                         'networks', to_chain, 'tokens', 'aergo_erc20', 'abi')
                 )
                 self.wallet.unlock_to_eth(
@@ -591,7 +609,7 @@ class EthMerkleBridgeCli():
                     print('Finalize transfer canceled')
                     return
                 asset_abi = get_asset_abi(
-                    self.wallet.config_data(
+                    self.root_path + self.wallet.config_data(
                         'networks', to_chain, 'tokens', asset_name, 'abi')
                 )
                 self.wallet.unlock_to_eth(
@@ -749,7 +767,7 @@ class EthMerkleBridgeCli():
         return from_assets, to_assets
 
     def store_pending_transfers(self):
-        with open('cli/pending_transfers.json', 'w') as file:
+        with open(self.root_path + '/cli/pending_transfers.json', 'w') as file:
             json.dump(self.pending_transfers, file, indent=4)
 
 

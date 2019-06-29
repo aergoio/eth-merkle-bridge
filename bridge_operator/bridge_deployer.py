@@ -1,5 +1,6 @@
 from getpass import getpass
 import json
+import os
 import time
 
 from typing import (
@@ -24,6 +25,7 @@ COMMIT_TIME = 3
 
 def run(
     config_data: Dict,
+    path: str,
     lua_bytecode: str,
     sol_bytecode: str,
     sol_abi: str,
@@ -33,7 +35,6 @@ def run(
     eth_net: str,
     aergo_net: str,
     aergo_erc20,
-    path: str = "./config.json",
     privkey_name: str = None,
     privkey_pwd: str = None,
 ) -> None:
@@ -67,7 +68,9 @@ def run(
     print("  > Sender Address Aergo: {}".format(aergo.account.address))
 
     keystore = config_data["wallet-eth"][privkey_name]['keystore']
-    with open("./keystore/" + keystore, "r") as f:
+    file_path = os.path.dirname(os.path.realpath(__file__))
+    root_path = os.path.dirname(file_path) + '/'
+    with open(root_path + keystore, "r") as f:
         encrypted_key = f.read()
     if privkey_pwd is None:
         privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
@@ -191,7 +194,7 @@ if __name__ == '__main__':
     t_anchor_aergo = 10  # ethereum anchoring periord on aergo
     t_final_eth = 10  # time after which ethereum is considered finalized
     run(
-        config_data, lua_bytecode, sol_bytecode, sol_abi, t_anchor_eth,
+        config_data, "./config.json", lua_bytecode, sol_bytecode, sol_abi, t_anchor_eth,
         t_anchor_aergo, t_final_eth, 'eth-poa-local', 'aergo-local',
         'aergo_erc20', privkey_pwd='1234'
     )

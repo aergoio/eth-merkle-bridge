@@ -43,7 +43,7 @@ def bridge_wallet(aergo_wallet):
     assert w3.isConnected()
     privkey_name = 'default'
     keystore = config_data["wallet-eth"][privkey_name]['keystore']
-    with open("./keystore/" + keystore, "r") as f:
+    with open(keystore, "r") as f:
         encrypted_key = f.read()
     privkey = w3.eth.account.decrypt(encrypted_key, '1234')
     receipt = deploy_contract(bytecode, abi, w3, 1821490, 20, privkey)
@@ -52,7 +52,7 @@ def bridge_wallet(aergo_wallet):
     config_data['networks']['eth-poa-local']['tokens']['test_erc20']['addr'] = sc_address
     config_data['networks']['eth-poa-local']['tokens']['test_erc20']['pegs'] = {}
     config_data['networks']['eth-poa-local']['tokens']['test_erc20']['abi'] = \
-        "./contracts/solidity/aergo_erc20_abi.txt"
+        "contracts/solidity/aergo_erc20_abi.txt"
     with open("./config.json", "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)
     wallet = EthAergoWallet("./config.json")

@@ -1,5 +1,6 @@
 from getpass import getpass
 import json
+import os
 from typing import (
     Dict,
 )
@@ -18,6 +19,7 @@ from ethaergo_wallet.eth_utils.contract_deployer import (
 
 def deploy_aergo_erc20(
     config_data: Dict,
+    config_path: str,
     bytecode: str,
     abi: str,
     abi_path,
@@ -36,7 +38,9 @@ def deploy_aergo_erc20(
     print("------ Set Sender Account -----------")
     privkey_name = 'default'
     keystore = config_data["wallet-eth"][privkey_name]['keystore']
-    with open("./keystore/" + keystore, "r") as f:
+    file_path = os.path.dirname(os.path.realpath(__file__))
+    root_path = os.path.dirname(file_path) + '/'
+    with open(root_path + keystore, "r") as f:
         encrypted_key = f.read()
     if privkey_pwd is None:
         privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
@@ -60,7 +64,7 @@ def deploy_aergo_erc20(
         ['aergo-local']) = 'aergo'
     (config_data['networks'][network_name]['tokens'][token_name]
         ['abi']) = abi_path
-    with open("./config.json", "w") as f:
+    with open(config_path, "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)
 
 
@@ -69,9 +73,9 @@ if __name__ == '__main__':
         config_data = json.load(f)
     with open("./contracts/solidity/aergo_erc20_bytecode.txt", "r") as f:
         bytecode = f.read()
-    abi_path = "./contracts/solidity/aergo_erc20_abi.txt"
+    abi_path = "contracts/solidity/aergo_erc20_abi.txt"
     with open(abi_path, "r") as f:
         abi = f.read()
 
-    deploy_aergo_erc20(config_data, bytecode, abi, abi_path, 'eth-poa-local',
-                       'aergo_erc20', '1234')
+    deploy_aergo_erc20(config_data, "./config.json", bytecode, abi, abi_path,
+                       'eth-poa-local', 'aergo_erc20', '1234')

@@ -123,7 +123,7 @@ def get_eth_privkey():
             ),
             inquirer.Text(
                 'privkey',
-                message="Name of json file in eth-merkle-bridge/keystore"
+                message="Path to json keystore"
             ),
             inquirer.Text(
                 'addr',
@@ -132,15 +132,34 @@ def get_eth_privkey():
         ]
         answers = inquirer.prompt(questions)
         privkey_name = answers['privkey_name']
-        privkey = answers['privkey']
+        privkey_path = answers['privkey']
         addr = answers['addr']
         try:
-            with open("./keystore/" + privkey, "r") as f:
+            with open(privkey_path, "r") as f:
                 f.read()
             break
         except (IsADirectoryError, FileNotFoundError):
-            print("Invalid key name in ./keystore/keyname")
-    return privkey_name, addr, privkey
+            print("Invalid key path")
+    return privkey_name, addr, privkey_path
+
+
+def get_abi():
+    while 1:
+        questions = [
+            inquirer.Text(
+                'abi_path',
+                message="Path to abi"
+            )
+        ]
+        answers = inquirer.prompt(questions)
+        abi_path = answers['abi_path']
+        try:
+            with open(abi_path, "r") as f:
+                f.read()
+            break
+        except (IsADirectoryError, FileNotFoundError):
+            print("Invalid abi path")
+    return abi_path
 
 
 def get_aergo_privkey():

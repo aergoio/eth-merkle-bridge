@@ -10,7 +10,7 @@
                 },
                 "eth-poa-local": {
                     "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
-                    "id": "1de0fa4890faaf2cbf39ecdb1d1a8c42",
+                    "id": "38b9c9e818b1083c62ec52ac0a83eac6",
                     "t_anchor": 10,
                     "t_final": 10
                 }
@@ -22,9 +22,9 @@
                     "pegs": {}
                 },
                 "token1": {
-                    "addr": "AmhMB4P4XkSCCMhqBVHGg2MN5DxXfnd4KJd4U2RhDgbSJnnpaHL4",
+                    "addr": "AmgQ7ccfdYRUzRiiud6ETbkqffbusHTyyNYDCHmSHMZTspiXzohv",
                     "pegs": {
-                        "eth-poa-local": "0x41c3a2534E93B25Dab9cd0630d4D9b312564f417"
+                        "eth-poa-local": "0x65c88DF2c72a6730a9bA0642e24C545fC13e70F3"
                     }
                 }
             },
@@ -49,7 +49,7 @@
             "isPOA": true,
             "tokens": {
                 "aergo_erc20": {
-                    "abi": "./contracts/solidity/aergo_erc20_abi.txt",
+                    "abi": "contracts/solidity/aergo_erc20_abi.txt",
                     "addr": "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
                     "pegs": {
                         "aergo-local": "aergo"
@@ -60,11 +60,9 @@
                     "pegs": {}
                 },
                 "test_erc20": {
-                    "abi": "./contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0x9CbF770D81a42B9c049Cb15B67036Ff26B31717d",
-                    "pegs": {
-                        "aergo-local": "Amg8GTZH4oAZKQvGzDLLLLuCpv6xtq2ro6AMWkS4amoox89JdCyQ"
-                    }
+                    "abi": "contracts/solidity/aergo_erc20_abi.txt",
+                    "addr": "0x737ED67385C69E22F4423AF7645954711e390416",
+                    "pegs": {}
                 }
             },
             "type": "ethereum"
@@ -120,31 +118,31 @@
     "wallet-eth": {
         "broadcaster": {
             "addr": "0x1abdc1d5568cbb639fa605e2a155480f151c0e55",
-            "keystore": "UTC--2018-12-27T07-43-50.585671000Z--1abdc1d5568cbb639fa605e2a155480f151c0e55"
+            "keystore": "keystore/UTC--2018-12-27T07-43-50.585671000Z--1abdc1d5568cbb639fa605e2a155480f151c0e55"
         },
         "default": {
             "addr": "0xfec3c905bcd3d9a5471452e53f82106844cb1e76",
-            "keystore": "UTC--2019-05-13T09-23-35.377701000Z--fec3c905bcd3d9a5471452e53f82106844cb1e76"
+            "keystore": "keystore/UTC--2019-05-13T09-23-35.377701000Z--fec3c905bcd3d9a5471452e53f82106844cb1e76"
         },
         "default2": {
             "addr": "0x429c2388cad780f8e801849cb5f1aa76389727cd",
-            "keystore": "UTC--2019-05-13T09-26-18.058577000Z--429c2388cad780f8e801849cb5f1aa76389727cd"
+            "keystore": "keystore/UTC--2019-05-13T09-26-18.058577000Z--429c2388cad780f8e801849cb5f1aa76389727cd"
         },
         "proposer": {
             "addr": "0xc19b69591141443676a3ee56fbf1d3ea869d53d8",
-            "keystore": "UTC--2019-05-13T09-26-29.993150000Z--c19b69591141443676a3ee56fbf1d3ea869d53d8"
+            "keystore": "keystore/UTC--2019-05-13T09-26-29.993150000Z--c19b69591141443676a3ee56fbf1d3ea869d53d8"
         },
         "receiver": {
             "addr": "0x7acb4a265bf759ec772510c2465fb7c8f4eaf54e",
-            "keystore": "UTC--2019-05-13T09-26-38.701134000Z--7acb4a265bf759ec772510c2465fb7c8f4eaf54e"
+            "keystore": "keystore/UTC--2019-05-13T09-26-38.701134000Z--7acb4a265bf759ec772510c2465fb7c8f4eaf54e"
         },
         "test": {
             "addr": "0xf1bf3497d98ead7f6a1bb9ee6dfbde9d448d7062",
-            "keystore": "UTC--2019-05-13T09-26-46.916719000Z--f1bf3497d98ead7f6a1bb9ee6dfbde9d448d7062"
+            "keystore": "keystore/UTC--2019-05-13T09-26-46.916719000Z--f1bf3497d98ead7f6a1bb9ee6dfbde9d448d7062"
         },
         "validator": {
             "addr": "0x210467b3849a408c3a3bee14b4627aa57f342134",
-            "keystore": "UTC--2019-05-13T09-26-54.907966000Z--210467b3849a408c3a3bee14b4627aa57f342134"
+            "keystore": "keystore/UTC--2019-05-13T09-26-54.907966000Z--210467b3849a408c3a3bee14b4627aa57f342134"
         }
     }
 }

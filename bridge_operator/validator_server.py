@@ -11,6 +11,7 @@ import json
 from multiprocessing.dummy import (
     Pool,
 )
+import os
 import time
 
 from typing import (
@@ -126,7 +127,9 @@ class ValidatorService(BridgeOperatorServicer):
         print("  > Aergo validator Address: {}".format(self.aergo_addr))
 
         keystore = config_data["wallet-eth"][privkey_name]['keystore']
-        with open("./keystore/" + keystore, "r") as f:
+        file_path = os.path.dirname(os.path.realpath(__file__))
+        root_path = os.path.dirname(file_path) + '/'
+        with open(root_path + keystore, "r") as f:
             encrypted_key = f.read()
 
         # record private key for signing AergoAnchor

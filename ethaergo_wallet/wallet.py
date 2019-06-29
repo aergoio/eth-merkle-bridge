@@ -1,4 +1,5 @@
 from getpass import getpass
+import os
 from typing import (
     Dict,
     Tuple
@@ -45,6 +46,10 @@ class EthAergoWallet(WalletConfig):
         WalletConfig.__init__(self, config_file_path, config_data)
         self.gas_price = 0
         self.fee_price = 20  # gWei
+        # root_path is the path/to/eth-merkle-bridge from which files are 
+        # tracked
+        file_path = os.path.dirname(os.path.realpath(__file__))
+        self.root_path = os.path.dirname(file_path) + '/'
 
     def eth_to_aergo_sidechain(
         self,
@@ -104,7 +109,7 @@ class EthAergoWallet(WalletConfig):
         w3 = self.get_web3(from_chain, eth_poa)
         sender_keystore = self.config_data(
             'wallet-eth', privkey_name, 'keystore')
-        with open("./keystore/" + sender_keystore, "r") as f:
+        with open(self.root_path + sender_keystore, "r") as f:
             encrypted_key = f.read()
         if privkey_pwd is None:
             privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
@@ -240,7 +245,7 @@ class EthAergoWallet(WalletConfig):
         w3 = self.get_web3(from_chain, eth_poa)
         sender_keystore = self.config_data(
             'wallet-eth', privkey_name, 'keystore')
-        with open("./keystore/" + sender_keystore, "r") as f:
+        with open(self.root_path + sender_keystore, "r") as f:
             encrypted_key = f.read()
         if privkey_pwd is None:
             privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
@@ -628,7 +633,7 @@ class EthAergoWallet(WalletConfig):
         w3 = self.get_web3(to_chain, eth_poa)
         sender_keystore = self.config_data(
             'wallet-eth', privkey_name, 'keystore')
-        with open("./keystore/" + sender_keystore, "r") as f:
+        with open(self.root_path + sender_keystore, "r") as f:
             encrypted_key = f.read()
         if privkey_pwd is None:
             privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
@@ -762,7 +767,7 @@ class EthAergoWallet(WalletConfig):
         w3 = self.get_web3(to_chain, eth_poa)
         sender_keystore = self.config_data(
             'wallet-eth', privkey_name, 'keystore')
-        with open("./keystore/" + sender_keystore, "r") as f:
+        with open(self.root_path + sender_keystore, "r") as f:
             encrypted_key = f.read()
         if privkey_pwd is None:
             privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
@@ -976,10 +981,11 @@ class EthAergoWallet(WalletConfig):
             if asset_addr == 'ether':
                 balance = eth_u.get_balance(account_addr, asset_addr, w3)
                 return balance, asset_addr
-            abi_path = self.config_data('networks', network_name, 'tokens',
-                                        asset_name, 'abi')
+            abi_path = self.root_path + self.config_data(
+                'networks', network_name, 'tokens', asset_name, 'abi')
         else:
-            abi_path = './contracts/solidity/minted_erc20_abi.txt'
+            abi_path = self.root_path \
+                + '/contracts/solidity/minted_erc20_abi.txt'
 
         with open(abi_path, "r") as f:
             abi = f.read()
