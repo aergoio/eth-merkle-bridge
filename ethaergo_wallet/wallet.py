@@ -103,30 +103,14 @@ class EthAergoWallet(WalletConfig):
             raise InvalidArgumentsError(
                 "Receiver {} must be an Aergo address".format(receiver)
             )
-        bridge_abi_path = self.config_data('networks', from_chain, 'bridges',
-                                           to_chain, 'bridge_abi')
-        with open(self.root_path + bridge_abi_path, "r") as f:
-            bridge_from_abi = f.read()
-        erc20_abi_path = self.config_data('networks', from_chain, 'tokens',
-                                          asset_name, 'abi')
-        with open(self.root_path + erc20_abi_path, "r") as f:
-            erc20_abi = f.read()
+        bridge_from_abi = self.load_bridge_abi(from_chain, to_chain)
+        erc20_abi = self.load_erc20_abi(from_chain, asset_name)
         w3 = self.get_web3(from_chain)
-        sender_keystore = self.config_data(
-            'wallet-eth', privkey_name, 'keystore')
-        with open(self.root_path + sender_keystore, "r") as f:
-            encrypted_key = f.read()
-        if privkey_pwd is None:
-            privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
-                                  .format(privkey_name))
-        privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
-        signer_acct = w3.eth.account.from_key(privkey)
+        signer_acct = self.get_signer(w3, privkey_name, privkey_pwd)
         token_owner = signer_acct.address
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        erc20_address = self.get_asset_address(asset_name, from_chain)
 
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        erc20_address = self.config_data(
-            'networks', from_chain, 'tokens', asset_name, 'addr')
         balance = eth_u.get_balance(token_owner, erc20_address, w3,
                                     erc20_abi)
         print("{} balance on destination before transfer : {}"
@@ -168,26 +152,23 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
     ) -> str:
         """ Finalize ERC20 token or Ether transfer to Aergo sidechain """
+        w3 = self.get_web3(from_chain)
+        aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
+        tx_sender = str(aergo_to.account.address)
+        bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        asset_address = self.get_asset_address(asset_name, from_chain)
+        if receiver is None:
+            receiver = tx_sender
         if not is_aergo_address(receiver):
             raise InvalidArgumentsError(
                 "Receiver {} must be an Aergo address".format(receiver)
             )
-        w3 = self.get_web3(from_chain)
-        aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
-        tx_sender = str(aergo_to.account.address)
-        bridge_to = self.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        asset_address = self.config_data(
-            'networks', from_chain, 'tokens', asset_name, 'addr')
-        if receiver is None:
-            receiver = tx_sender
 
         save_pegged_token_address = False
         try:
-            token_pegged = self.config_data(
-                'networks', from_chain, 'tokens', asset_name, 'pegs', to_chain)
+            token_pegged = self.get_asset_address(
+                asset_name, to_chain, asset_origin_chain=from_chain)
             balance = aergo_u.get_balance(receiver, token_pegged, aergo_to)
             print("{} balance on destination before transfer: {}"
                   .format(asset_name, balance/10**18))
@@ -243,30 +224,15 @@ class EthAergoWallet(WalletConfig):
             raise InvalidArgumentsError(
                 "Receiver {} must be an Aergo address".format(receiver)
             )
-        bridge_abi_path = self.config_data('networks', from_chain, 'bridges',
-                                           to_chain, 'bridge_abi')
-        with open(self.root_path + bridge_abi_path, "r") as f:
-            bridge_from_abi = f.read()
-        minted_erc20_abi_path = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'minted_abi')
-        with open(self.root_path + minted_erc20_abi_path, "r") as f:
-            minted_erc20_abi = f.read()
+        bridge_from_abi = self.load_bridge_abi(from_chain, to_chain)
+        minted_erc20_abi = self.load_minted_erc20_abi(from_chain, to_chain)
         w3 = self.get_web3(from_chain)
-        sender_keystore = self.config_data(
-            'wallet-eth', privkey_name, 'keystore')
-        with open(self.root_path + sender_keystore, "r") as f:
-            encrypted_key = f.read()
-        if privkey_pwd is None:
-            privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
-                                  .format(privkey_name))
-        privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
-        signer_acct = w3.eth.account.from_key(privkey)
+        signer_acct = self.get_signer(w3, privkey_name, privkey_pwd)
         token_owner = signer_acct.address
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        token_pegged = self.get_asset_address(asset_name, from_chain,
+                                              asset_origin_chain=to_chain)
 
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        token_pegged = self.config_data(
-            'networks', to_chain, 'tokens', asset_name, 'pegs', from_chain)
         balance = eth_u.get_balance(token_owner, token_pegged, w3,
                                     minted_erc20_abi)
         print("{} balance on destination before transfer : {}"
@@ -304,22 +270,19 @@ class EthAergoWallet(WalletConfig):
         """ Finalize ERC20Aergo transfer to Aergo Mainnet by unfreezing
             (aers are already minted and freezed in the bridge contract)
         """
-        if not is_aergo_address(receiver):
-            raise InvalidArgumentsError(
-                "Receiver {} must be an Aergo address".format(receiver)
-            )
         asset_name = 'aergo_erc20'
         w3 = self.get_web3(from_chain)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
-        bridge_to = self.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        asset_address = self.config_data(
-            'networks', from_chain, 'tokens', asset_name, 'addr')
+        bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        asset_address = self.get_asset_address(asset_name, from_chain)
         if receiver is None:
             receiver = tx_sender
+        if not is_aergo_address(receiver):
+            raise InvalidArgumentsError(
+                "Receiver {} must be an Aergo address".format(receiver)
+            )
 
         balance = aergo_u.get_balance(receiver, 'aergo', aergo_to)
         print("{} balance on destination before transfer: {}"
@@ -371,12 +334,9 @@ class EthAergoWallet(WalletConfig):
         w3 = self.get_web3(from_chain)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
-        bridge_to = self.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        asset_address = self.config_data(
-            'networks', to_chain, 'tokens', asset_name, 'addr')
+        bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        asset_address = self.get_asset_address(asset_name, to_chain)
 
         print("\n------ Get burn proof -----------")
         burn_proof = eth_to_aergo.build_burn_proof(
@@ -415,12 +375,10 @@ class EthAergoWallet(WalletConfig):
         asset_name: str,
         receiver: str,
     ) -> Tuple[int, int]:
-        token_origin = self.config_data(
-            'networks', from_chain, 'tokens', asset_name, 'addr')
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        bridge_to = self.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
+        """Check minteable balance on Aergo."""
+        token_origin = self.get_asset_address(asset_name, from_chain)
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
         if not is_ethereum_address(token_origin):
             raise InvalidArgumentsError(
                 "token_origin {} must be an Ethereum address"
@@ -448,12 +406,10 @@ class EthAergoWallet(WalletConfig):
         asset_name: str,
         receiver: str,
     ) -> Tuple[int, int]:
-        token_origin = self.config_data(
-            'networks', to_chain, 'tokens', asset_name, 'addr')
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        bridge_to = self.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
+        """Check unlockeable balance on Aergo."""
+        token_origin = self.get_asset_address(asset_name, to_chain)
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
         if not is_aergo_address(token_origin):
             raise InvalidArgumentsError(
                 "token_origin {} must be an Aergo address"
@@ -480,12 +436,10 @@ class EthAergoWallet(WalletConfig):
         to_chain: str,
         receiver: str,
     ) -> Tuple[int, int]:
-        token_origin = self.config_data(
-            'networks', from_chain, 'tokens', 'aergo_erc20', 'addr')
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        bridge_to = self.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
+        """Check unfreezeable balance on Aergo."""
+        token_origin = self.get_asset_address('aergo_erc20', from_chain)
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
         if not is_ethereum_address(token_origin):
             raise InvalidArgumentsError(
                 "token_origin {} must be an Ethereum address"
@@ -531,8 +485,8 @@ class EthAergoWallet(WalletConfig):
         asset_name = 'aergo_erc20'
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
         sender = str(aergo_from.account.address)
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+
         fee_limit = 0
         balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
         if balance < amount + fee_limit * self.fee_price:
@@ -575,10 +529,9 @@ class EthAergoWallet(WalletConfig):
             )
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
         sender = str(aergo_from.account.address)
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        asset_address = self.config_data(
-            'networks', from_chain, 'tokens', asset_name, 'addr')
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        asset_address = self.get_asset_address(asset_name, from_chain)
+
         # sign transfer so bridge can pull tokens to lock.
         fee_limit = 0
         signed_transfer, balance = \
@@ -587,6 +540,7 @@ class EthAergoWallet(WalletConfig):
         signed_transfer = signed_transfer[:2]  # only nonce, sig are needed
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
+
         aer_balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
         if aer_balance < fee_limit*self.fee_price:
             err = "not enough aer balance to pay tx fee"
@@ -625,45 +579,26 @@ class EthAergoWallet(WalletConfig):
         already minted amount.
         Bridge tempo is taken from config_data
         """
-        bridge_abi_path = self.config_data('networks', to_chain, 'bridges',
-                                           from_chain, 'bridge_abi')
-        with open(self.root_path + bridge_abi_path, "r") as f:
-            bridge_to_abi = f.read()
-        minted_erc20_abi_path = self.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'minted_abi')
-        with open(self.root_path + minted_erc20_abi_path, "r") as f:
-            minted_erc20_abi = f.read()
+        bridge_to_abi = self.load_bridge_abi(to_chain, from_chain)
+        minted_erc20_abi = self.load_minted_erc20_abi(to_chain, from_chain)
         aergo_from = self.connect_aergo(from_chain)
-        # get ethereum tx signer
         w3 = self.get_web3(to_chain)
-        sender_keystore = self.config_data(
-            'wallet-eth', privkey_name, 'keystore')
-        with open(self.root_path + sender_keystore, "r") as f:
-            encrypted_key = f.read()
-        if privkey_pwd is None:
-            privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
-                                  .format(privkey_name))
-        privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
-        signer_acct = w3.eth.account.from_key(privkey)
+        signer_acct = self.get_signer(w3, privkey_name, privkey_pwd)
         tx_sender = signer_acct.address
-
         if receiver is None:
             receiver = tx_sender
         if not is_ethereum_address(receiver):
             raise InvalidArgumentsError(
                 "receiver {} must be an Ethereum address".format(receiver)
             )
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
+        asset_address = self.get_asset_address(asset_name, from_chain)
 
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        bridge_to = self.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
-        asset_address = self.config_data(
-            'networks', from_chain, 'tokens', asset_name, 'addr')
         save_pegged_token_address = False
         try:
-            token_pegged = self.config_data(
-                'networks', from_chain, 'tokens', asset_name, 'pegs', to_chain)
+            token_pegged = self.get_asset_address(
+                asset_name, to_chain, asset_origin_chain=from_chain)
             balance = eth_u.get_balance(receiver, token_pegged, w3,
                                         minted_erc20_abi)
             print("{} balance on destination before transfer : {}"
@@ -724,16 +659,17 @@ class EthAergoWallet(WalletConfig):
             )
         aergo_from = self.get_aergo(from_chain, privkey_name, privkey_pwd)
         sender = str(aergo_from.account.address)
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        token_pegged = self.config_data(
-            'networks', to_chain, 'tokens', asset_name, 'pegs', from_chain)
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        token_pegged = self.get_asset_address(asset_name, from_chain,
+                                              asset_origin_chain=to_chain)
+
         fee_limit = 0
         balance = aergo_u.get_balance(sender, token_pegged, aergo_from)
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
         print("\n{} balance on sidechain before transfer: {}"
               .format(asset_name, balance/10**18))
+
         aer_balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
         if aer_balance < fee_limit*self.fee_price:
             err = "not enough aer balance to pay tx fee"
@@ -764,26 +700,12 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
     ) -> Tuple[str, str]:
         """ Finalize ERC20 or Eth transfer back to Ethereum origin """
-        bridge_abi_path = self.config_data('networks', to_chain, 'bridges',
-                                           from_chain, 'bridge_abi')
-        with open(self.root_path + bridge_abi_path, "r") as f:
-            bridge_to_abi = f.read()
-        erc20_abi_path = self.config_data('networks', to_chain, 'tokens',
-                                          asset_name, 'abi')
-        with open(self.root_path + erc20_abi_path, "r") as f:
-            erc20_abi = f.read()
+        bridge_to_abi = self.load_bridge_abi(to_chain, from_chain)
+        erc20_abi = self.load_erc20_abi(to_chain, asset_name)
         aergo_from = self.connect_aergo(from_chain)
         # get ethereum tx signer
         w3 = self.get_web3(to_chain)
-        sender_keystore = self.config_data(
-            'wallet-eth', privkey_name, 'keystore')
-        with open(self.root_path + sender_keystore, "r") as f:
-            encrypted_key = f.read()
-        if privkey_pwd is None:
-            privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
-                                  .format(privkey_name))
-        privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
-        signer_acct = w3.eth.account.from_key(privkey)
+        signer_acct = self.get_signer(w3, privkey_name, privkey_pwd)
         tx_sender = signer_acct.address
 
         if receiver is None:
@@ -793,12 +715,9 @@ class EthAergoWallet(WalletConfig):
                 "receiver {} must be an Ethereum address".format(receiver)
             )
 
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        bridge_to = self.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
-        asset_address = self.config_data(
-            'networks', to_chain, 'tokens', asset_name, 'addr')
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
+        asset_address = self.get_asset_address(asset_name, to_chain)
         balance = eth_u.get_balance(receiver, asset_address, w3, erc20_abi)
         print("{} balance on destination before transfer : {}"
               .format(asset_name, balance/10**18))
@@ -837,12 +756,10 @@ class EthAergoWallet(WalletConfig):
         asset_name: str,
         receiver: str,
     ) -> Tuple[int, int]:
-        token_origin = self.config_data(
-            'networks', from_chain, 'tokens', asset_name, 'addr')
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        bridge_to = self.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
+        """Check minteable balance on Ethereum."""
+        token_origin = self.get_asset_address(asset_name, from_chain)
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
         if not is_aergo_address(token_origin):
             raise InvalidArgumentsError(
                 "token_origin {} must be an Aergo address".format(token_origin)
@@ -871,12 +788,10 @@ class EthAergoWallet(WalletConfig):
         asset_name: str,
         receiver: str,
     ) -> Tuple[int, int]:
-        token_origin = self.config_data(
-            'networks', to_chain, 'tokens', asset_name, 'addr')
-        bridge_from = self.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        bridge_to = self.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
+        """Check unlockeable balance on Ethereum."""
+        token_origin = self.get_asset_address(asset_name, to_chain)
+        bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
+        bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
         if not is_ethereum_address(token_origin):
             raise InvalidArgumentsError(
                 "token_origin {} must be an Ethereum address"
@@ -980,7 +895,7 @@ class EthAergoWallet(WalletConfig):
         and specify asset_origin_chain for a pegged asset query,
         """
         if account_addr is None:
-            account_addr = self.get_wallet_address(account_name)
+            account_addr = self.get_eth_wallet_address(account_name)
         if not is_ethereum_address(account_addr):
             raise InvalidArgumentsError(
                 "Account {} must be an Ethereum address".format(account_addr)
@@ -992,14 +907,74 @@ class EthAergoWallet(WalletConfig):
             if asset_addr == 'ether':
                 balance = eth_u.get_balance(account_addr, asset_addr, w3)
                 return balance, asset_addr
-            abi_path = self.config_data(
-                'networks', network_name, 'tokens', asset_name, 'abi')
+            abi = self.load_erc20_abi(network_name, asset_name)
         else:
-            abi_path = self.config_data(
-                'networks', network_name, 'bridges', asset_origin_chain,
-                'minted_abi')
+            abi = self.load_minted_erc20_abi(network_name, asset_origin_chain)
 
-        with open(abi_path, "r") as f:
-            abi = f.read()
         balance = eth_u.get_balance(account_addr, asset_addr, w3, abi)
         return balance, asset_addr
+
+    def load_bridge_abi(
+        self,
+        from_chain: str,
+        to_chain: str,
+    ) -> str:
+        """Load Ethereum bridge contract abi from file location in config."""
+        bridge_abi_path = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'bridge_abi')
+        with open(self.root_path + bridge_abi_path, "r") as f:
+            bridge_from_abi = f.read()
+        return bridge_from_abi
+
+    def load_minted_erc20_abi(
+        self,
+        from_chain: str,
+        to_chain: str,
+    ) -> str:
+        """Load Ethereum bridge contract minted token abi from file location
+        in config.
+
+        """
+        minted_erc20_abi_path = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'minted_abi')
+        with open(self.root_path + minted_erc20_abi_path, "r") as f:
+            minted_erc20_abi = f.read()
+        return minted_erc20_abi
+
+    def load_erc20_abi(
+        self,
+        origin_chain: str,
+        asset_name: str,
+    ) -> str:
+        """Load erc20 contract abi from file location in config."""
+        erc20_abi_path = self.config_data('networks', origin_chain, 'tokens',
+                                          asset_name, 'abi')
+        with open(self.root_path + erc20_abi_path, "r") as f:
+            erc20_abi = f.read()
+        return erc20_abi
+
+    def load_keystore(
+        self,
+        privkey_name: str
+    ) -> str:
+        """Load encrypted private key from Ethereum json keystore."""
+        sender_keystore = self.config_data(
+            'wallet-eth', privkey_name, 'keystore')
+        with open(self.root_path + sender_keystore, "r") as f:
+            encrypted_key = f.read()
+        return encrypted_key
+
+    def get_signer(
+        self,
+        w3: Web3,
+        privkey_name: str,
+        privkey_pwd: str = None,
+    ):
+        """Get the web3 signer object from the ethereum private key."""
+        encrypted_key = self.load_keystore(privkey_name)
+        if privkey_pwd is None:
+            privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
+                                  .format(privkey_name))
+        privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
+        signer_acct = w3.eth.account.from_key(privkey)
+        return signer_acct

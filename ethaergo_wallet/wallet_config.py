@@ -41,7 +41,7 @@ class WalletConfig():
         with open(path, "w") as f:
             json.dump(self._config_data, f, indent=4, sort_keys=True)
 
-    def get_wallet_address(
+    def get_eth_wallet_address(
         self,
         wallet_name: str,
         account_name: str = 'default',
@@ -67,3 +67,11 @@ class WalletConfig():
                                           'tokens', asset_name, 'pegs',
                                           network_name)
         return asset_addr
+
+    def get_bridge_contract_address(
+        self,
+        from_chain: str,
+        to_chain: str,
+    ) -> str:
+        return self.config_data('networks', from_chain, 'bridges', to_chain,
+                                'addr')

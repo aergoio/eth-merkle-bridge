@@ -431,10 +431,10 @@ class EthMerkleBridgeCli():
         from_chain, to_chain, from_assets, to_assets, asset_name, \
             receiver = self.prompt_commun_transfer_params()
         amount = prompt_amount()
-        bridge_from = self.wallet.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        bridge_to = self.wallet.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
+        bridge_from = self.wallet.get_bridge_contract_address(from_chain,
+                                                              to_chain)
+        bridge_to = self.wallet.get_bridge_contract_address(to_chain,
+                                                            from_chain)
         summary = "Departure chain: {} ({})\n" \
                   "Destination chain: {} ({})\n" \
                   "Asset name: {}\n" \
@@ -558,7 +558,8 @@ class EthMerkleBridgeCli():
         else:
             from_chain, to_chain, asset_name, receiver, deposit_height = \
                 answers['transfer']
-            from_assets, to_assets = self.get_assets(from_chain, to_chain)
+            from_assets, to_assets = self.get_registered_assets(from_chain,
+                                                                to_chain)
 
         return (from_chain, to_chain, from_assets, to_assets, asset_name,
                 receiver, deposit_height)
@@ -570,10 +571,10 @@ class EthMerkleBridgeCli():
             return
         from_chain, to_chain, from_assets, to_assets, asset_name, receiver, \
             deposit_height = arguments
-        bridge_from = self.wallet.config_data(
-            'networks', from_chain, 'bridges', to_chain, 'addr')
-        bridge_to = self.wallet.config_data(
-            'networks', to_chain, 'bridges', from_chain, 'addr')
+        bridge_from = self.wallet.get_bridge_contract_address(from_chain,
+                                                              to_chain)
+        bridge_to = self.wallet.get_bridge_contract_address(to_chain,
+                                                            from_chain)
         summary = "Departure chain: {} ({})\n" \
                   "Destination chain: {} ({})\n" \
                   "Asset name: {}\n" \
@@ -729,7 +730,8 @@ class EthMerkleBridgeCli():
 
         """
         from_chain, to_chain = self.prompt_transfer_networks()
-        from_assets, to_assets = self.get_assets(from_chain, to_chain)
+        from_assets, to_assets = self.get_registered_assets(from_chain,
+                                                            to_chain)
         questions = [
             inquirer.List(
                 'asset_name',
@@ -818,7 +820,7 @@ class EthMerkleBridgeCli():
         """Get the list of networks registered in the wallet config."""
         return [net for net in self.wallet.config_data('networks')]
 
-    def get_assets(self, from_chain, to_chain):
+    def get_registered_assets(self, from_chain, to_chain):
         """Get the list of registered assets on each network."""
         from_assets = [
             asset for asset in self.wallet.config_data(
