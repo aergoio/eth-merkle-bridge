@@ -23,18 +23,20 @@ from ethaergo_wallet.eth_utils.contract_deployer import (
 COMMIT_TIME = 3
 
 
-def run(
+def deploy_bridge(
     config_data: Dict,
-    path: str,
+    config_path: str,
     lua_bytecode: str,
     sol_bytecode: str,
-    sol_abi: str,
+    bridge_abi: str,
+    bridge_abi_path: str,
+    minted_erc20_abi_path: str,
     t_anchor_eth: int,
     t_anchor_aergo: int,
     t_final_eth: int,
     eth_net: str,
     aergo_net: str,
-    aergo_erc20,
+    aergo_erc20: str,
     privkey_name: str = None,
     privkey_pwd: str = None,
 ) -> None:
@@ -48,7 +50,9 @@ def run(
     print("------ Connect Web3 -----------")
     ip = config_data['networks'][eth_net]['ip']
     w3 = Web3(Web3.HTTPProvider("http://" + ip))
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    eth_poa = config_data['networks'][eth_net]['isPOA']
+    if eth_poa:
+        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     assert w3.isConnected()
 
     status = aergo.get_status()
@@ -62,15 +66,13 @@ def run(
     print("------ Set Sender Account -----------")
     if privkey_pwd is None:
         privkey_pwd = getpass("Decrypt Aergo private key '{}'\nPassword: "
-                            .format(privkey_name))
+                              .format(privkey_name))
     sender_priv_key = config_data['wallet'][privkey_name]['priv_key']
     aergo.import_account(sender_priv_key, privkey_pwd)
     print("  > Sender Address Aergo: {}".format(aergo.account.address))
 
     keystore = config_data["wallet-eth"][privkey_name]['keystore']
-    file_path = os.path.dirname(os.path.realpath(__file__))
-    root_path = os.path.dirname(file_path) + '/'
-    with open(root_path + keystore, "r") as f:
+    with open(keystore, "r") as f:
         encrypted_key = f.read()
     if privkey_pwd is None:
         privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
@@ -91,10 +93,10 @@ def run(
 
     print("------ Deploy Aergo SC -----------")
     payload = herapy.utils.decode_address(lua_bytecode)
-    aergo_erc20 = config_data['networks'][eth_net]['tokens'][aergo_erc20]['addr']
+    aergo_erc20_addr = config_data['networks'][eth_net]['tokens'][aergo_erc20]['addr']
     tx, result = aergo.deploy_sc(amount=0,
                                  payload=payload,
-                                 args=[aergo_erc20[2:].lower(),
+                                 args=[aergo_erc20_addr[2:].lower(),
                                        aergo_validators,
                                        t_anchor_aergo,
                                        t_final_eth])
@@ -139,13 +141,13 @@ def run(
 
     print("------ Deploy Ethereum SC -----------")
     receipt = deploy_contract(
-        sol_bytecode, sol_abi, w3, 6700000, 20, privkey,
+        sol_bytecode, bridge_abi, w3, 6700000, 20, privkey,
         eth_validators,
         t_anchor_eth, t_final_aergo
     )
     bridge_contract = w3.eth.contract(
         address=receipt.contractAddress,
-        abi=sol_abi
+        abi=bridge_abi
     )
     eth_id = bridge_contract.functions.ContractID().call().hex()
 
@@ -154,7 +156,7 @@ def run(
     print("  > SC Address Ethereum: {}".format(eth_address))
     print("  > SC Address Aergo: {}".format(aergo_bridge))
 
-    print("------ Store bridge addresses in config.json  -----------")
+    print("------ Store bridge addresses in test_config.json  -----------")
     config_data['networks'][eth_net]['bridges'][aergo_net] = {}
     config_data['networks'][aergo_net]['bridges'][eth_net] = {}
     (config_data['networks'][eth_net]['bridges'][aergo_net]
@@ -171,8 +173,12 @@ def run(
         ['t_anchor']) = t_anchor_aergo
     (config_data['networks'][aergo_net]['bridges'][eth_net]
         ['t_final']) = t_final_eth
+    (config_data['networks'][eth_net]['bridges'][aergo_net]
+        ['bridge_abi']) = bridge_abi_path
+    (config_data['networks'][eth_net]['bridges'][aergo_net]
+        ['minted_abi']) = minted_erc20_abi_path
 
-    with open(path, "w") as f:
+    with open(config_path, "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)
 
     print("------ Disconnect AERGO -----------")
@@ -180,21 +186,25 @@ def run(
 
 
 if __name__ == '__main__':
-    with open("./config.json", "r") as f:
+    with open("./test_config.json", "r") as f:
         config_data = json.load(f)
     with open("./contracts/lua/bridge_bytecode.txt", "r") as f:
         lua_bytecode = f.read()[:-1]
     with open("./contracts/solidity/bridge_bytecode.txt", "r") as f:
         sol_bytecode = f.read()
-    with open("./contracts/solidity/bridge_abi.txt", "r") as f:
-        sol_abi = f.read()
+    minted_erc20_abi_path = "contracts/solidity/minted_erc20_abi.txt"
+    bridge_abi_path = "contracts/solidity/bridge_abi.txt"
+    with open(bridge_abi_path, "r") as f:
+        bridge_abi = f.read()
+
     # NOTE t_final is the minimum time to get lib : only informative (not
     # actually used in code except for Eth bridge because Eth doesn't have LIB)
     t_anchor_eth = 25  # aergo anchoring periord on ethereum
     t_anchor_aergo = 10  # ethereum anchoring periord on aergo
     t_final_eth = 10  # time after which ethereum is considered finalized
-    run(
-        config_data, "./config.json", lua_bytecode, sol_bytecode, sol_abi, t_anchor_eth,
+    deploy_bridge(
+        config_data, "./test_config.json", lua_bytecode, sol_bytecode, bridge_abi,
+        bridge_abi_path, minted_erc20_abi_path, t_anchor_eth,
         t_anchor_aergo, t_final_eth, 'eth-poa-local', 'aergo-local',
         'aergo_erc20', privkey_pwd='1234'
     )

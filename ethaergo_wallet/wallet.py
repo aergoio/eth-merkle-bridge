@@ -92,21 +92,26 @@ class EthAergoWallet(WalletConfig):
         self,
         from_chain: str,
         to_chain: str,
-        bridge_from_abi: str,
         asset_name: str,
-        erc20_abi: str,
         amount: int,
         receiver: str,
         privkey_name: str = 'default',
         privkey_pwd: str = None,
-        eth_poa: bool = False
     ) -> Tuple[int, str]:
         """ Initiate ERC20 token or Ether transfer to Aergo sidechain """
         if not is_aergo_address(receiver):
             raise InvalidArgumentsError(
                 "Receiver {} must be an Aergo address".format(receiver)
             )
-        w3 = self.get_web3(from_chain, eth_poa)
+        bridge_abi_path = self.config_data('networks', from_chain, 'bridges',
+                                           to_chain, 'bridge_abi')
+        with open(self.root_path + bridge_abi_path, "r") as f:
+            bridge_from_abi = f.read()
+        erc20_abi_path = self.config_data('networks', from_chain, 'tokens',
+                                          asset_name, 'abi')
+        with open(self.root_path + erc20_abi_path, "r") as f:
+            erc20_abi = f.read()
+        w3 = self.get_web3(from_chain)
         sender_keystore = self.config_data(
             'wallet-eth', privkey_name, 'keystore')
         with open(self.root_path + sender_keystore, "r") as f:
@@ -161,14 +166,13 @@ class EthAergoWallet(WalletConfig):
         lock_height: int = 0,
         privkey_name: str = 'default',
         privkey_pwd: str = None,
-        eth_poa: bool = False
     ) -> str:
         """ Finalize ERC20 token or Ether transfer to Aergo sidechain """
         if not is_aergo_address(receiver):
             raise InvalidArgumentsError(
                 "Receiver {} must be an Aergo address".format(receiver)
             )
-        w3 = self.get_web3(from_chain, eth_poa)
+        w3 = self.get_web3(from_chain)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
         bridge_to = self.config_data(
@@ -228,21 +232,26 @@ class EthAergoWallet(WalletConfig):
         self,
         from_chain: str,
         to_chain: str,
-        bridge_from_abi: str,
         asset_name: str,
-        minted_erc20_abi: str,
         amount: int,
         receiver: str,
         privkey_name: str = 'default',
         privkey_pwd: str = None,
-        eth_poa: bool = False
     ) -> Tuple[int, str]:
         """ Initiate minted Standard token transfer back to aergo origin"""
         if not is_aergo_address(receiver):
             raise InvalidArgumentsError(
                 "Receiver {} must be an Aergo address".format(receiver)
             )
-        w3 = self.get_web3(from_chain, eth_poa)
+        bridge_abi_path = self.config_data('networks', from_chain, 'bridges',
+                                           to_chain, 'bridge_abi')
+        with open(self.root_path + bridge_abi_path, "r") as f:
+            bridge_from_abi = f.read()
+        minted_erc20_abi_path = self.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'minted_abi')
+        with open(self.root_path + minted_erc20_abi_path, "r") as f:
+            minted_erc20_abi = f.read()
+        w3 = self.get_web3(from_chain)
         sender_keystore = self.config_data(
             'wallet-eth', privkey_name, 'keystore')
         with open(self.root_path + sender_keystore, "r") as f:
@@ -291,7 +300,6 @@ class EthAergoWallet(WalletConfig):
         lock_height: int = 0,
         privkey_name: str = 'default',
         privkey_pwd: str = None,
-        eth_poa: bool = False
     ) -> str:
         """ Finalize ERC20Aergo transfer to Aergo Mainnet by unfreezing
             (aers are already minted and freezed in the bridge contract)
@@ -301,7 +309,7 @@ class EthAergoWallet(WalletConfig):
                 "Receiver {} must be an Aergo address".format(receiver)
             )
         asset_name = 'aergo_erc20'
-        w3 = self.get_web3(from_chain, eth_poa)
+        w3 = self.get_web3(from_chain)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
         bridge_to = self.config_data(
@@ -354,14 +362,13 @@ class EthAergoWallet(WalletConfig):
         burn_height: int = 0,
         privkey_name: str = 'default',
         privkey_pwd: str = None,
-        eth_poa: bool = False
     ) -> str:
         """ Finalize Aergo Standard token transfer back to Aergo Origin"""
         if not is_aergo_address(receiver):
             raise InvalidArgumentsError(
                 "Receiver {} must be an Aergo address".format(receiver)
             )
-        w3 = self.get_web3(from_chain, eth_poa)
+        w3 = self.get_web3(from_chain)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
         bridge_to = self.config_data(
@@ -407,7 +414,6 @@ class EthAergoWallet(WalletConfig):
         to_chain: str,
         asset_name: str,
         receiver: str,
-        eth_poa: bool = False
     ) -> Tuple[int, int]:
         token_origin = self.config_data(
             'networks', from_chain, 'tokens', asset_name, 'addr')
@@ -425,7 +431,7 @@ class EthAergoWallet(WalletConfig):
                 "Receiver {} must be an Aergo address".format(receiver)
             )
         hera = self.connect_aergo(to_chain)
-        w3 = self.get_web3(from_chain, eth_poa=eth_poa)
+        w3 = self.get_web3(from_chain)
         account_ref_eth = \
             receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
         position = b'\x03'  # Locks
@@ -441,7 +447,6 @@ class EthAergoWallet(WalletConfig):
         to_chain: str,
         asset_name: str,
         receiver: str,
-        eth_poa: bool = False
     ) -> Tuple[int, int]:
         token_origin = self.config_data(
             'networks', to_chain, 'tokens', asset_name, 'addr')
@@ -459,7 +464,7 @@ class EthAergoWallet(WalletConfig):
                 "Receiver {} must be an Aergo address".format(receiver)
             )
         hera = self.connect_aergo(to_chain)
-        w3 = self.get_web3(from_chain, eth_poa=eth_poa)
+        w3 = self.get_web3(from_chain)
         account_ref = receiver + token_origin
         position = b'\x05'  # Burns
         eth_trie_key = keccak(account_ref.encode('utf-8')
@@ -474,7 +479,6 @@ class EthAergoWallet(WalletConfig):
         from_chain: str,
         to_chain: str,
         receiver: str,
-        eth_poa: bool = False
     ) -> Tuple[int, int]:
         token_origin = self.config_data(
             'networks', from_chain, 'tokens', 'aergo_erc20', 'addr')
@@ -492,7 +496,7 @@ class EthAergoWallet(WalletConfig):
                 "Receiver {} must be an Aergo address".format(receiver)
             )
         hera = self.connect_aergo(to_chain)
-        w3 = self.get_web3(from_chain, eth_poa=eth_poa)
+        w3 = self.get_web3(from_chain)
         account_ref_eth = \
             receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
         position = b'\x03'  # Locks
@@ -609,14 +613,11 @@ class EthAergoWallet(WalletConfig):
         self,
         from_chain: str,
         to_chain: str,
-        bridge_to_abi: str,
         asset_name: str,
-        minted_erc20_abi: str,
         receiver: str = None,
         lock_height: int = 0,
         privkey_name: str = 'default',
         privkey_pwd: str = None,
-        eth_poa: bool = False
     ) -> Tuple[str, str]:
         """ Finalize Aergo Standard Token transfer to Ethereum sidechain
         NOTE anybody can mint so sender is not necessary.
@@ -624,13 +625,17 @@ class EthAergoWallet(WalletConfig):
         already minted amount.
         Bridge tempo is taken from config_data
         """
-        if not is_ethereum_address(receiver):
-            raise InvalidArgumentsError(
-                "receiver {} must be an Ethereum address".format(receiver)
-            )
+        bridge_abi_path = self.config_data('networks', to_chain, 'bridges',
+                                           from_chain, 'bridge_abi')
+        with open(self.root_path + bridge_abi_path, "r") as f:
+            bridge_to_abi = f.read()
+        minted_erc20_abi_path = self.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'minted_abi')
+        with open(self.root_path + minted_erc20_abi_path, "r") as f:
+            minted_erc20_abi = f.read()
         aergo_from = self.connect_aergo(from_chain)
         # get ethereum tx signer
-        w3 = self.get_web3(to_chain, eth_poa)
+        w3 = self.get_web3(to_chain)
         sender_keystore = self.config_data(
             'wallet-eth', privkey_name, 'keystore')
         with open(self.root_path + sender_keystore, "r") as f:
@@ -644,6 +649,10 @@ class EthAergoWallet(WalletConfig):
 
         if receiver is None:
             receiver = tx_sender
+        if not is_ethereum_address(receiver):
+            raise InvalidArgumentsError(
+                "receiver {} must be an Ethereum address".format(receiver)
+            )
 
         bridge_from = self.config_data(
             'networks', from_chain, 'bridges', to_chain, 'addr')
@@ -748,23 +757,24 @@ class EthAergoWallet(WalletConfig):
         self,
         from_chain: str,
         to_chain: str,
-        bridge_to_abi: str,
         asset_name: str,
-        erc20_abi: str,
         receiver: str = None,
         burn_height: int = 0,
         privkey_name: str = 'default',
         privkey_pwd: str = None,
-        eth_poa: bool = False
     ) -> Tuple[str, str]:
         """ Finalize ERC20 or Eth transfer back to Ethereum origin """
-        if not is_ethereum_address(receiver):
-            raise InvalidArgumentsError(
-                "receiver {} must be an Ethereum address".format(receiver)
-            )
+        bridge_abi_path = self.config_data('networks', to_chain, 'bridges',
+                                           from_chain, 'bridge_abi')
+        with open(self.root_path + bridge_abi_path, "r") as f:
+            bridge_to_abi = f.read()
+        erc20_abi_path = self.config_data('networks', to_chain, 'tokens',
+                                          asset_name, 'abi')
+        with open(self.root_path + erc20_abi_path, "r") as f:
+            erc20_abi = f.read()
         aergo_from = self.connect_aergo(from_chain)
         # get ethereum tx signer
-        w3 = self.get_web3(to_chain, eth_poa)
+        w3 = self.get_web3(to_chain)
         sender_keystore = self.config_data(
             'wallet-eth', privkey_name, 'keystore')
         with open(self.root_path + sender_keystore, "r") as f:
@@ -778,6 +788,10 @@ class EthAergoWallet(WalletConfig):
 
         if receiver is None:
             receiver = tx_sender
+        if not is_ethereum_address(receiver):
+            raise InvalidArgumentsError(
+                "receiver {} must be an Ethereum address".format(receiver)
+            )
 
         bridge_from = self.config_data(
             'networks', from_chain, 'bridges', to_chain, 'addr')
@@ -822,7 +836,6 @@ class EthAergoWallet(WalletConfig):
         to_chain: str,
         asset_name: str,
         receiver: str,
-        eth_poa: bool = False
     ) -> Tuple[int, int]:
         token_origin = self.config_data(
             'networks', from_chain, 'tokens', asset_name, 'addr')
@@ -839,7 +852,7 @@ class EthAergoWallet(WalletConfig):
                 "Receiver {} must be an Ethereum address".format(receiver)
             )
         hera = self.connect_aergo(from_chain)
-        w3 = self.get_web3(to_chain, eth_poa=eth_poa)
+        w3 = self.get_web3(to_chain)
         # TODO bytes.fromhex(receiver[2:]) + token_origin.encode('utf-8')
         # TODO change this when real bytes are stored
         account_ref_eth = \
@@ -857,7 +870,6 @@ class EthAergoWallet(WalletConfig):
         to_chain: str,
         asset_name: str,
         receiver: str,
-        eth_poa: bool = False
     ) -> Tuple[int, int]:
         token_origin = self.config_data(
             'networks', to_chain, 'tokens', asset_name, 'addr')
@@ -875,7 +887,7 @@ class EthAergoWallet(WalletConfig):
                 "Receiver {} must be an Ethereum address".format(receiver)
             )
         hera = self.connect_aergo(from_chain)
-        w3 = self.get_web3(to_chain, eth_poa=eth_poa)
+        w3 = self.get_web3(to_chain)
         account_ref = (receiver[2:] + token_origin[2:]).lower()
         position = b'\x04'  # Unlocks
         # TODO change when real bytes are used
@@ -923,10 +935,10 @@ class EthAergoWallet(WalletConfig):
     def get_web3(
         self,
         network_name: str,
-        eth_poa: bool = False
     ) -> Web3:
         ip = self.config_data('networks', network_name, 'ip')
         w3 = Web3(Web3.HTTPProvider("http://" + ip))
+        eth_poa = self.config_data('networks', network_name, 'isPOA')
         if eth_poa:
             w3.middleware_onion.inject(geth_poa_middleware, layer=0)
         assert w3.isConnected()
@@ -963,7 +975,6 @@ class EthAergoWallet(WalletConfig):
         asset_origin_chain: str = None,
         account_name: str = 'default',
         account_addr: str = None,
-        eth_poa: bool = False
     ) -> Tuple[int, str]:
         """ Get account name balance of asset_name on network_name,
         and specify asset_origin_chain for a pegged asset query,
@@ -974,18 +985,19 @@ class EthAergoWallet(WalletConfig):
             raise InvalidArgumentsError(
                 "Account {} must be an Ethereum address".format(account_addr)
             )
-        w3 = self.get_web3(network_name, eth_poa)
+        w3 = self.get_web3(network_name)
         asset_addr = self.get_asset_address(asset_name, network_name,
                                             asset_origin_chain)
         if asset_origin_chain is None:
             if asset_addr == 'ether':
                 balance = eth_u.get_balance(account_addr, asset_addr, w3)
                 return balance, asset_addr
-            abi_path = self.root_path + self.config_data(
+            abi_path = self.config_data(
                 'networks', network_name, 'tokens', asset_name, 'abi')
         else:
-            abi_path = self.root_path \
-                + '/contracts/solidity/minted_erc20_abi.txt'
+            abi_path = self.config_data(
+                'networks', network_name, 'bridges', asset_origin_chain,
+                'minted_abi')
 
         with open(abi_path, "r") as f:
             abi = f.read()

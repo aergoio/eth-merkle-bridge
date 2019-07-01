@@ -16,7 +16,6 @@ from ethaergo_wallet.exceptions import (
 from cli.utils import (
     confirm_transfer,
     get_amount,
-    get_asset_abi,
     get_deposit_height,
     get_bridge,
     get_network,
@@ -25,21 +24,16 @@ from cli.utils import (
     get_new_asset,
     get_validators,
     get_abi,
+    get_bridge_abi_paths,
 )
 
 
 class EthMerkleBridgeCli():
     def __init__(self):
         file_path = os.path.dirname(os.path.realpath(__file__))
-        # root_path is the path/to/eth-merkle-bridge from which files are 
+        # root_path is the path/to/eth-merkle-bridge from which files are
         # tracked
         self.root_path = os.path.dirname(file_path) + '/'
-        with open(self.root_path
-                  + "/contracts/solidity/bridge_abi.txt", "r") as f:
-            self.bridge_abi = f.read()
-        with open(self.root_path +
-                  "/contracts/solidity/minted_erc20_abi.txt", "r") as f:
-            self.minted_erc20_abi = f.read()
         with open(file_path + '/pending_transfers.json', 'r') as file:
             self.pending_transfers = json.load(file)
 
@@ -124,10 +118,8 @@ class EthMerkleBridgeCli():
                 for token_name, token in net['tokens'].items():
                     print('{}{}'.format('\t'*3, token_name))
                     if net['type'] == 'ethereum':
-                        eth_poa = net['isPOA']
                         balance, addr = self.wallet.get_balance_eth(
-                            token_name, net_name, account_name=wallet,
-                            eth_poa=eth_poa
+                            token_name, net_name, account_name=wallet
                         )
                         if balance != 0:
                             print("{}{} balance: {}{}"
@@ -140,10 +132,8 @@ class EthMerkleBridgeCli():
                         pegged_network = self.wallet.config_data('networks',
                                                                  peg)
                         if pegged_network['type'] == 'ethereum':
-                            eth_poa = pegged_network['isPOA']
                             balance, addr = self.wallet.get_balance_eth(
-                                token_name, peg, net_name, wallet,
-                                eth_poa=eth_poa
+                                token_name, peg, net_name, wallet
                             )
                             if balance != 0:
                                 print("{}{} balance: {}{}"
@@ -249,6 +239,19 @@ class EthMerkleBridgeCli():
                    't_final': int(answers['t_final2'])
                    }
         }
+        # Get paths to abis
+        if net1_type == 'ethereum':
+            bridge_abi, minted_abi = get_bridge_abi_paths()
+            new_config['networks'][net1]['bridges'][net2]['bridge_abi'] = \
+                bridge_abi
+            new_config['networks'][net1]['bridges'][net2]['minted_abi'] = \
+                minted_abi
+        if net2_type == 'ethereum':
+            bridge_abi, minted_abi = get_bridge_abi_paths()
+            new_config['networks'][net2]['bridges'][net1]['bridge_abi'] = \
+                bridge_abi
+            new_config['networks'][net2]['bridges'][net1]['minted_abi'] = \
+                minted_abi
         # Register a new private key (ethereum + aergo)
         print("Register a private key for {}".format(net1))
         new_config['wallet-eth'] = {}
@@ -298,7 +301,7 @@ class EthMerkleBridgeCli():
 
         with open(path, "w") as f:
             json.dump(new_config, f, indent=4, sort_keys=True)
-        
+
         print("Config file stored in: {}".format(os.path.abspath(path)))
 
     def register_bridge(self):
@@ -384,10 +387,10 @@ class EthMerkleBridgeCli():
         from_chain, to_chain, from_assets, to_assets, asset_name, \
             receiver = self.commun_transfer_params()
         amount = get_amount()
-        bridge_from = self.wallet.config_data('networks', from_chain, 'bridges',
-                                              to_chain, 'addr')
-        bridge_to = self.wallet.config_data('networks', to_chain, 'bridges',
-                                            from_chain, 'addr')
+        bridge_from = self.wallet.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        bridge_to = self.wallet.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
         summary = "Departure chain: {} ({})\n" \
                   "Destination chain: {} ({})\n" \
                   "Asset name: {}\n" \
@@ -399,20 +402,15 @@ class EthMerkleBridgeCli():
         if self.wallet.config_data('networks',
                                    from_chain, 'type') == 'ethereum':
             privkey_name = self.get_privkey_name('wallet-eth')
-            eth_poa = self.wallet.config_data('networks', from_chain, 'isPOA')
             if asset_name in from_assets:
                 # if transfering a native asset Lock
                 print("Lock transfer summary:\n{}".format(summary))
                 if not confirm_transfer():
                     print('Initialize transfer canceled')
                     return
-                asset_abi = get_asset_abi(
-                    self.root_path + self.wallet.config_data(
-                        'networks', from_chain, 'tokens', asset_name, 'abi')
-                )
                 deposit_height, tx_hash = self.wallet.lock_to_aergo(
-                    from_chain, to_chain, self.bridge_abi, asset_name,
-                    asset_abi, amount, receiver, privkey_name, eth_poa=eth_poa
+                    from_chain, to_chain, asset_name,
+                    amount, receiver, privkey_name
                 )
             elif (asset_name in to_assets and
                   from_chain in self.wallet.config_data(
@@ -423,9 +421,8 @@ class EthMerkleBridgeCli():
                     print('Initialize transfer canceled')
                     return
                 deposit_height, tx_hash = self.wallet.burn_to_aergo(
-                    from_chain, to_chain, self.bridge_abi, asset_name,
-                    self.minted_erc20_abi, amount, receiver, privkey_name,
-                    eth_poa=eth_poa
+                    from_chain, to_chain, asset_name,
+                    amount, receiver, privkey_name
                 )
             else:
                 print('asset not properly registered in config.json')
@@ -519,10 +516,10 @@ class EthMerkleBridgeCli():
             return
         from_chain, to_chain, from_assets, to_assets, asset_name, receiver, \
             deposit_height = arguments
-        bridge_from = self.wallet.config_data('networks', from_chain, 'bridges',
-                                              to_chain, 'addr')
-        bridge_to = self.wallet.config_data('networks', to_chain, 'bridges',
-                                            from_chain, 'addr')
+        bridge_from = self.wallet.config_data(
+            'networks', from_chain, 'bridges', to_chain, 'addr')
+        bridge_to = self.wallet.config_data(
+            'networks', to_chain, 'bridges', from_chain, 'addr')
         summary = "Departure chain: {} ({})\n" \
                   "Destination chain: {} ({})\n" \
                   "Asset name: {}\n" \
@@ -533,7 +530,6 @@ class EthMerkleBridgeCli():
         if self.wallet.config_data('networks',
                                    from_chain, 'type') == 'ethereum':
             privkey_name = self.get_privkey_name('wallet')
-            eth_poa = self.wallet.config_data('networks', from_chain, 'isPOA')
             if asset_name in from_assets:
                 # if transfering a native asset mint
                 if asset_name == 'aergo_erc20':
@@ -544,7 +540,7 @@ class EthMerkleBridgeCli():
                         return
                     self.wallet.unfreeze(
                         from_chain, to_chain, receiver, deposit_height,
-                        privkey_name, eth_poa=eth_poa
+                        privkey_name
                     )
                 else:
                     print("Mint transfer summary:\n{}".format(summary))
@@ -553,7 +549,7 @@ class EthMerkleBridgeCli():
                         return
                     self.wallet.mint_to_aergo(
                         from_chain, to_chain, asset_name, receiver,
-                        deposit_height, privkey_name, eth_poa=eth_poa
+                        deposit_height, privkey_name
                     )
             elif (asset_name in to_assets and
                   from_chain in self.wallet.config_data(
@@ -565,7 +561,7 @@ class EthMerkleBridgeCli():
                     return
                 self.wallet.unlock_to_aergo(
                     from_chain, to_chain, asset_name, receiver, deposit_height,
-                    privkey_name, eth_poa=eth_poa
+                    privkey_name
                 )
             else:
                 print('asset not properly registered in config.json')
@@ -573,20 +569,14 @@ class EthMerkleBridgeCli():
         elif self.wallet.config_data('networks',
                                      from_chain, 'type') == 'aergo':
             privkey_name = self.get_privkey_name('wallet')
-            eth_poa = self.wallet.config_data('networks', to_chain, 'isPOA')
             if asset_name == 'aergo':
                 print("Unlock transfer summary:\n{}".format(summary))
                 if not confirm_transfer():
                     print('Finalize transfer canceled')
                     return
-                asset_abi = get_asset_abi(
-                    self.root_path + self.wallet.config_data(
-                        'networks', to_chain, 'tokens', 'aergo_erc20', 'abi')
-                )
                 self.wallet.unlock_to_eth(
-                    from_chain, to_chain, self.bridge_abi, 'aergo_erc20',
-                    asset_abi, receiver, deposit_height, privkey_name,
-                    eth_poa=eth_poa
+                    from_chain, to_chain, 'aergo_erc20',
+                    receiver, deposit_height, privkey_name
                 )
             elif asset_name in from_assets:
                 # if transfering a native asset mint
@@ -595,9 +585,9 @@ class EthMerkleBridgeCli():
                     print('Finalize transfer canceled')
                     return
                 self.wallet.mint_to_eth(
-                    from_chain, to_chain, self.bridge_abi, asset_name,
-                    self.minted_erc20_abi, receiver, deposit_height,
-                    privkey_name, eth_poa=eth_poa
+                    from_chain, to_chain, asset_name,
+                    receiver, deposit_height,
+                    privkey_name
                 )
             elif (asset_name in to_assets and
                   from_chain in self.wallet.config_data(
@@ -608,14 +598,9 @@ class EthMerkleBridgeCli():
                 if not confirm_transfer():
                     print('Finalize transfer canceled')
                     return
-                asset_abi = get_asset_abi(
-                    self.root_path + self.wallet.config_data(
-                        'networks', to_chain, 'tokens', asset_name, 'abi')
-                )
                 self.wallet.unlock_to_eth(
-                    from_chain, to_chain, self.bridge_abi, asset_name,
-                    asset_abi, receiver, deposit_height, privkey_name,
-                    eth_poa=eth_poa
+                    from_chain, to_chain, asset_name,
+                    receiver, deposit_height, privkey_name
                 )
             else:
                 print('asset not properly registered in config.json')
@@ -649,39 +634,35 @@ class EthMerkleBridgeCli():
             from_assets, to_assets = self.get_assets(from_chain, to_chain)
         if self.wallet.config_data('networks',
                                    from_chain, 'type') == 'ethereum':
-            eth_poa = self.wallet.config_data('networks', from_chain, 'isPOA')
             if asset_name in from_assets:
                 # if native asset check minteable
                 if asset_name == 'aergo_erc20':
                     withdrawable, pending = self.wallet.unfreezeable(
-                        from_chain, to_chain, receiver, eth_poa=eth_poa)
+                        from_chain, to_chain, receiver)
                 else:
                     withdrawable, pending = self.wallet.minteable_to_aergo(
-                        from_chain, to_chain, asset_name, receiver,
-                        eth_poa=eth_poa
+                        from_chain, to_chain, asset_name, receiver
                     )
             elif (asset_name in to_assets and
                   from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
                 # if pegged asset check unlockeable
                 withdrawable, pending = self.wallet.unlockeable_to_aergo(
-                    from_chain, to_chain, asset_name, receiver, eth_poa=eth_poa
+                    from_chain, to_chain, asset_name, receiver
                 )
             else:
                 print('asset not properly registered in config.json')
                 return
         elif self.wallet.config_data('networks',
                                      from_chain, 'type') == 'aergo':
-            eth_poa = self.wallet.config_data('networks', to_chain, 'isPOA')
             if asset_name == 'aergo':
                 withdrawable, pending = self.wallet.unlockeable_to_eth(
-                    from_chain, to_chain, 'aergo_erc20', receiver,
-                    eth_poa=eth_poa
+                    from_chain, to_chain, 'aergo_erc20', receiver
                 )
             elif asset_name in from_assets:
                 # if native asset check minteable
                 withdrawable, pending = self.wallet.minteable_to_eth(
-                    from_chain, to_chain, asset_name, receiver, eth_poa=eth_poa
+                    from_chain, to_chain, asset_name, receiver
                 )
             elif (asset_name in to_assets and
                   from_chain in self.wallet.config_data(
@@ -689,7 +670,7 @@ class EthMerkleBridgeCli():
                   ):
                 # if pegged asset check unlockeable
                 withdrawable, pending = self.wallet.unlockeable_to_eth(
-                    from_chain, to_chain, asset_name, receiver, eth_poa=eth_poa
+                    from_chain, to_chain, asset_name, receiver
                 )
             else:
                 print('asset not properly registered in config.json')
@@ -767,7 +748,7 @@ class EthMerkleBridgeCli():
         return from_assets, to_assets
 
     def store_pending_transfers(self):
-        with open(self.root_path + '/cli/pending_transfers.json', 'w') as file:
+        with open(self.root_path + 'cli/pending_transfers.json', 'w') as file:
             json.dump(self.pending_transfers, file, indent=4)
 
 

@@ -68,7 +68,6 @@ class AergoProposerClient(threading.Thread):
         eth_block_time: int,
         privkey_name: str = None,
         privkey_pwd: str = None,
-        eth_poa: bool = False,
         tab: str = ""
     ) -> None:
         threading.Thread.__init__(self)
@@ -81,6 +80,7 @@ class AergoProposerClient(threading.Thread):
 
         ip = config_data['networks'][eth_net]['ip']
         self.web3 = Web3(Web3.HTTPProvider("http://" + ip))
+        eth_poa = config_data['networks'][eth_net]['isPOA']
         if eth_poa:
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         assert self.web3.isConnected()
@@ -329,10 +329,9 @@ class AergoProposerClient(threading.Thread):
 
 
 if __name__ == '__main__':
-    with open("./config.json", "r") as f:
+    with open("./test_config.json", "r") as f:
         config_data = json.load(f)
     proposer = AergoProposerClient(
-        config_data, 'aergo-local', 'eth-poa-local', 3, privkey_pwd='1234',
-        eth_poa=True
+        config_data, 'aergo-local', 'eth-poa-local', 3, privkey_pwd='1234'
     )
     proposer.run()

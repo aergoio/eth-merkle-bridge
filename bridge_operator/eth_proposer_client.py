@@ -60,10 +60,8 @@ class EthProposerClient(threading.Thread):
         config_data: Dict,
         aergo_net: str,
         eth_net: str,
-        eth_abi: str,
         privkey_name: str = None,
         privkey_pwd: str = None,
-        eth_poa: bool = False,
         tab: str = ""
     ) -> None:
         threading.Thread.__init__(self)
@@ -75,18 +73,27 @@ class EthProposerClient(threading.Thread):
 
         ip = config_data['networks'][eth_net]['ip']
         self.web3 = Web3(Web3.HTTPProvider("http://" + ip))
+        eth_poa = config_data['networks'][eth_net]['isPOA']
         if eth_poa:
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         assert self.web3.isConnected()
 
-        eth_bridge_address = config_data['networks'][eth_net]['bridges'][aergo_net]['addr']
+        bridge_abi_path = (config_data['networks'][eth_net]['bridges']
+                           [aergo_net]['bridge_abi'])
+        with open(bridge_abi_path, "r") as f:
+            eth_abi = f.read()
+        eth_bridge_address = (config_data['networks'][eth_net]['bridges']
+                              [aergo_net]['addr'])
         self.eth_bridge = self.web3.eth.contract(
             address=eth_bridge_address,
             abi=eth_abi
         )
-        self.aergo_bridge = config_data['networks'][aergo_net]['bridges'][eth_net]['addr']
-        self.aergo_id = config_data['networks'][aergo_net]['bridges'][eth_net]['id']
-        self.eth_id = config_data['networks'][eth_net]['bridges'][aergo_net]['id']
+        self.aergo_bridge = (config_data['networks'][aergo_net]['bridges']
+                             [eth_net]['addr'])
+        self.aergo_id = (config_data['networks'][aergo_net]['bridges'][eth_net]
+                         ['id'])
+        self.eth_id = (config_data['networks'][eth_net]['bridges'][aergo_net]
+                       ['id'])
 
         print("------ Connect to Validators -----------")
         validators = query_eth_validators(self.web3, eth_bridge_address,
@@ -338,12 +345,9 @@ class EthProposerClient(threading.Thread):
 
 
 if __name__ == '__main__':
-    with open("./contracts/solidity/bridge_abi.txt", "r") as f:
-        abi = f.read()
-    with open("./config.json", "r") as f:
+    with open("./test_config.json", "r") as f:
         config_data = json.load(f)
 
     proposer = EthProposerClient(
-        config_data, 'aergo-local', 'eth-poa-local', abi, privkey_pwd='1234',
-        eth_poa=True)
+        config_data, 'aergo-local', 'eth-poa-local', privkey_pwd='1234')
     proposer.run()

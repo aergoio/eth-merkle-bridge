@@ -56,11 +56,9 @@ class ValidatorService(BridgeOperatorServicer):
         config_data: Dict,
         aergo_net: str,
         eth_net: str,
-        eth_abi: str,
         privkey_name: str = None,
         privkey_pwd: str = None,
         validator_index: int = 0,
-        eth_poa: bool = False
     ) -> None:
         """ Initialize parameters of the bridge validator"""
         self.validator_index = validator_index
@@ -70,18 +68,27 @@ class ValidatorService(BridgeOperatorServicer):
 
         ip = config_data['networks'][eth_net]['ip']
         self.web3 = Web3(Web3.HTTPProvider("http://" + ip))
+        eth_poa = config_data['networks'][eth_net]['isPOA']
         if eth_poa:
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         assert self.web3.isConnected()
 
-        self.eth_bridge_addr = config_data['networks'][eth_net]['bridges'][aergo_net]['addr']
+        bridge_abi_path = (config_data['networks'][eth_net]['bridges']
+                           [aergo_net]['bridge_abi'])
+        with open(bridge_abi_path, "r") as f:
+            eth_abi = f.read()
+        self.eth_bridge_addr = (config_data['networks'][eth_net]['bridges']
+                                [aergo_net]['addr'])
         self.eth_bridge = self.web3.eth.contract(
             address=self.eth_bridge_addr,
             abi=eth_abi
         )
-        self.aergo_bridge = config_data['networks'][aergo_net]['bridges'][eth_net]['addr']
-        self.aergo_id = config_data['networks'][aergo_net]['bridges'][eth_net]['id']
-        self.eth_id = config_data['networks'][eth_net]['bridges'][aergo_net]['id']
+        self.aergo_bridge = (config_data['networks'][aergo_net]['bridges']
+                             [eth_net]['addr'])
+        self.aergo_id = (config_data['networks'][aergo_net]['bridges'][eth_net]
+                         ['id'])
+        self.eth_id = (config_data['networks'][eth_net]['bridges'][aergo_net]
+                       ['id'])
 
         # check validators are correct
         aergo_vals = query_aergo_validators(self.hera, self.aergo_bridge)
@@ -279,19 +286,17 @@ class ValidatorServer:
         config_file_path: str,
         aergo_net: str,
         eth_net: str,
-        eth_abi: str,
         privkey_name: str = None,
         privkey_pwd: str = None,
         validator_index: int = 0,
-        eth_poa: bool = False
     ) -> None:
         with open(config_file_path, "r") as f:
             config_data = json.load(f)
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         add_BridgeOperatorServicer_to_server(
             ValidatorService(
-                config_data, aergo_net, eth_net, eth_abi, privkey_name,
-                privkey_pwd, validator_index, eth_poa
+                config_data, aergo_net, eth_net, privkey_name,
+                privkey_pwd, validator_index
             ),
             self.server
         )
@@ -318,14 +323,14 @@ def _serve_worker(servers, index):
     servers[index].run()
 
 
-def _serve_all(config_file_path, aergo_net, eth_net, eth_abi,
+def _serve_all(config_file_path, aergo_net, eth_net,
                privkey_name=None, privkey_pwd=None):
     """ For testing, run all validators in different threads """
     with open(config_file_path, "r") as f:
         config_data = json.load(f)
     validator_indexes = [i for i in range(len(config_data['validators']))]
-    servers = [ValidatorServer(config_file_path, aergo_net, eth_net, eth_abi,
-                               privkey_name, privkey_pwd, index, True)
+    servers = [ValidatorServer(config_file_path, aergo_net, eth_net,
+                               privkey_name, privkey_pwd, index)
                for index in validator_indexes]
     worker = partial(_serve_worker, servers)
     pool = Pool(len(validator_indexes))
@@ -333,15 +338,12 @@ def _serve_all(config_file_path, aergo_net, eth_net, eth_abi,
 
 
 if __name__ == '__main__':
-    with open("./contracts/solidity/bridge_abi.txt", "r") as f:
-        eth_abi = f.read()
-    with open("./config.json", "r") as f:
+    with open("./test_config.json", "r") as f:
         config_data = json.load(f)
     # validator = ValidatorServer(
-    #   "./config.json", 'aergo-local', 'eth-poa-local', eth_abi,
+    #   "./test_config.json", 'aergo-local', 'eth-poa-local',
     #   privkey_name='validator', privkey_pwd='1234', validator_index=1,
-    #   eth_poa=True
     # )
     # validator.run()
-    _serve_all("./config.json", 'aergo-local', 'eth-poa-local', eth_abi,
+    _serve_all("./test_config.json", 'aergo-local', 'eth-poa-local',
                privkey_name='validator', privkey_pwd='1234')

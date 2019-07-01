@@ -25,6 +25,7 @@ def deploy_aergo_erc20(
     abi_path,
     network_name: str,
     token_name: str,
+    privkey_name: str = 'default',
     privkey_pwd: str = None
 ):
     """ Deploys an Aergo ERC20 token for testing purposes"""
@@ -32,13 +33,14 @@ def deploy_aergo_erc20(
     print("------ Connect Web3 -----------")
     ip = config_data['networks'][network_name]['ip']
     w3 = Web3(Web3.HTTPProvider("http://" + ip))
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    eth_poa = config_data['networks'][network_name]['isPOA']
+    if eth_poa:
+        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     assert w3.isConnected()
 
     print("------ Set Sender Account -----------")
-    privkey_name = 'default'
     keystore = config_data["wallet-eth"][privkey_name]['keystore']
-    file_path = os.path.dirname(os.path.realpath(__file__))
+    file_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     root_path = os.path.dirname(file_path) + '/'
     with open(root_path + keystore, "r") as f:
         encrypted_key = f.read()
@@ -69,13 +71,14 @@ def deploy_aergo_erc20(
 
 
 if __name__ == '__main__':
-    with open("./config.json", "r") as f:
+    with open("./test_config.json", "r") as f:
         config_data = json.load(f)
-    with open("./contracts/solidity/aergo_erc20_bytecode.txt", "r") as f:
+    with open("./contracts/solidity/test_aergo_erc20_bytecode.txt", "r") as f:
         bytecode = f.read()
     abi_path = "contracts/solidity/aergo_erc20_abi.txt"
     with open(abi_path, "r") as f:
         abi = f.read()
 
-    deploy_aergo_erc20(config_data, "./config.json", bytecode, abi, abi_path,
-                       'eth-poa-local', 'aergo_erc20', '1234')
+    deploy_aergo_erc20(config_data, "./test_config.json", bytecode, abi, abi_path,
+                       'eth-poa-local', 'aergo_erc20', 'default', '1234')
+

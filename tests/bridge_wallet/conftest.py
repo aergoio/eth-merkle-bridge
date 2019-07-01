@@ -16,7 +16,7 @@ import pytest
 
 @pytest.fixture(scope="session")
 def aergo_wallet():
-    wallet = Wallet("./config.json")
+    wallet = Wallet("./test_config.json")
     # deploy test token
     total_supply = 500*10**6*10**18
     with open("./contracts/lua/std_token_bytecode.txt", "r") as f:
@@ -31,9 +31,9 @@ def aergo_wallet():
 @pytest.fixture(scope="session")
 def bridge_wallet(aergo_wallet):
     # deploy test token
-    with open("./config.json", "r") as f:
+    with open("./test_config.json", "r") as f:
         config_data = json.load(f)
-    with open("./contracts/solidity/aergo_erc20_bytecode.txt", "r") as f:
+    with open("./contracts/solidity/test_aergo_erc20_bytecode.txt", "r") as f:
         bytecode = f.read()
     with open("./contracts/solidity/aergo_erc20_abi.txt", "r") as f:
         abi = f.read()
@@ -53,7 +53,7 @@ def bridge_wallet(aergo_wallet):
     config_data['networks']['eth-poa-local']['tokens']['test_erc20']['pegs'] = {}
     config_data['networks']['eth-poa-local']['tokens']['test_erc20']['abi'] = \
         "contracts/solidity/aergo_erc20_abi.txt"
-    with open("./config.json", "w") as f:
+    with open("./test_config.json", "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)
-    wallet = EthAergoWallet("./config.json")
+    wallet = EthAergoWallet("./test_config.json")
     return wallet

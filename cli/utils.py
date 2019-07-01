@@ -81,6 +81,40 @@ def get_bridge(net1, net2):
     return inquirer.prompt(questions)
 
 
+def get_bridge_abi_paths():
+    while 1:
+        questions = [
+            inquirer.Text(
+                'bridge_abi',
+                message="Path to Ethereum bridge abi text file"
+            )
+        ]
+        answers = inquirer.prompt(questions)
+        bridge_abi = answers['bridge_abi']
+        try:
+            with open(bridge_abi, "r") as f:
+                f.read()
+            break
+        except (IsADirectoryError, FileNotFoundError):
+            print("Invalid path")
+    while 1:
+        questions = [
+            inquirer.Text(
+                'minted_abi',
+                message="Path to Ethereum bridge minted token abi text file"
+            )
+        ]
+        answers = inquirer.prompt(questions)
+        minted_abi = answers['minted_abi']
+        try:
+            with open(minted_abi, "r") as f:
+                f.read()
+            break
+        except (IsADirectoryError, FileNotFoundError):
+            print("Invalid path")
+    return bridge_abi, minted_abi
+
+
 def get_network():
     questions = [
         inquirer.Text(

@@ -10,7 +10,7 @@
                 },
                 "eth-poa-local": {
                     "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
-                    "id": "38b9c9e818b1083c62ec52ac0a83eac6",
+                    "id": "217ffb9ed9e2e905277343359254c192",
                     "t_anchor": 10,
                     "t_final": 10
                 }
@@ -22,9 +22,9 @@
                     "pegs": {}
                 },
                 "token1": {
-                    "addr": "AmgQ7ccfdYRUzRiiud6ETbkqffbusHTyyNYDCHmSHMZTspiXzohv",
+                    "addr": "AmhhGGdTByBrFNzfCH7bt4H17JBHwhAFLY3YCTiG2Pecf8eCwtNM",
                     "pegs": {
-                        "eth-poa-local": "0x65c88DF2c72a6730a9bA0642e24C545fC13e70F3"
+                        "eth-poa-local": "0x41c3a2534E93B25Dab9cd0630d4D9b312564f417"
                     }
                 }
             },
@@ -40,7 +40,9 @@
                 },
                 "aergo-local": {
                     "addr": "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
+                    "bridge_abi": "contracts/solidity/bridge_abi.txt",
                     "id": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "minted_abi": "contracts/solidity/minted_erc20_abi.txt",
                     "t_anchor": 25,
                     "t_final": 4
                 }
@@ -61,8 +63,10 @@
                 },
                 "test_erc20": {
                     "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0x737ED67385C69E22F4423AF7645954711e390416",
-                    "pegs": {}
+                    "addr": "0xC3738192ED24062aee7810De0214d7362F5E6218",
+                    "pegs": {
+                        "aergo-local": "AmhBHSywcSWoFSzsbqGWyAECtYszYpYYX7Ws7LyoX5XVkQBX7gVg"
+                    }
                 }
             },
             "type": "ethereum"
