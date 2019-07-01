@@ -2,6 +2,7 @@ import inquirer
 
 
 def confirm_transfer():
+    """Prompt user to procede with a transfer of not."""
     questions = [
         inquirer.List(
             'confirm',
@@ -16,41 +17,44 @@ def confirm_transfer():
     return answers['confirm']
 
 
-def get_amount():
+def prompt_number(message):
+    """Prompt a number."""
     while 1:
         try:
             questions = [
                 inquirer.Text(
-                    'amount',
-                    message="Amount of assets to transfer",
+                    'num',
+                    message=message,
                 )
             ]
             answers = inquirer.prompt(questions)
-            amount = int(answers['amount']) * 10**18
+            num = int(answers['num']) * 10**18
             break
         except ValueError:
-            print("Invalid amount")
-    return amount
+            print("Invalid number")
+    return num
 
 
-def get_asset_abi(path):
-    with open(path, "r") as f:
-        abi = f.read()
-    return abi
+def prompt_amount():
+    """Prompt a number of tokens to transfer."""
+    return prompt_number("Amount of assets to transfer")
 
 
-def get_deposit_height():
-    questions = [
-        inquirer.Text(
-            'height',
-            message="Block height of deposit (0 to try finalization anyway)",
-        )
-    ]
-    answers = inquirer.prompt(questions)
-    return int(answers['height'])
+def prompt_deposit_height():
+    """Prompt the block number of deposit."""
+    return prompt_number("Block height of deposit (0 to try finalization "
+                         "anyway)")
 
 
-def get_bridge(net1, net2):
+def prompt_new_bridge(net1, net2):
+    """Prompt user to input bridge contracts and tempo.
+
+    For each contract on each bridged network, provide:
+    - bridge contract address
+    - anchoring periode
+    - finality of the anchored chain
+
+    """
     print('Bridge between {} and {}'.format(net1, net2))
     questions = [
         inquirer.Text(
@@ -81,41 +85,42 @@ def get_bridge(net1, net2):
     return inquirer.prompt(questions)
 
 
-def get_bridge_abi_paths():
+def prompt_file_path(message):
+    """Prompt user to input a path to a file and check it exists."""
     while 1:
         questions = [
             inquirer.Text(
-                'bridge_abi',
-                message="Path to Ethereum bridge abi text file"
+                'path',
+                message=message
             )
         ]
         answers = inquirer.prompt(questions)
-        bridge_abi = answers['bridge_abi']
+        path = answers['path']
         try:
-            with open(bridge_abi, "r") as f:
+            with open(path, "r") as f:
                 f.read()
             break
         except (IsADirectoryError, FileNotFoundError):
             print("Invalid path")
-    while 1:
-        questions = [
-            inquirer.Text(
-                'minted_abi',
-                message="Path to Ethereum bridge minted token abi text file"
-            )
-        ]
-        answers = inquirer.prompt(questions)
-        minted_abi = answers['minted_abi']
-        try:
-            with open(minted_abi, "r") as f:
-                f.read()
-            break
-        except (IsADirectoryError, FileNotFoundError):
-            print("Invalid path")
+    return path
+
+
+def prompt_bridge_abi_paths():
+    """Prompt user to input paths to text files containing abis."""
+    bridge_abi = prompt_file_path("Path to Ethereum bridge abi text file")
+    minted_abi = prompt_file_path("Path to Ethereum bridge minted token abi "
+                                  "text file")
     return bridge_abi, minted_abi
 
 
-def get_network():
+def prompt_new_network():
+    """Prompt user to input a new network's information:
+    - Name
+    - IP/url
+    - Network type (aergo/eth)
+    - is POA (only needed for ethereum)
+
+    """
     questions = [
         inquirer.Text(
             'name',
@@ -148,7 +153,15 @@ def get_network():
     return answers
 
 
-def get_eth_privkey():
+def prompt_eth_privkey():
+    """Prompt use to input a new ethereum private key.
+
+    Returns:
+        - name of the key
+        - address of the key
+        - path to the json key file
+
+    """
     while 1:
         questions = [
             inquirer.Text(
@@ -177,26 +190,15 @@ def get_eth_privkey():
     return privkey_name, addr, privkey_path
 
 
-def get_abi():
-    while 1:
-        questions = [
-            inquirer.Text(
-                'abi_path',
-                message="Path to abi"
-            )
-        ]
-        answers = inquirer.prompt(questions)
-        abi_path = answers['abi_path']
-        try:
-            with open(abi_path, "r") as f:
-                f.read()
-            break
-        except (IsADirectoryError, FileNotFoundError):
-            print("Invalid abi path")
-    return abi_path
+def prompt_aergo_privkey():
+    """Prompt user to input a new aergo private key.
 
+    Returns:
+        - name of the key
+        - address of the key
+        - encrypted private key
 
-def get_aergo_privkey():
+    """
     questions = [
         inquirer.Text(
             'privkey_name',
@@ -218,7 +220,15 @@ def get_aergo_privkey():
     return privkey_name, addr, privkey
 
 
-def get_new_asset(networks):
+def prompt_new_asset(networks):
+    """Prompt user to input a new asset by providing the following:
+    - asset name
+    - origin network (where it was first issued)
+    - address on origin network
+    - other networks where the asset exists as a peg
+    - address of pegs
+
+    """
     questions = [
         inquirer.Text(
             'name',
@@ -279,7 +289,18 @@ def get_new_asset(networks):
     return name, origin, origin_addr, pegs, peg_addrs
 
 
-def get_validators():
+def prompt_new_validators():
+    """Prompt user to input validators
+
+    Note:
+        The list of validators must have the same order as defined in the
+        bridge contracts
+
+    Returns:
+        List of ordered validators
+
+    """
+
     print("WARNING : Validators must be registered in the correct order")
     validators = []
     add_val = True

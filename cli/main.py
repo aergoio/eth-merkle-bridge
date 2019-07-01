@@ -15,21 +15,34 @@ from ethaergo_wallet.exceptions import (
 
 from cli.utils import (
     confirm_transfer,
-    get_amount,
-    get_deposit_height,
-    get_bridge,
-    get_network,
-    get_eth_privkey,
-    get_aergo_privkey,
-    get_new_asset,
-    get_validators,
-    get_abi,
-    get_bridge_abi_paths,
+    prompt_amount,
+    prompt_deposit_height,
+    prompt_new_bridge,
+    prompt_new_network,
+    prompt_eth_privkey,
+    prompt_aergo_privkey,
+    prompt_new_asset,
+    prompt_new_validators,
+    prompt_file_path,
+    prompt_bridge_abi_paths,
 )
 
 
 class EthMerkleBridgeCli():
+    """CLI tool for interacting with the EthAergoWallet.
+
+    First choose an existing config file of create one from scratch.
+    Once a config file is chosen, the CLI provides an interface to the
+    EthAergoWallet and has the following features:
+    - edit config file settings
+    - transfer assets between networks
+    - check status of transfers
+    - check balances for each asset on each network
+
+    """
+
     def __init__(self):
+        """Load the pending transfers."""
         file_path = os.path.dirname(os.path.realpath(__file__))
         # root_path is the path/to/eth-merkle-bridge from which files are
         # tracked
@@ -38,6 +51,10 @@ class EthMerkleBridgeCli():
             self.pending_transfers = json.load(file)
 
     def start(self):
+        """Entry point of cli : load a wallet configuration file of create a
+        new one
+
+        """
         f = Figlet(font='speed')
         print(f.renderText('Eth Merkel Bridge Cli'))
         print("Welcome to the Eth Merkle Bridge Interactive CLI.\n"
@@ -55,13 +72,14 @@ class EthMerkleBridgeCli():
             answers = inquirer.prompt(questions)
             if answers['YesNo'] == 'Y':
                 self.load_config()
-                self.root()
+                self.menu()
             elif answers['YesNo'] == 'N':
                 self.create_config()
             else:
                 return
 
     def load_config(self):
+        """Load the configuration file from path and create a wallet object."""
         while 1:
             questions = [
                 inquirer.Text(
@@ -75,7 +93,13 @@ class EthMerkleBridgeCli():
             except (IsADirectoryError, FileNotFoundError):
                 print("Invalid path/to/config.json")
 
-    def root(self):
+    def menu(self):
+        """Menu for interacting with network.
+
+        Users can change settings, query balances, check pending transfers,
+        execute cross chain transactions
+
+        """
         while 1:
             questions = [
                 inquirer.List(
@@ -110,6 +134,10 @@ class EthMerkleBridgeCli():
                       'transfers\nError msg: {}'.format(e))
 
     def check_balances(self):
+        """Iterate every registered wallet, network and asset and query
+        balances.
+
+        """
         print('Ethereum wallet: ')
         for wallet, info in self.wallet.config_data('wallet-eth').items():
             print('{}{}: {}'.format('\t', wallet, info['addr']))
@@ -171,6 +199,7 @@ class EthMerkleBridgeCli():
                                               u'\U0001f604'))
 
     def edit_settings(self):
+        """Menu for editing the config file of the currently loaded wallet"""
         while 1:
             questions = [
                 inquirer.List(
@@ -201,12 +230,19 @@ class EthMerkleBridgeCli():
                       'transfers\nError msg: {}'.format(e))
 
     def create_config(self):
+        """Create a new configuration file from scratch.
+
+        This tool registers 2 networks, bridge contracts, bridge validators,
+        paths to bridge abis, a private key for each network and
+        bridge validators
+
+        """
         new_config = {}
         print("Let's register 2 networks, "
               "validators(optional) and a private key for interacting with "
               "each network.")
         # Register 2 networks
-        answers = get_network()
+        answers = prompt_new_network()
         net1 = answers['name']
         net1_type = answers['type']
         new_config['networks'] = {net1: {'ip': answers['ip'],
@@ -216,7 +252,7 @@ class EthMerkleBridgeCli():
                                   }
         if net1_type == 'ethereum':
             new_config['networks'][net1]['isPOA'] = answers['isPOA']
-        answers = get_network()
+        answers = prompt_new_network()
         net2 = answers['name']
         net2_type = answers['type']
         new_config['networks'][net2] = {'ip': answers['ip'],
@@ -226,7 +262,7 @@ class EthMerkleBridgeCli():
         if net2_type == 'ethereum':
             new_config['networks'][net2]['isPOA'] = answers['isPOA']
         # Register bridge contracts on each network
-        answers = get_bridge(net1, net2)
+        answers = prompt_new_bridge(net1, net2)
         new_config['networks'][net1]['bridges'] = {
             net2: {'addr': answers['bridge1'],
                    't_anchor': int(answers['t_anchor1']),
@@ -239,40 +275,40 @@ class EthMerkleBridgeCli():
                    't_final': int(answers['t_final2'])
                    }
         }
-        # Get paths to abis
+        # Register paths to abis
         if net1_type == 'ethereum':
-            bridge_abi, minted_abi = get_bridge_abi_paths()
+            bridge_abi, minted_abi = prompt_bridge_abi_paths()
             new_config['networks'][net1]['bridges'][net2]['bridge_abi'] = \
                 bridge_abi
             new_config['networks'][net1]['bridges'][net2]['minted_abi'] = \
                 minted_abi
         if net2_type == 'ethereum':
-            bridge_abi, minted_abi = get_bridge_abi_paths()
+            bridge_abi, minted_abi = prompt_bridge_abi_paths()
             new_config['networks'][net2]['bridges'][net1]['bridge_abi'] = \
                 bridge_abi
             new_config['networks'][net2]['bridges'][net1]['minted_abi'] = \
                 minted_abi
-        # Register a new private key (ethereum + aergo)
-        print("Register a private key for {}".format(net1))
+        # Register a new private key for each network
         new_config['wallet-eth'] = {}
         new_config['wallet'] = {}
+        print("Register a private key for {}".format(net1))
         if net1_type == 'ethereum':
-            name, addr, privkey_path = get_eth_privkey()
+            name, addr, privkey_path = prompt_eth_privkey()
             privkey_path = os.path.relpath(privkey_path, self.root_path)
             new_config['wallet-eth'][name] = {"addr": addr,
                                               "keystore": privkey_path}
         else:
-            name, addr, privkey = get_aergo_privkey()
+            name, addr, privkey = prompt_aergo_privkey()
             new_config['wallet'][name] = {"addr": addr,
                                           "priv_key": privkey}
         print("Register a private key for {}".format(net2))
         if net2_type == 'ethereum':
-            name, addr, privkey_path = get_eth_privkey()
+            name, addr, privkey_path = prompt_eth_privkey()
             privkey_path = os.path.relpath(privkey_path, self.root_path)
             new_config['wallet-eth'][name] = {"addr": addr,
                                               "keystore": privkey_path}
         else:
-            name, addr, privkey = get_aergo_privkey()
+            name, addr, privkey = prompt_aergo_privkey()
             new_config['wallet'][name] = {"addr": addr,
                                           "priv_key": privkey}
 
@@ -286,7 +322,7 @@ class EthMerkleBridgeCli():
             )
         ]
         if inquirer.prompt(questions)['YN'] == 'Yes':
-            validators = get_validators()
+            validators = prompt_new_validators()
             new_config['validators'] = validators
         else:
             new_config['validators'] = {}
@@ -305,8 +341,9 @@ class EthMerkleBridgeCli():
         print("Config file stored in: {}".format(os.path.abspath(path)))
 
     def register_bridge(self):
-        net1, net2 = self.get_directions()
-        answers = get_bridge(net1, net2)
+        """Register bridge contracts between 2 already defined networks."""
+        net1, net2 = self.prompt_bridge_networks()
+        answers = prompt_new_bridge(net1, net2)
         self.wallet.config_data(
             'networks', net1, 'bridges', net2,
             value={'addr': answers['bridge1'],
@@ -324,8 +361,12 @@ class EthMerkleBridgeCli():
         self.wallet.save_config()
 
     def register_asset(self):
-        networks = self.get_networks()
-        name, origin, origin_addr, pegs, peg_addrs = get_new_asset(networks)
+        """Register a new asset and it's pegs on other networks in the
+        wallet's config.
+
+        """
+        networks = self.get_registered_networks()
+        name, origin, origin_addr, pegs, peg_addrs = prompt_new_asset(networks)
         try:
             self.wallet.config_data('networks', origin, 'tokens', name)
             questions = [
@@ -346,7 +387,7 @@ class EthMerkleBridgeCli():
             'networks', origin, 'tokens', name, 'addr', value=origin_addr)
         # if ethereum query abi path
         if self.wallet.config_data('networks', origin, 'type') == 'ethereum':
-            abi_path = get_abi()
+            abi_path = prompt_file_path("Path to the asset's abi text file")
             abi_path = os.path.relpath(abi_path, self.root_path)
             self.wallet.config_data(
                 'networks', origin, 'tokens', name, 'abi', value=abi_path)
@@ -357,7 +398,8 @@ class EthMerkleBridgeCli():
         self.wallet.save_config()
 
     def register_network(self):
-        answers = get_network()
+        """Register a new network in the wallet's config."""
+        answers = prompt_new_network()
         net = answers['name']
         net_type = answers['type']
         ip = answers['ip']
@@ -377,16 +419,18 @@ class EthMerkleBridgeCli():
         self.wallet.save_config()
 
     def register_new_validators(self):
+        """Register new validators in the wallet's config."""
         print("WARNING: current validators will be overridden in the config "
               "file")
-        validators = get_validators()
+        validators = prompt_new_validators()
         self.wallet.config_data('validators', value=validators)
         self.wallet.save_config()
 
     def initiate_transfer(self):
+        """Initiate a new transfer of tokens between 2 networks."""
         from_chain, to_chain, from_assets, to_assets, asset_name, \
-            receiver = self.commun_transfer_params()
-        amount = get_amount()
+            receiver = self.prompt_commun_transfer_params()
+        amount = prompt_amount()
         bridge_from = self.wallet.config_data(
             'networks', from_chain, 'bridges', to_chain, 'addr')
         bridge_to = self.wallet.config_data(
@@ -401,7 +445,7 @@ class EthMerkleBridgeCli():
         deposit_height, tx_hash = 0, ""
         if self.wallet.config_data('networks',
                                    from_chain, 'type') == 'ethereum':
-            privkey_name = self.get_privkey_name('wallet-eth')
+            privkey_name = self.prompt_signing_key('wallet-eth')
             if asset_name in from_assets:
                 # if transfering a native asset Lock
                 print("Lock transfer summary:\n{}".format(summary))
@@ -429,7 +473,7 @@ class EthMerkleBridgeCli():
                 return
         elif self.wallet.config_data('networks',
                                      from_chain, 'type') == 'aergo':
-            privkey_name = self.get_privkey_name('wallet')
+            privkey_name = self.prompt_signing_key('wallet')
             if asset_name in from_assets:
                 # if transfering a native asset Lock
                 if asset_name == 'aergo':
@@ -486,6 +530,15 @@ class EthMerkleBridgeCli():
         self.store_pending_transfers()
 
     def finalize_transfer_arguments(self):
+        """Prompt the arguments needed to finalize a transfer.
+
+        The arguments can be taken from the pending transfers or
+        inputed manually by users.
+
+        Returns:
+            List of transfer arguments
+
+        """
         choices = [val for _, val in self.pending_transfers.items()]
         choices.extend(["Custom transfer", "Back"])
         questions = [
@@ -498,8 +551,8 @@ class EthMerkleBridgeCli():
         answers = inquirer.prompt(questions)
         if answers['transfer'] == 'Custom transfer':
             from_chain, to_chain, from_assets, to_assets, asset_name, \
-                receiver = self.commun_transfer_params()
-            deposit_height = get_deposit_height()
+                receiver = self.prompt_commun_transfer_params()
+            deposit_height = prompt_deposit_height()
         elif answers['transfer'] == 'Back':
             return None
         else:
@@ -511,6 +564,7 @@ class EthMerkleBridgeCli():
                 receiver, deposit_height)
 
     def finalize_transfer(self):
+        """Finalize a token transfer between 2 chains."""
         arguments = self.finalize_transfer_arguments()
         if arguments is None:
             return
@@ -529,7 +583,7 @@ class EthMerkleBridgeCli():
                           asset_name, receiver, deposit_height)
         if self.wallet.config_data('networks',
                                    from_chain, 'type') == 'ethereum':
-            privkey_name = self.get_privkey_name('wallet')
+            privkey_name = self.prompt_signing_key('wallet')
             if asset_name in from_assets:
                 # if transfering a native asset mint
                 if asset_name == 'aergo_erc20':
@@ -568,7 +622,7 @@ class EthMerkleBridgeCli():
                 return
         elif self.wallet.config_data('networks',
                                      from_chain, 'type') == 'aergo':
-            privkey_name = self.get_privkey_name('wallet')
+            privkey_name = self.prompt_signing_key('wallet')
             if asset_name == 'aergo':
                 print("Unlock transfer summary:\n{}".format(summary))
                 if not confirm_transfer():
@@ -613,25 +667,13 @@ class EthMerkleBridgeCli():
         self.store_pending_transfers()
 
     def check_withdrawable_balance(self):
-        choices = [val for _, val in self.pending_transfers.items()]
-        choices.extend([("Check another custom transfer", "custom"), "Back"])
-        questions = [
-            inquirer.List(
-                'transfer',
-                message="Choose a pending transfer to finalize",
-                choices=choices
-                )
-        ]
-        answers = inquirer.prompt(questions)
-        if answers['transfer'] == 'custom':
-            from_chain, to_chain, from_assets, to_assets, asset_name, \
-                receiver = self.commun_transfer_params()
-        elif answers['transfer'] == 'Back':
+        """Check the status of cross chain transfers."""
+        arguments = self.finalize_transfer_arguments()
+        if arguments is None:
             return
-        else:
-            from_chain, to_chain, asset_name, receiver, _ = \
-                answers['transfer']
-            from_assets, to_assets = self.get_assets(from_chain, to_chain)
+        from_chain, to_chain, from_assets, to_assets, asset_name, receiver, \
+            _ = arguments
+
         if self.wallet.config_data('networks',
                                    from_chain, 'type') == 'ethereum':
             if asset_name in from_assets:
@@ -678,13 +720,20 @@ class EthMerkleBridgeCli():
         print("Withdrawable: {}  Pending: {}"
               .format(withdrawable/10**18, pending/10**18))
 
-    def commun_transfer_params(self):
-        from_chain, to_chain = self.get_directions()
+    def prompt_commun_transfer_params(self):
+        """Prompt the common parameters necessary for all transfers.
+
+        Returns:
+            List of transfer parameters : from_chain, to_chain, from_assets,
+            to_assets, asset_name, receiver
+
+        """
+        from_chain, to_chain = self.prompt_transfer_networks()
         from_assets, to_assets = self.get_assets(from_chain, to_chain)
         questions = [
             inquirer.List(
                 'asset_name',
-                message="Name of asset to transfer : ",
+                message="Name of asset to transfer",
                 choices=from_assets + to_assets
             ),
             inquirer.Text(
@@ -698,7 +747,14 @@ class EthMerkleBridgeCli():
         return from_chain, to_chain, from_assets, to_assets, asset_name, \
             receiver
 
-    def get_privkey_name(self, wallet_name):
+    def prompt_signing_key(self, wallet_name):
+        """Prompt user to select a private key.
+
+        Note:
+            Keys are displayed by name and should have been registered in
+            wallet config.
+
+        """
         accounts = self.wallet.config_data(wallet_name)
         questions = [
             inquirer.List(
@@ -710,8 +766,9 @@ class EthMerkleBridgeCli():
         answers = inquirer.prompt(questions)
         return answers['privkey_name']
 
-    def get_directions(self):
-        networks = self.get_networks()
+    def prompt_bridge_networks(self):
+        """Prompt user to choose 2 networks between registered networks."""
+        networks = self.get_registered_networks()
         questions = [
             inquirer.List(
                 'from_chain',
@@ -731,23 +788,53 @@ class EthMerkleBridgeCli():
         to_chain = answers['to_chain']
         return from_chain, to_chain
 
-    def get_networks(self):
-        networks = []
-        for net in self.wallet.config_data('networks'):
-            networks.append(net)
-        return networks
+    def prompt_transfer_networks(self):
+        """Prompt user to choose 2 networks between registered bridged
+        networks.
+
+        """
+        networks = self.get_registered_networks()
+        questions = [
+            inquirer.List(
+                'from_chain',
+                message="Departure network",
+                choices=networks)
+        ]
+        answers = inquirer.prompt(questions)
+        from_chain = answers['from_chain']
+        networks = [net for net in
+                    self.wallet.config_data('networks', from_chain, 'bridges')]
+        questions = [
+            inquirer.List(
+                'to_chain',
+                message="Destination network",
+                choices=networks)
+        ]
+        answers = inquirer.prompt(questions)
+        to_chain = answers['to_chain']
+        return from_chain, to_chain
+
+    def get_registered_networks(self):
+        """Get the list of networks registered in the wallet config."""
+        return [net for net in self.wallet.config_data('networks')]
 
     def get_assets(self, from_chain, to_chain):
-        from_assets = []
-        for asset in self.wallet.config_data('networks',
-                                             from_chain, 'tokens'):
-            from_assets.append(asset)
-        to_assets = []
-        for asset in self.wallet.config_data('networks', to_chain, 'tokens'):
-            to_assets.append(asset)
+        """Get the list of registered assets on each network."""
+        from_assets = [
+            asset for asset in self.wallet.config_data(
+                'networks', from_chain, 'tokens')
+        ]
+        to_assets = [
+            asset for asset in self.wallet.config_data(
+                'networks', to_chain, 'tokens')
+        ]
         return from_assets, to_assets
 
     def store_pending_transfers(self):
+        """Record pending transfers in json file so they can be finalized
+        later.
+
+        """
         with open(self.root_path + 'cli/pending_transfers.json', 'w') as file:
             json.dump(self.pending_transfers, file, indent=4)
 
@@ -755,33 +842,3 @@ class EthMerkleBridgeCli():
 if __name__ == '__main__':
     app = EthMerkleBridgeCli()
     app.start()
-
-    # 'Register network',
-    # 'Register asset',
-    # 'Register account with private key'
-    # 'Send AergoERC20 to Aergo (Lock)',
-    # 'Receive Aer on Aergo (Unfreeze)',
-    # 'Send Aer to Ethereum (Freeze)',
-    # 'Receive AergoERC20 on Ethereum (Unlock)',
-
-    # 'Initiate cross-chain transfer (Lock)',
-    # 'Initiate cross-chain transfer (Burn)',
-    # 'Finalize cross-chain transfer (Mint)',
-    # 'Finalize cross-chain transfer (Unlock)',
-
-    # 'Send ERC20 to Aergo Mainnet (Lock)',
-    # 'Receive pegged token on Aergo Mainnet (Mint)',
-    # 'Send pegged token to Ethereum (Burn)',
-    # 'Receive ERC20 on Ethereum (Unlock)',
-
-    # 'Send StdToken to Ethereum (Lock)',
-    # 'Unfreeze AergoERC20 --> Mainnet',
-    # 'Freeze AergoERC20 --> Ethereum',
-    # 'Lock ERC20     Ethereum => Aergo                   ',
-    # '               Ethereum => Aergo           Mint peg',
-    # '               Ethereum <= Aergo           Burn peg',
-    # 'Unlock ERC20   Ethereum <= Aergo                   ',
-    # '               Ethereum <= Aergo    Lock AergoToken',
-    # 'Mint peg       Ethereum <= Aergo                   ',
-    # 'Burn peg       Ethereum => Aergo                   ',
-    # '               Ethereum => Aergo  Unlock AergoToken',
