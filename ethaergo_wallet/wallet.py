@@ -134,6 +134,7 @@ class EthAergoWallet(WalletConfig):
             w3, signer_acct, receiver, amount, bridge_from, bridge_from_abi,
             erc20_address, fee_limit, self.fee_price, next_nonce
         )
+        print('\U0001f512 Lock success')
 
         balance = eth_u.get_balance(token_owner, erc20_address, w3,
                                     erc20_abi)
@@ -194,6 +195,7 @@ class EthAergoWallet(WalletConfig):
             aergo_to, receiver, lock_proof, asset_address, bridge_to,
             fee_limit, self.fee_price
         )
+        print('\u26cf Mint success')
         # new balance on destination
         balance = aergo_u.get_balance(receiver, token_pegged, aergo_to)
         print("{} balance on destination after transfer: {}"
@@ -251,6 +253,7 @@ class EthAergoWallet(WalletConfig):
             w3, signer_acct, receiver, amount, bridge_from, bridge_from_abi,
             token_pegged, fee_limit, self.fee_price
         )
+        print('\U0001f525 Burn success')
 
         balance = eth_u.get_balance(token_owner, token_pegged, w3,
                                     minted_erc20_abi)
@@ -307,6 +310,7 @@ class EthAergoWallet(WalletConfig):
             aergo_to, receiver, lock_proof, bridge_to, fee_limit,
             self.fee_price
         )
+        print('\U0001f4a7 Unfreeze success')
         # new balance on destination
         balance = aergo_u.get_balance(receiver, 'aergo', aergo_to)
         print("{} balance on destination after transfer: {}"
@@ -360,6 +364,7 @@ class EthAergoWallet(WalletConfig):
             aergo_to, receiver, burn_proof, asset_address, bridge_to,
             fee_limit, self.fee_price
         )
+        print('\U0001f513 Unlock success')
 
         # new balance on origin
         balance = aergo_u.get_balance(receiver, asset_address, aergo_to)
@@ -499,6 +504,7 @@ class EthAergoWallet(WalletConfig):
             aergo_from, bridge_from, receiver, amount, fee_limit,
             self.fee_price
         )
+        print('\u2744 Freeze success')
 
         # remaining balance on origin : aer or asset
         balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
@@ -554,6 +560,7 @@ class EthAergoWallet(WalletConfig):
             aergo_from, bridge_from, receiver, amount,
             asset_address, fee_limit, self.fee_price, signed_transfer
         )
+        print('\U0001f512 Lock success')
 
         # remaining balance on origin : aer or asset
         balance = aergo_u.get_balance(sender, asset_address, aergo_from)
@@ -624,6 +631,7 @@ class EthAergoWallet(WalletConfig):
             w3, signer_acct, receiver, lock_proof, asset_address, bridge_to,
             bridge_to_abi, fee_limit, self.fee_price
         )
+        print('\u26cf Mint success')
 
         # new balance on sidechain
         balance = eth_u.get_balance(receiver, token_pegged, w3,
@@ -676,10 +684,11 @@ class EthAergoWallet(WalletConfig):
             raise InsufficientBalanceError(err)
 
         print("\n------ Burn {} -----------".format(asset_name))
-        lock_height, tx_hash = aergo_to_eth.burn(
+        burn_height, tx_hash = aergo_to_eth.burn(
             aergo_from, bridge_from, receiver, amount, token_pegged,
             fee_limit, self.fee_price
         )
+        print('\U0001f525 Burn success')
 
         # remaining balance on origin : aer or asset
         balance = aergo_u.get_balance(sender, token_pegged, aergo_from)
@@ -687,7 +696,7 @@ class EthAergoWallet(WalletConfig):
               .format(asset_name, balance/10**18))
 
         aergo_from.disconnect()
-        return lock_height, tx_hash
+        return burn_height, tx_hash
 
     def unlock_to_eth(
         self,
@@ -739,6 +748,7 @@ class EthAergoWallet(WalletConfig):
             w3, signer_acct, receiver, lock_proof, asset_address, bridge_to,
             bridge_to_abi, fee_limit, self.fee_price
         )
+        print('\U0001f513 Unlock success')
 
         # new balance on origin
         balance = eth_u.get_balance(receiver, asset_address, w3,
