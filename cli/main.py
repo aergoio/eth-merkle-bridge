@@ -25,6 +25,7 @@ from cli.utils import (
     prompt_new_validators,
     prompt_file_path,
     prompt_bridge_abi_paths,
+    prompt_number,
 )
 
 
@@ -152,7 +153,7 @@ class EthMerkleBridgeCli():
                         if balance != 0:
                             print("{}{} balance: {}{}"
                                   .format('\t'*4, addr, balance/10**18,
-                                          u'\U0001f604'))
+                                          u'\U0001f4b0'))
                     print("{}{} pegged on other chains:"
                           .format('\t'*4, token_name))
                     for peg in token['pegs']:
@@ -166,7 +167,7 @@ class EthMerkleBridgeCli():
                             if balance != 0:
                                 print("{}{} balance: {}{}"
                                       .format('\t'*6, addr, balance/10**18,
-                                              u'\U0001f604'))
+                                              u'\U0001f4b0'))
         print('Aergo wallet: ')
         for wallet, info in self.wallet.config_data('wallet').items():
             print('{}{}: {}'.format('\t', wallet, info['addr']))
@@ -210,6 +211,8 @@ class EthMerkleBridgeCli():
                         ('Register new network', 'N'),
                         ('Register new bridge', 'B'),
                         ('Register new set of validators', 'V'),
+                        ('Update anchoring periode', 'UA'),
+                        ('Update finality', 'UF'),
                         'Back',
                         ])
             ]
@@ -225,6 +228,10 @@ class EthMerkleBridgeCli():
                     self.register_new_validators()
                 elif answers['action'] == 'B':
                     self.register_bridge()
+                elif answers['action'] == 'UA':
+                    self.update_t_anchor()
+                elif answers['action'] == 'UF':
+                    self.update_t_final()
             except (TypeError, KeyboardInterrupt, InvalidArgumentsError) as e:
                 print('Someting went wrong, check the status of you pending '
                       'transfers\nError msg: {}'.format(e))
@@ -424,6 +431,22 @@ class EthMerkleBridgeCli():
               "file")
         validators = prompt_new_validators()
         self.wallet.config_data('validators', value=validators)
+        self.wallet.save_config()
+
+    def update_t_anchor(self):
+        from_chain, to_chain = self.prompt_transfer_networks()
+        t_anchor = prompt_number("New anchoring periode (nb of blocks) of {} "
+                                 "onto {}".format(to_chain, from_chain))
+        self.wallet.config_data('networks', from_chain, 'bridges', to_chain,
+                                't_anchor', value=t_anchor)
+        self.wallet.save_config()
+
+    def update_t_final(self):
+        from_chain, to_chain = self.prompt_transfer_networks()
+        t_final = prompt_number("New finality (nb of blocks) of {}"
+                                .format(to_chain))
+        self.wallet.config_data('networks', from_chain, 'bridges', to_chain,
+                                't_final', value=t_final)
         self.wallet.save_config()
 
     def initiate_transfer(self):

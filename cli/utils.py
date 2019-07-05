@@ -28,7 +28,7 @@ def prompt_number(message):
                 )
             ]
             answers = inquirer.prompt(questions)
-            num = int(answers['num']) * 10**18
+            num = int(answers['num'])
             break
         except ValueError:
             print("Invalid number")
@@ -37,7 +37,7 @@ def prompt_number(message):
 
 def prompt_amount():
     """Prompt a number of tokens to transfer."""
-    return prompt_number("Amount of assets to transfer")
+    return prompt_number("Amount of assets to transfer") * 10**18
 
 
 def prompt_deposit_height():

@@ -101,7 +101,7 @@ class ValidatorService(BridgeOperatorServicer):
         )
         self.aergo_bridge = (config_data['networks'][aergo_net]['bridges']
                              [eth_net]['addr'])
-        #TODO query id from contract
+        #TODO query id from contract / register with cli
         self.aergo_id = (config_data['networks'][aergo_net]['bridges'][eth_net]
                          ['id'])
         self.eth_id = (config_data['networks'][eth_net]['bridges'][aergo_net]
@@ -198,9 +198,9 @@ class ValidatorService(BridgeOperatorServicer):
         sig = self.web3.eth.account.signHash(h, private_key=self.eth_privkey)
         approval = Approval(
             address=self.eth_address, sig=bytes(sig.signature))
-        print("{0}Validator {1} signed a new anchor for {2},\n"
-              "{0}with nonce {3}"
-              .format("\t"*5, self.validator_index, "Ethereum",
+        print("{0}{1} Validator {2} signed a new anchor for {3},\n"
+              "{0}with nonce {4}"
+              .format("\t"*5, u'\u2693', self.validator_index, "Ethereum",
                       anchor.destination_nonce))
         return approval
 
@@ -271,9 +271,9 @@ class ValidatorService(BridgeOperatorServicer):
         h = hashlib.sha256(msg).digest()
         sig = self.hera.account.private_key.sign_msg(h)
         approval = Approval(address=self.aergo_addr, sig=sig)
-        print("{0}Validator {1} signed a new anchor for {2},\n"
-              "{0}with nonce {3}"
-              .format("", self.validator_index, "Aergo",
+        print("{0}{1} Validator {2} signed a new anchor for {3},\n"
+              "{0}with nonce {4}"
+              .format("", u'\u2693', self.validator_index, "Aergo",
                       anchor.destination_nonce))
         return approval
 
@@ -373,9 +373,9 @@ class ValidatorService(BridgeOperatorServicer):
         h = hashlib.sha256(msg).digest()
         sig = self.hera.account.private_key.sign_msg(h)
         approval = Approval(address=self.aergo_addr, sig=sig)
-        print("{0}Validator {1} signed a new {2} for {3},\n"
-              "{0}with nonce {4}"
-              .format("", self.validator_index, tempo_str, "Aergo",
+        print("{0}{1} Validator {2} signed a new {3} for {4},\n"
+              "{0}with nonce {5}"
+              .format("", u'\u231B', self.validator_index, tempo_str, "Aergo",
                       tempo_msg.destination_nonce))
         return approval
 
@@ -423,10 +423,10 @@ class ValidatorService(BridgeOperatorServicer):
         sig = self.web3.eth.account.signHash(h, private_key=self.eth_privkey)
         approval = Approval(
             address=self.eth_address, sig=bytes(sig.signature))
-        print("{0}Validator {1} signed a new {2} for {3},\n"
-              "{0}with nonce {4}"
-              .format("\t"*5, self.validator_index, tempo_str, "Ethereum",
-                      tempo_msg.destination_nonce))
+        print("{0}{1} Validator {2} signed a new {3} for {4},\n"
+              "{0}with nonce {5}"
+              .format("\t"*5, u'\u231B', self.validator_index, tempo_str,
+                      "Ethereum", tempo_msg.destination_nonce))
         return approval
 
     def GetEthValidatorsSignature(self, val_msg, context):
@@ -460,9 +460,9 @@ class ValidatorService(BridgeOperatorServicer):
         h = hashlib.sha256(data_bytes).digest()
         sig = self.hera.account.private_key.sign_msg(h)
         approval = Approval(address=self.aergo_addr, sig=sig)
-        print("{0}Validator {1} signed a new validator set for {2},\n"
-              "{0}with nonce {3}"
-              .format("", self.validator_index, "Aergo",
+        print("{0}{1} Validator {2} signed a new validator set for {3},\n"
+              "{0}with nonce {4}"
+              .format("", u'\U0001f58b', self.validator_index, "Aergo",
                       val_msg.destination_nonce))
         return approval
 
@@ -496,9 +496,9 @@ class ValidatorService(BridgeOperatorServicer):
         sig = self.web3.eth.account.signHash(h, private_key=self.eth_privkey)
         approval = Approval(
             address=self.eth_address, sig=bytes(sig.signature))
-        print("{0}Validator {1} signed a new validator set for {2},\n"
-              "{0}with nonce {3}"
-              .format("\t"*5, self.validator_index, "Ethereum",
+        print("{0}{1} Validator {2} signed a new validator set for {3},\n"
+              "{0}with nonce {4}"
+              .format("\t"*5, u'\U0001f58b', self.validator_index, "Ethereum",
                       val_msg.destination_nonce))
         return approval
 

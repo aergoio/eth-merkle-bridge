@@ -243,7 +243,8 @@ class EthProposerClient(threading.Thread):
         lib = self.hera.get_status().consensus_info.status['LibNo']
         wait = (merged_height + self.t_anchor) - lib + 1
         while wait > 0:
-            print("{}waiting new anchor time : {}s ...".format(self.tab, wait))
+            print("{}{} waiting new anchor time : {}s ..."
+                  .format(self.tab, u'\u23F0', wait))
             self.monitor_settings_and_sleep(wait)
             # Wait lib > last merged block height + t_anchor
             lib = self.hera.get_status().consensus_info.status['LibNo']
@@ -287,8 +288,9 @@ class EthProposerClient(threading.Thread):
         receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
 
         if receipt.status == 1:
-            print("{0}Anchor success,\n{0}wait until next anchor "
-                  "time: {1}s...".format(self.tab, self.t_anchor))
+            print("{0}{1} Anchor success,\n{0}{2} wait until next anchor "
+                  "time: {3}s...".format(self.tab, u'\u2693', u'\u23F0',
+                                         self.t_anchor))
         else:
             print("{}Anchor failed: already anchored, or invalid "
                   "signature: {}".format(self.tab, receipt))
@@ -332,8 +334,8 @@ class EthProposerClient(threading.Thread):
 
             print("{}anchoring new Aergo root :'0x{}...'"
                   .format(self.tab, root[:8].hex()))
-            print("{}Gathering signatures from validators ..."
-                  .format(self.tab))
+            print("{}{} Gathering signatures from validators ..."
+                  .format(self.tab, u'\U0001f58b'))
 
             try:
                 nonce_to = self.eth_bridge.functions.Nonce().call()
@@ -342,8 +344,8 @@ class EthProposerClient(threading.Thread):
                     )
             except ValidatorMajorityError:
                 print("{0}Failed to gather 2/3 validators signatures,\n"
-                      "{0}waiting for next anchor..."
-                      .format(self.tab))
+                      "{0}{1} waiting for next anchor..."
+                      .format(self.tab, u'\u23F0'))
                 self.monitor_settings_and_sleep(self.t_anchor)
                 continue
 
@@ -369,6 +371,7 @@ class EthProposerClient(threading.Thread):
         """
         if self.auto_update:
             start = time.time()
+            self.monitor_settings()
             while time.time()-start < sleeping_time-10:
                 # check the config file every 10 seconds
                 time.sleep(10)
@@ -454,7 +457,8 @@ class EthProposerClient(threading.Thread):
         receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
 
         if receipt.status == 1:
-            print("{0}Set new validators update success".format(self.tab))
+            print("{}{} Set new validators update success"
+                  .format(self.tab, u'\U0001f58b'))
             return True
         else:
             print("{}Set new validators failed: nonce already used, or "
@@ -518,7 +522,7 @@ class EthProposerClient(threading.Thread):
         receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
 
         if receipt.status == 1:
-            print("{0}update_t_anchor success".format(self.tab))
+            print("{}{} update_t_anchor success".format(self.tab, u'\u231B'))
             return True
         else:
             print("{}update_t_anchor failed: nonce already used, or "
@@ -559,7 +563,7 @@ class EthProposerClient(threading.Thread):
         receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
 
         if receipt.status == 1:
-            print("{0}update_t_final success".format(self.tab))
+            print("{}{} update_t_final success".format(self.tab, u'\u231B'))
             return True
         else:
             print("{}update_t_final failed: nonce already used, or "
@@ -600,5 +604,6 @@ class EthProposerClient(threading.Thread):
 
 if __name__ == '__main__':
     proposer = EthProposerClient(
-        "./test_config.json", 'aergo-local', 'eth-poa-local', privkey_pwd='1234')
+        "./test_config.json", 'aergo-local', 'eth-poa-local',
+        privkey_pwd='1234')
     proposer.run()

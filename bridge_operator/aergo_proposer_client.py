@@ -102,10 +102,14 @@ class AergoProposerClient(threading.Thread):
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         assert self.web3.isConnected()
 
-        self.eth_bridge = self.config_data['networks'][eth_net]['bridges'][aergo_net]['addr']
-        self.aergo_bridge = self.config_data['networks'][aergo_net]['bridges'][eth_net]['addr']
-        self.aergo_id = self.config_data['networks'][aergo_net]['bridges'][eth_net]['id']
-        self.eth_id = self.config_data['networks'][eth_net]['bridges'][aergo_net]['id']
+        self.eth_bridge = (self.config_data['networks'][eth_net]['bridges']
+                           [aergo_net]['addr'])
+        self.aergo_bridge = (self.config_data['networks'][aergo_net]['bridges']
+                             [eth_net]['addr'])
+        self.aergo_id = (self.config_data['networks'][aergo_net]['bridges']
+                         [eth_net]['id'])
+        self.eth_id = (self.config_data['networks'][eth_net]['bridges']
+                       [aergo_net]['id'])
 
         print("------ Connect to Validators -----------")
         validators = query_aergo_validators(self.hera, self.aergo_bridge)
@@ -231,8 +235,8 @@ class AergoProposerClient(threading.Thread):
         # wait for merged_height + t_anchor > lib
         wait = (merged_height + self.t_anchor) - lib + 1
         while wait > 0:
-            print("{}waiting new anchor time : {}s ..."
-                  .format(self.tab, wait * self.eth_block_time))
+            print("{}{} waiting new anchor time : {}s ..."
+                  .format(self.tab, u'\u23F0', wait * self.eth_block_time))
             self.monitor_settings_and_sleep(wait * self.eth_block_time)
             # Wait lib > last merged block height + t_anchor
             best_height = self.web3.eth.blockNumber
@@ -263,9 +267,10 @@ class AergoProposerClient(threading.Thread):
             print("{}Anchor failed: already anchored, or invalid "
                   "signature: {}".format(self.tab, result))
         else:
-            print("{0}Anchor success,\n{0}wait until next anchor "
-                  "time: {1}s..."
-                  .format(self.tab, self.t_anchor * self.eth_block_time))
+            print("{0}{1} Anchor success,\n{0}{2} wait until next anchor "
+                  "time: {3}s..."
+                  .format(self.tab, u'\u2693', u'\u23F0',
+                          self.t_anchor * self.eth_block_time))
 
     def run(
         self,
@@ -311,8 +316,8 @@ class AergoProposerClient(threading.Thread):
 
             print("{}anchoring new Ethereum root :'0x{}...'"
                   .format(self.tab, root[:17]))
-            print("{}Gathering signatures from validators ..."
-                  .format(self.tab))
+            print("{}{} Gathering signatures from validators ..."
+                  .format(self.tab, u'\U0001f58b'))
 
             try:
                 nonce_to = int(self.hera.query_sc_state(
@@ -323,8 +328,8 @@ class AergoProposerClient(threading.Thread):
                     )
             except ValidatorMajorityError:
                 print("{0}Failed to gather 2/3 validators signatures,\n"
-                      "{0}waiting for next anchor..."
-                      .format(self.tab))
+                      "{0}{1} waiting for next anchor..."
+                      .format(self.tab, u'\u23F0'))
                 self.monitor_settings_and_sleep(
                     self.t_anchor * self.eth_block_time)
                 continue
@@ -354,6 +359,7 @@ class AergoProposerClient(threading.Thread):
         """
         if self.auto_update:
             start = time.time()
+            self.monitor_settings()
             while time.time()-start < sleeping_time-10:
                 # check the config file every 10 seconds
                 time.sleep(10)
@@ -437,8 +443,8 @@ class AergoProposerClient(threading.Thread):
                   "invalid signature: {}".format(self.tab, result))
             return False
         else:
-            print("{0}New validators update success"
-                  .format(self.tab))
+            print("{}{} New validators update success"
+                  .format(self.tab, u'\U0001f58b'))
         return True
 
     def get_new_validators_signatures(self, validators):
@@ -504,8 +510,8 @@ class AergoProposerClient(threading.Thread):
                   "signature: {}".format(self.tab, contract_function, result))
             return False
         else:
-            print("{}{} success"
-                  .format(self.tab, contract_function))
+            print("{}{} {} success"
+                  .format(self.tab, '\u231B', contract_function))
         return True
 
     def update_t_final(self, t_final):
@@ -559,6 +565,7 @@ class AergoProposerClient(threading.Thread):
 
 if __name__ == '__main__':
     proposer = AergoProposerClient(
-        "./test_config.json", 'aergo-local', 'eth-poa-local', 3, privkey_pwd='1234'
+        "./test_config.json", 'aergo-local', 'eth-poa-local', 3,
+        privkey_pwd='1234'
     )
     proposer.run()
