@@ -33,7 +33,7 @@ def deploy_bridge(
     minted_erc20_abi_path: str,
     t_anchor_eth: int,
     t_anchor_aergo: int,
-    t_final_eth: int,
+    eth_finality: int,
     eth_net: str,
     aergo_net: str,
     aergo_erc20: str,
@@ -61,7 +61,7 @@ def deploy_bridge(
     # aergo finalization time
     t_final_aergo = height - lib
     print("aergo finality: ", t_final_aergo)
-    print("ethereum finality: ", t_final_eth)
+    print("ethereum finality: ", eth_finality)
 
     print("------ Set Sender Account -----------")
     if privkey_pwd is None:
@@ -76,7 +76,7 @@ def deploy_bridge(
         encrypted_key = f.read()
     if privkey_pwd is None:
         privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
-                            .format(privkey_name))
+                              .format(privkey_name))
     privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
     acct = w3.eth.account.from_key(privkey)
     sender = acct.address
@@ -99,7 +99,7 @@ def deploy_bridge(
                                  args=[aergo_erc20_addr[2:].lower(),
                                        aergo_validators,
                                        t_anchor_aergo,
-                                       t_final_eth])
+                                       eth_finality])
     if result.status != herapy.CommitStatus.TX_OK:
         print("    > ERROR[{0}]: {1}"
               .format(result.status, result.detail))
@@ -172,7 +172,7 @@ def deploy_bridge(
     (config_data['networks'][aergo_net]['bridges'][eth_net]
         ['t_anchor']) = t_anchor_aergo
     (config_data['networks'][aergo_net]['bridges'][eth_net]
-        ['t_final']) = t_final_eth
+        ['t_final']) = eth_finality
     (config_data['networks'][eth_net]['bridges'][aergo_net]
         ['bridge_abi']) = bridge_abi_path
     (config_data['networks'][eth_net]['bridges'][aergo_net]
@@ -199,12 +199,12 @@ if __name__ == '__main__':
 
     # NOTE t_final is the minimum time to get lib : only informative (not
     # actually used in code except for Eth bridge because Eth doesn't have LIB)
-    t_anchor_eth = 25  # aergo anchoring periord on ethereum
-    t_anchor_aergo = 10  # ethereum anchoring periord on aergo
-    t_final_eth = 10  # time after which ethereum is considered finalized
+    t_anchor_eth = 7  # aergo anchoring periord on ethereum
+    t_anchor_aergo = 6  # ethereum anchoring periord on aergo
+    eth_finality = 4  # blocks after which ethereum is considered finalized
     deploy_bridge(
-        config_data, "./test_config.json", lua_bytecode, sol_bytecode, bridge_abi,
-        bridge_abi_path, minted_erc20_abi_path, t_anchor_eth,
-        t_anchor_aergo, t_final_eth, 'eth-poa-local', 'aergo-local',
+        config_data, "./test_config.json", lua_bytecode, sol_bytecode,
+        bridge_abi, bridge_abi_path, minted_erc20_abi_path, t_anchor_eth,
+        t_anchor_aergo, eth_finality, 'eth-poa-local', 'aergo-local',
         'aergo_erc20', privkey_pwd='1234'
     )
