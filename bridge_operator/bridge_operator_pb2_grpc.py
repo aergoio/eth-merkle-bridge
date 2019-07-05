@@ -16,13 +16,43 @@ class BridgeOperatorStub(object):
     """
     self.GetEthAnchorSignature = channel.unary_unary(
         '/BridgeOperator/GetEthAnchorSignature',
-        request_serializer=bridge__operator_dot_bridge__operator__pb2.EthAnchor.SerializeToString,
-        response_deserializer=bridge__operator_dot_bridge__operator__pb2.EthApproval.FromString,
+        request_serializer=bridge__operator_dot_bridge__operator__pb2.Anchor.SerializeToString,
+        response_deserializer=bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
         )
     self.GetAergoAnchorSignature = channel.unary_unary(
         '/BridgeOperator/GetAergoAnchorSignature',
-        request_serializer=bridge__operator_dot_bridge__operator__pb2.AergoAnchor.SerializeToString,
-        response_deserializer=bridge__operator_dot_bridge__operator__pb2.AergoApproval.FromString,
+        request_serializer=bridge__operator_dot_bridge__operator__pb2.Anchor.SerializeToString,
+        response_deserializer=bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
+        )
+    self.GetEthTAnchorSignature = channel.unary_unary(
+        '/BridgeOperator/GetEthTAnchorSignature',
+        request_serializer=bridge__operator_dot_bridge__operator__pb2.NewTempo.SerializeToString,
+        response_deserializer=bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
+        )
+    self.GetEthTFinalSignature = channel.unary_unary(
+        '/BridgeOperator/GetEthTFinalSignature',
+        request_serializer=bridge__operator_dot_bridge__operator__pb2.NewTempo.SerializeToString,
+        response_deserializer=bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
+        )
+    self.GetAergoTAnchorSignature = channel.unary_unary(
+        '/BridgeOperator/GetAergoTAnchorSignature',
+        request_serializer=bridge__operator_dot_bridge__operator__pb2.NewTempo.SerializeToString,
+        response_deserializer=bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
+        )
+    self.GetAergoTFinalSignature = channel.unary_unary(
+        '/BridgeOperator/GetAergoTFinalSignature',
+        request_serializer=bridge__operator_dot_bridge__operator__pb2.NewTempo.SerializeToString,
+        response_deserializer=bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
+        )
+    self.GetEthValidatorsSignature = channel.unary_unary(
+        '/BridgeOperator/GetEthValidatorsSignature',
+        request_serializer=bridge__operator_dot_bridge__operator__pb2.NewValidators.SerializeToString,
+        response_deserializer=bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
+        )
+    self.GetAergoValidatorsSignature = channel.unary_unary(
+        '/BridgeOperator/GetAergoValidatorsSignature',
+        request_serializer=bridge__operator_dot_bridge__operator__pb2.NewValidators.SerializeToString,
+        response_deserializer=bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
         )
 
 
@@ -31,14 +61,56 @@ class BridgeOperatorServicer(object):
   pass
 
   def GetEthAnchorSignature(self, request, context):
-    """Get signatures of anchoring messages from Ethereum
+    """Get signature of anchoring message from Ethereum
     """
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
   def GetAergoAnchorSignature(self, request, context):
-    """Get signatures of anchoring messages from Aergo
+    """Get signature of anchoring message from Aergo
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def GetEthTAnchorSignature(self, request, context):
+    """Get signature to update anchoring periode from Ethereum
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def GetEthTFinalSignature(self, request, context):
+    """Get signature to update finality from Ethereum
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def GetAergoTAnchorSignature(self, request, context):
+    """Get signature to update anchoring periode from Aergo
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def GetAergoTFinalSignature(self, request, context):
+    """Get signature to update finality from Aergo
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def GetEthValidatorsSignature(self, request, context):
+    """Get signature to update validators of anchors from Ethereum
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def GetAergoValidatorsSignature(self, request, context):
+    """Get signature to update validators of anchors from Aergo
     """
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
@@ -49,13 +121,43 @@ def add_BridgeOperatorServicer_to_server(servicer, server):
   rpc_method_handlers = {
       'GetEthAnchorSignature': grpc.unary_unary_rpc_method_handler(
           servicer.GetEthAnchorSignature,
-          request_deserializer=bridge__operator_dot_bridge__operator__pb2.EthAnchor.FromString,
-          response_serializer=bridge__operator_dot_bridge__operator__pb2.EthApproval.SerializeToString,
+          request_deserializer=bridge__operator_dot_bridge__operator__pb2.Anchor.FromString,
+          response_serializer=bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
       ),
       'GetAergoAnchorSignature': grpc.unary_unary_rpc_method_handler(
           servicer.GetAergoAnchorSignature,
-          request_deserializer=bridge__operator_dot_bridge__operator__pb2.AergoAnchor.FromString,
-          response_serializer=bridge__operator_dot_bridge__operator__pb2.AergoApproval.SerializeToString,
+          request_deserializer=bridge__operator_dot_bridge__operator__pb2.Anchor.FromString,
+          response_serializer=bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
+      ),
+      'GetEthTAnchorSignature': grpc.unary_unary_rpc_method_handler(
+          servicer.GetEthTAnchorSignature,
+          request_deserializer=bridge__operator_dot_bridge__operator__pb2.NewTempo.FromString,
+          response_serializer=bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
+      ),
+      'GetEthTFinalSignature': grpc.unary_unary_rpc_method_handler(
+          servicer.GetEthTFinalSignature,
+          request_deserializer=bridge__operator_dot_bridge__operator__pb2.NewTempo.FromString,
+          response_serializer=bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
+      ),
+      'GetAergoTAnchorSignature': grpc.unary_unary_rpc_method_handler(
+          servicer.GetAergoTAnchorSignature,
+          request_deserializer=bridge__operator_dot_bridge__operator__pb2.NewTempo.FromString,
+          response_serializer=bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
+      ),
+      'GetAergoTFinalSignature': grpc.unary_unary_rpc_method_handler(
+          servicer.GetAergoTFinalSignature,
+          request_deserializer=bridge__operator_dot_bridge__operator__pb2.NewTempo.FromString,
+          response_serializer=bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
+      ),
+      'GetEthValidatorsSignature': grpc.unary_unary_rpc_method_handler(
+          servicer.GetEthValidatorsSignature,
+          request_deserializer=bridge__operator_dot_bridge__operator__pb2.NewValidators.FromString,
+          response_serializer=bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
+      ),
+      'GetAergoValidatorsSignature': grpc.unary_unary_rpc_method_handler(
+          servicer.GetAergoValidatorsSignature,
+          request_deserializer=bridge__operator_dot_bridge__operator__pb2.NewValidators.FromString,
+          response_serializer=bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(

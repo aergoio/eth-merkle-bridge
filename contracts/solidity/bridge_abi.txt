@@ -47,6 +47,36 @@
 		"type": "function"
 	},
 	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "new_validators",
+				"type": "address[]"
+			},
+			{
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "update_validators",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"constant": true,
 		"inputs": [
 			{
@@ -82,6 +112,36 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "new_t_final",
+				"type": "uint256"
+			},
+			{
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "update_t_final",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -392,6 +452,36 @@
 		"type": "function"
 	},
 	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "new_t_anchor",
+				"type": "uint256"
+			},
+			{
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "update_t_anchor",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"constant": true,
 		"inputs": [
 			{
@@ -488,25 +578,6 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "num",
-				"type": "uint8"
-			}
-		],
-		"name": "test",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -672,6 +743,59 @@
 			}
 		],
 		"name": "burnEvent",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "root",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "height",
+				"type": "uint256"
+			}
+		],
+		"name": "anchorEvent",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "new_validators",
+				"type": "address[]"
+			}
+		],
+		"name": "newValidatorsEvent",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "t_anchor",
+				"type": "uint256"
+			}
+		],
+		"name": "newTAnchorEvent",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "t_final",
+				"type": "uint256"
+			}
+		],
+		"name": "newTFinalEvent",
 		"type": "event"
 	}
 ]

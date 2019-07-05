@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.10;
 
 import "./minted_erc20.sol";
 
@@ -35,13 +35,17 @@ contract EthMerkleBridge {
     // ContractID is a replay protection between sidechains as the same addresses can be validators
     // on multiple chains.
     bytes32 public ContractID;
-    
+
     event newMintedERC20(string indexed origin, MintedERC20 indexed addr);
     event lockEvent(IERC20 indexed token_address, string indexed receiver, uint amount);
     event unlockEvent(IERC20 indexed token_address, address indexed receiver, uint amount);
     event mintEvent(MintedERC20 indexed token_address, address indexed receiver, uint amount);
     event burnEvent(MintedERC20 indexed token_address, string indexed receiver, uint amount);
     event anchorEvent(bytes32 root, uint height);
+    event newValidatorsEvent(address[] new_validators);
+    event newTAnchorEvent(uint t_anchor);
+    event newTFinalEvent(uint t_final);
+
 
 
     constructor(
@@ -55,12 +59,57 @@ contract EthMerkleBridge {
         Height = 0;
         Nonce = 0;
         Validators = validators;
-        //ContractID = blockhash(block.number - 1);
+        ContractID = blockhash(block.number - 1);
         Root = 0x28c5e719dc355014473f8796511132f0abdcde3fdc9114f2e7291e0752717c37;
     }
 
     function get_validators() public view returns (address[] memory) {
         return Validators;
+    }
+    
+    function update_validators(
+        address[] memory new_validators,
+        uint[] memory signers,
+        uint8[] memory vs,
+        bytes32[] memory rs,
+        bytes32[] memory ss
+    ) public {
+        // validators should not sign a set that is equal to the current one to prevent spamming
+        bytes32 message = keccak256(abi.encodePacked(new_validators, Nonce, ContractID, "V"));
+        validate_signatures(message, signers, vs, rs, ss);
+        Validators = new_validators;
+        Nonce += 1;
+        emit newValidatorsEvent(new_validators);
+    }
+    
+    function update_t_anchor(
+        uint new_t_anchor,
+        uint[] memory signers,
+        uint8[] memory vs,
+        bytes32[] memory rs,
+        bytes32[] memory ss
+    ) public {
+        // validators should not sign a number that is equal to the current on to prevent spamming
+        bytes32 message = keccak256(abi.encodePacked(new_t_anchor, Nonce, ContractID, "A"));
+        validate_signatures(message, signers, vs, rs, ss);
+        T_anchor = new_t_anchor;
+        Nonce += 1;
+        emit newTAnchorEvent(new_t_anchor);
+    }
+    
+    function update_t_final(
+        uint new_t_final,
+        uint[] memory signers,
+        uint8[] memory vs,
+        bytes32[] memory rs,
+        bytes32[] memory ss
+    ) public {
+        // validators should not sign a number that is equal to the current on to prevent spamming
+        bytes32 message = keccak256(abi.encodePacked(new_t_final, Nonce, ContractID, "F"));
+        validate_signatures(message, signers, vs, rs, ss);
+        T_final = new_t_final;
+        Nonce += 1;
+        emit newTFinalEvent(new_t_final);
     }
 
     function set_root(
@@ -243,11 +292,5 @@ contract EthMerkleBridge {
             num /= 10;
         }
         return string(bstr);
-    }
-    
-    function test(uint8 num) public returns(bytes32) {
-        bytes memory a = abi.encodePacked(byte(0x00));
-        bytes32 b = sha256(a);
-        return b;
     }
 }

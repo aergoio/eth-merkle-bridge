@@ -19,20 +19,21 @@ class ProposerClient:
 
     def __init__(
         self,
-        config_data: Dict,
+        config_file_path: str,
         aergo_net: str,
         eth_net: str,
         eth_block_time: int,
         privkey_name: str = None,
         privkey_pwd: str = None,
+        auto_update: bool = False
     ) -> None:
         self.t_eth_client = EthProposerClient(
-            config_data, aergo_net, eth_net, privkey_name,
-            privkey_pwd
+            config_file_path, aergo_net, eth_net, privkey_name,
+            privkey_pwd, "", auto_update
         )
         self.t_aergo_client = AergoProposerClient(
-            config_data, aergo_net, eth_net, eth_block_time, privkey_name,
-            privkey_pwd, "\t"*5
+            config_file_path, aergo_net, eth_net, eth_block_time, privkey_name,
+            privkey_pwd, "\t"*5, auto_update
         )
 
     def run(self):
@@ -41,10 +42,8 @@ class ProposerClient:
 
 
 if __name__ == '__main__':
-    with open("./test_config.json", "r") as f:
-        config_data = json.load(f)
     proposer = ProposerClient(
-        config_data, 'aergo-local', 'eth-poa-local', 3,
-        privkey_pwd='1234'
+        "./test_config.json", 'aergo-local', 'eth-poa-local', 3,
+        privkey_pwd='1234', auto_update=True
     )
     proposer.run()

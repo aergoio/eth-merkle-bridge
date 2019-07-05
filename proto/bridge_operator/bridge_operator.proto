@@ -1,44 +1,55 @@
 syntax = "proto3";
 
 service BridgeOperator {
-    // Get signatures of anchoring messages from Ethereum
-    rpc GetEthAnchorSignature(EthAnchor) returns (EthApproval) {}
-    // Get signatures of anchoring messages from Aergo
-    rpc GetAergoAnchorSignature(AergoAnchor) returns (AergoApproval) {}
+    // Get signature of anchoring message from Ethereum
+    rpc GetEthAnchorSignature(Anchor) returns (Approval) {}
+    // Get signature of anchoring message from Aergo
+    rpc GetAergoAnchorSignature(Anchor) returns (Approval) {}
+
+    // Get signature to update anchoring periode from Ethereum
+    rpc GetEthTAnchorSignature(NewTempo) returns (Approval) {}
+    // Get signature to update finality from Ethereum
+    rpc GetEthTFinalSignature(NewTempo) returns (Approval) {}
+
+    // Get signature to update anchoring periode from Aergo
+    rpc GetAergoTAnchorSignature(NewTempo) returns (Approval) {}
+    // Get signature to update finality from Aergo
+    rpc GetAergoTFinalSignature(NewTempo) returns (Approval) {}
+
+    // Get signature to update validators of anchors from Ethereum
+    rpc GetEthValidatorsSignature(NewValidators) returns (Approval) {}
+    // Get signature to update validators of anchors from Aergo
+    rpc GetAergoValidatorsSignature(NewValidators) returns (Approval) {}
 }
 
-message EthAnchor {
-    // root to be merged on Aergo
-    string root = 1;
-    // height to be merged on sidechain
-    string height = 2;
-    // aergo bridge update nonce
-    string destination_nonce = 3;
-}
-
-message EthApproval {
-    // address of the private key that produced signatures
-    string address = 1;
-    // signature of anchor
-    bytes sig = 2;
-    // error message why the requested anchor is invalid
-    string error = 3;
-}
-
-message AergoAnchor {
-    // root to be merged on Aergo
+message Anchor {
+    // root to be merged on sidechain
     bytes root = 1;
     // height to be merged on sidechain
     uint64 height = 2;
-    // ethereum bridge update nonce
+    // bridge update nonce
     uint64 destination_nonce = 3;
 }
 
-message AergoApproval {
+message Approval {
     // address of the private key that produced signatures
     string address = 1;
-    // signature of anchor
+    // signature of anchor / tempo update / validators update
     bytes sig = 2;
     // error message why the requested anchor is invalid
     string error = 3;
+}
+
+message NewTempo {
+    // anchoring periode or finality
+    uint64 tempo = 1;
+    // eth bridge update nonce
+    uint64 destination_nonce = 2;
+}
+
+message NewValidators {
+    // validators addresses : either '0x...' or 'A...' 
+    repeated string validators = 1;
+    // eth bridge update nonce
+    uint64 destination_nonce = 2;
 }
