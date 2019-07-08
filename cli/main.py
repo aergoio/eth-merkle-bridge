@@ -170,7 +170,7 @@ class EthMerkleBridgeCli():
                 print('Someting went wrong, check the status of your pending '
                       'transfers\nError msg: {}'.format(e))
             except KeyError:
-                return
+                pass
 
     def check_balances(self):
         """Iterate every registered wallet, network and asset and query
@@ -511,6 +511,21 @@ class EthMerkleBridgeCli():
                                 't_final', value=t_final)
         self.wallet.save_config()
 
+    def get_asset_address(self, asset_name, from_chain, to_chain):
+        try:
+            addr = self.wallet.config_data(
+                'networks', from_chain, 'tokens', asset_name, 'addr')
+            return addr
+        except KeyError:
+            pass
+        try:
+            addr = self.wallet.config_data(
+                'networks', to_chain, 'tokens', asset_name, 'pegs', from_chain)
+            return addr
+        except KeyError:
+            pass
+        raise InvalidArgumentsError('asset not properly registered in config.json')
+
     def initiate_transfer(self):
         """Initiate a new transfer of tokens between 2 networks."""
         from_chain, to_chain, from_assets, to_assets, asset_name, \
@@ -520,13 +535,14 @@ class EthMerkleBridgeCli():
                                                               to_chain)
         bridge_to = self.wallet.get_bridge_contract_address(to_chain,
                                                             from_chain)
+        asset_addr = self.get_asset_address(asset_name, from_chain, to_chain)
         summary = "Departure chain: {} ({})\n" \
                   "Destination chain: {} ({})\n" \
-                  "Asset name: {}\n" \
+                  "Asset name: {} ({})\n" \
                   "Receiver at destination: {}\n" \
                   "Amount: {}\n".format(from_chain, bridge_from, to_chain,
-                                        bridge_to, asset_name, receiver,
-                                        amount)
+                                        bridge_to, asset_name, asset_addr,
+                                        receiver, amount)
         deposit_height, tx_hash = 0, ""
         if self.wallet.config_data('networks',
                                    from_chain, 'type') == 'ethereum':
@@ -666,13 +682,14 @@ class EthMerkleBridgeCli():
                                                               to_chain)
         bridge_to = self.wallet.get_bridge_contract_address(to_chain,
                                                             from_chain)
+        asset_addr = self.get_asset_address(asset_name, from_chain, to_chain)
         summary = "Departure chain: {} ({})\n" \
                   "Destination chain: {} ({})\n" \
-                  "Asset name: {}\n" \
+                  "Asset name: {} ({})\n" \
                   "Receiver at destination: {}\n" \
                   "Block height of lock/burn/freeze: {}\n"\
                   .format(from_chain, bridge_from, to_chain, bridge_to,
-                          asset_name, receiver, deposit_height)
+                          asset_name, asset_addr, receiver, deposit_height)
         if self.wallet.config_data('networks',
                                    from_chain, 'type') == 'ethereum':
             privkey_name = self.prompt_signing_key('wallet')

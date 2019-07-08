@@ -989,8 +989,15 @@ class EthAergoWallet(WalletConfig):
         """Get the web3 signer object from the ethereum private key."""
         encrypted_key = self.load_keystore(privkey_name)
         if privkey_pwd is None:
-            privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
-                                  .format(privkey_name))
+            while True:
+                try:
+                    privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
+                                          .format(privkey_name))
+                except ValueError:
+                    print("Wrong password, try again")
+                    continue
+                break
+
         privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
         signer_acct = w3.eth.account.from_key(privkey)
         return signer_acct
