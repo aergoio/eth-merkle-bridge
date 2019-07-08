@@ -1,7 +1,8 @@
 from web3 import (
     Web3,
 )
-from wallet.exceptions import (
+from web3.exceptions import MismatchedABI
+from ethaergo_wallet.exceptions import (
     InvalidArgumentsError,
     TxError
 )
@@ -32,7 +33,10 @@ def get_balance(
             address=asset_addr,
             abi=erc20_abi
         )
-        balance = token_contract.functions.balanceOf(account_addr).call()
+        try:
+            balance = token_contract.functions.balanceOf(account_addr).call()
+        except Exception as e:
+            raise InvalidArgumentsError(e, asset_addr)
     return balance
 
 
@@ -51,14 +55,9 @@ def increase_approval(
     """
     asset_addr = Web3.toChecksumAddress(asset_addr)
     spender = Web3.toChecksumAddress(spender)
-    token_contract = w3.eth.contract(
-        address=asset_addr,
-        abi=erc20_abi
-    )
+    function = get_abi_function(w3, asset_addr, erc20_abi, spender, amount)
     approval_nonce = w3.eth.getTransactionCount(signer_acct.address)
-    construct_txn = token_contract.functions.increaseApproval(
-        spender, amount
-    ).buildTransaction({
+    construct_txn = function.buildTransaction({
         'chainId': w3.eth.chainId,
         'from': signer_acct.address,
         'nonce': approval_nonce,
@@ -73,3 +72,32 @@ def increase_approval(
         print(receipt)
         raise TxError("Mint asset Tx execution failed")
     return approval_nonce + 1
+
+
+def get_abi_function(
+    w3: Web3,
+    asset_addr: str,
+    abi: str,
+    spender: str,
+    amount: int
+):
+    token_contract = w3.eth.contract(
+        address=asset_addr,
+        abi=abi
+    )
+    try:
+        function = token_contract.functions.increaseAllowance(
+            spender, amount)
+        return function
+    except MismatchedABI:
+        pass
+    try:
+        function = token_contract.functions.increaseApproval(
+            spender, amount)
+        return function
+    except MismatchedABI:
+        pass
+    raise InvalidArgumentsError(
+        "Impossible to send ERC20 tokens to bridge contract: "
+        "'increaseAllowance' or 'increaseApproval' must be included in ERC20 abi"
+    )

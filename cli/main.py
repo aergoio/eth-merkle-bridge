@@ -91,7 +91,7 @@ class EthMerkleBridgeCli():
                 else:
                     return
             except KeyError:
-                continue
+                return
 
     def load_config(self):
         """Load the configuration file from path and create a wallet object."""
@@ -170,7 +170,7 @@ class EthMerkleBridgeCli():
                 print('Someting went wrong, check the status of your pending '
                       'transfers\nError msg: {}'.format(e))
             except KeyError:
-                continue
+                return
 
     def check_balances(self):
         """Iterate every registered wallet, network and asset and query

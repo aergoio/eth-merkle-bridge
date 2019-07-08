@@ -294,7 +294,7 @@ def prompt_new_asset(networks):
                        "used for the real Aergo)"
         },
         {
-            'type': 'input',
+            'type': 'list',
             'name': 'origin',
             'message': 'Origin network '
                        '(where the token was originally issued)',
@@ -306,7 +306,7 @@ def prompt_new_asset(networks):
             'message': 'Asset address'
         },
         {
-            'type': 'input',
+            'type': 'list',
             'name': 'add_peg',
             'message': 'Add pegged asset on another network',
             'choices': [
