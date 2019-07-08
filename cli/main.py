@@ -1,5 +1,5 @@
 import hashlib
-import inquirer
+import PyInquirer as inquirer
 import json
 import os
 from pyfiglet import Figlet
@@ -26,6 +26,7 @@ from cli.utils import (
     prompt_file_path,
     prompt_bridge_abi_paths,
     prompt_number,
+    aergo_style
 )
 
 
@@ -64,35 +65,53 @@ class EthMerkleBridgeCli():
               "settings (config.json)\n")
         while 1:
             questions = [
-                inquirer.List('YesNo',
-                              message="Do you have a config.json? ",
-                              choices=[('Yes, find it with the path', 'Y'),
-                                       ('No, create one from scratch', 'N'),
-                                       'Quit'])
+                {
+                    'type': 'list',
+                    'name': 'YesNo',
+                    'message': "Do you have a config.json? ",
+                    'choices': [
+                        {
+                            'name': 'Yes, find it with the path',
+                            'value': 'Y'
+                        },
+                        {
+                            'name': 'No, create one from scratch',
+                            'value': 'N'
+                        },
+                        'Quit']
+                }
             ]
-            answers = inquirer.prompt(questions)
-            if answers['YesNo'] == 'Y':
-                self.load_config()
-                self.menu()
-            elif answers['YesNo'] == 'N':
-                self.create_config()
-            else:
-                return
+            answers = inquirer.prompt(questions, style=aergo_style)
+            try:
+                if answers['YesNo'] == 'Y':
+                    self.load_config()
+                    self.menu()
+                elif answers['YesNo'] == 'N':
+                    self.create_config()
+                else:
+                    return
+            except KeyError:
+                continue
 
     def load_config(self):
         """Load the configuration file from path and create a wallet object."""
         while 1:
             questions = [
-                inquirer.Text(
-                    'config_file_path',
-                    message="Path to config.json (path/to/config.json)"),
+                {
+                    'type': 'input',
+                    'name': 'config_file_path',
+                    'message': 'Path to config.json (path/to/config.json)'
+                }
             ]
-            config_file_path = inquirer.prompt(questions)['config_file_path']
+            config_file_path = inquirer.prompt(
+                questions, style=aergo_style)['config_file_path']
             try:
                 self.wallet = EthAergoWallet(config_file_path)
                 break
             except (IsADirectoryError, FileNotFoundError):
                 print("Invalid path/to/config.json")
+            except KeyError:
+                return
 
     def menu(self):
         """Menu for interacting with network.
@@ -103,19 +122,36 @@ class EthMerkleBridgeCli():
         """
         while 1:
             questions = [
-                inquirer.List(
-                    'action',
-                    message="What would you like to do ? ",
-                    choices=[
-                        ('Check pending transfer', 'P'),
-                        ('Check balances', 'B'),
-                        ('Initiate transfer (Lock/Burn)', 'I'),
-                        ('Finalize transfer (Mint/Unlock)', 'F'),
-                        ('Settings (Register Assets and Networks)', 'S'),
-                        'Back',
-                        ])
+                {
+                    'type': 'list',
+                    'name': 'action',
+                    'message': "What would you like to do ? ",
+                    'choices': [
+                        {
+                            'name': 'Check pending transfer',
+                            'value': 'P'
+                        },
+                        {
+                            'name': 'Check balances',
+                            'value': 'B'
+                        },
+                        {
+                            'name': 'Initiate transfer (Lock/Burn)',
+                            'value': 'I'
+                        },
+                        {
+                            'name': 'Finalize transfer (Mint/Unlock)',
+                            'value': 'F'
+                        },
+                        {
+                            'name': 'Settings (Register Assets and Networks)',
+                            'value': 'S'
+                        },
+                        'Back'
+                    ]
+                }
             ]
-            answers = inquirer.prompt(questions)
+            answers = inquirer.prompt(questions, style=aergo_style)
             try:
                 if answers['action'] == 'Back':
                     return
@@ -133,6 +169,8 @@ class EthMerkleBridgeCli():
                     TxError, InsufficientBalanceError) as e:
                 print('Someting went wrong, check the status of your pending '
                       'transfers\nError msg: {}'.format(e))
+            except KeyError:
+                continue
 
     def check_balances(self):
         """Iterate every registered wallet, network and asset and query
@@ -182,7 +220,7 @@ class EthMerkleBridgeCli():
                         if balance != 0:
                             print("{}{} balance: {}{}"
                                   .format('\t'*4, addr, balance/10**18,
-                                          u'\U0001f604'))
+                                          u'\U0001f4b0'))
                     print("{}{} pegged on other chains:"
                           .format('\t'*4, token_name))
                     for peg in token['pegs']:
@@ -197,26 +235,46 @@ class EthMerkleBridgeCli():
                             if balance != 0:
                                 print("{}{} balance: {}{}"
                                       .format('\t'*6, addr, balance/10**18,
-                                              u'\U0001f604'))
+                                              u'\U0001f4b0'))
 
     def edit_settings(self):
         """Menu for editing the config file of the currently loaded wallet"""
         while 1:
             questions = [
-                inquirer.List(
-                    'action',
-                    message="What would you like to do ? ",
-                    choices=[
-                        ('Register new asset', 'A'),
-                        ('Register new network', 'N'),
-                        ('Register new bridge', 'B'),
-                        ('Register new set of validators', 'V'),
-                        ('Update anchoring periode', 'UA'),
-                        ('Update finality', 'UF'),
+                {
+                    'type': 'list',
+                    'name': 'action',
+                    'message': 'What would you like to do ? ',
+                    'choices': [
+                        {
+                            'name': 'Register new asset',
+                            'value': 'A'
+                        },
+                        {
+                            'name': 'Register new network',
+                            'value': 'N'
+                        },
+                        {
+                            'name': 'Register new bridge',
+                            'value': 'B'
+                        },
+                        {
+                            'name': 'Register new set of validators',
+                            'value': 'V'
+                        },
+                        {
+                            'name': 'Update anchoring periode',
+                            'value': 'UA'
+                        },
+                        {
+                            'name': 'Update finality',
+                            'value': 'UF'
+                        },
                         'Back',
-                        ])
+                    ]
+                }
             ]
-            answers = inquirer.prompt(questions)
+            answers = inquirer.prompt(questions, style=aergo_style)
             try:
                 if answers['action'] == 'Back':
                     return
@@ -321,26 +379,28 @@ class EthMerkleBridgeCli():
 
         # Register bridge validators
         questions = [
-            inquirer.List(
-                'YN',
-                message='Would you like to register validators ? '
-                        '(not needed for bridge users)',
-                choices=['Yes', 'No']
-            )
+            {
+                'type': 'list',
+                'name': 'YN',
+                'message': 'Would you like to register validators ? '
+                           '(not needed for bridge users)',
+                'choices': ['Yes', 'No']
+            }
         ]
-        if inquirer.prompt(questions)['YN'] == 'Yes':
+        if inquirer.prompt(questions, style=aergo_style)['YN'] == 'Yes':
             validators = prompt_new_validators()
             new_config['validators'] = validators
         else:
             new_config['validators'] = {}
 
         questions = [
-            inquirer.Text(
-                'path',
-                message="Path to save new config file"
-            )
+            {
+                'type': 'input',
+                'name': 'path',
+                'message': 'Path to save new config file'
+            }
         ]
-        path = inquirer.prompt(questions)['path']
+        path = inquirer.prompt(questions, style=aergo_style)['path']
 
         with open(path, "w") as f:
             json.dump(new_config, f, indent=4, sort_keys=True)
@@ -377,13 +437,15 @@ class EthMerkleBridgeCli():
         try:
             self.wallet.config_data('networks', origin, 'tokens', name)
             questions = [
-                inquirer.List(
-                    'YN',
-                    message="Warning : override existing asset with same name",
-                    choices=['Yes', 'No']
-                )
+                {
+                    'type': 'list',
+                    'name': 'YN',
+                    'message': 'Warning: '
+                               'override existing asset with same name',
+                    'choices': ['Yes', 'No']
+                }
             ]
-            if inquirer.prompt(questions)['YN'] == 'No':
+            if inquirer.prompt(questions, style=aergo_style)['YN'] == 'No':
                 return
             self.wallet.config_data('networks', origin, 'tokens', name,
                                     value={'pegs': {}})
@@ -562,16 +624,22 @@ class EthMerkleBridgeCli():
             List of transfer arguments
 
         """
-        choices = [val for _, val in self.pending_transfers.items()]
+        choices = [
+            {
+                'name': '{}'.format(val),
+                'value': val
+            } for _, val in self.pending_transfers.items()
+        ]
         choices.extend(["Custom transfer", "Back"])
         questions = [
-            inquirer.List(
-                'transfer',
-                message="Choose a pending transfer",
-                choices=choices
-                )
+            {
+                'type': 'list',
+                'name': 'transfer',
+                'message': 'Choose a pending transfer',
+                'choices': choices
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         if answers['transfer'] == 'Custom transfer':
             from_chain, to_chain, from_assets, to_assets, asset_name, \
                 receiver = self.prompt_commun_transfer_params()
@@ -756,17 +824,19 @@ class EthMerkleBridgeCli():
         from_assets, to_assets = self.get_registered_assets(from_chain,
                                                             to_chain)
         questions = [
-            inquirer.List(
-                'asset_name',
-                message="Name of asset to transfer",
-                choices=from_assets + to_assets
-            ),
-            inquirer.Text(
-                'receiver',
-                message='Receiver of assets on other side of bridge'
-            )
+            {
+                'type': 'list',
+                'name': 'asset_name',
+                'message': 'Name of asset to transfer',
+                'choices': from_assets + to_assets
+            },
+            {
+                'type': 'input',
+                'name': 'receiver',
+                'message': 'Receiver of assets on other side of bridge'
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         receiver = answers['receiver']
         asset_name = answers['asset_name']
         return from_chain, to_chain, from_assets, to_assets, asset_name, \
@@ -782,34 +852,39 @@ class EthMerkleBridgeCli():
         """
         accounts = self.wallet.config_data(wallet_name)
         questions = [
-            inquirer.List(
-                'privkey_name',
-                message="Choose account to sign transaction : ",
-                choices=[name for name in accounts]
-                )
+            {
+                'type': 'list',
+                'name': 'privkey_name',
+                'message': 'Choose account to sign transaction : ',
+                'choices': [name for name in accounts]
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         return answers['privkey_name']
 
     def prompt_bridge_networks(self):
         """Prompt user to choose 2 networks between registered networks."""
         networks = self.get_registered_networks()
         questions = [
-            inquirer.List(
-                'from_chain',
-                message="Departure network",
-                choices=networks)
+            {
+                'type': 'list',
+                'name': 'from_chain',
+                'message': 'Departure network',
+                'choices': networks
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         from_chain = answers['from_chain']
         networks.remove(from_chain)
         questions = [
-            inquirer.List(
-                'to_chain',
-                message="Destination network",
-                choices=networks)
+            {
+                'type': 'list',
+                'name': 'to_chain',
+                'message': 'Destination network',
+                'choices': networks
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         to_chain = answers['to_chain']
         return from_chain, to_chain
 
@@ -820,22 +895,26 @@ class EthMerkleBridgeCli():
         """
         networks = self.get_registered_networks()
         questions = [
-            inquirer.List(
-                'from_chain',
-                message="Departure network",
-                choices=networks)
+            {
+                'type': 'list',
+                'name': 'from_chain',
+                'message': 'Departure network',
+                'choices': networks
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         from_chain = answers['from_chain']
         networks = [net for net in
                     self.wallet.config_data('networks', from_chain, 'bridges')]
         questions = [
-            inquirer.List(
-                'to_chain',
-                message="Destination network",
-                choices=networks)
+            {
+                'type': 'list',
+                'name': 'to_chain',
+                'message': 'Destination network',
+                'choices': networks
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         to_chain = answers['to_chain']
         return from_chain, to_chain
 

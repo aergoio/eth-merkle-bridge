@@ -1,19 +1,36 @@
-import inquirer
+import PyInquirer as inquirer
+
+aergo_style = inquirer.style_from_dict({
+    inquirer.Token.Separator: '#FF36AD',
+    inquirer.Token.QuestionMark: '#FF36AD bold',
+    inquirer.Token.Selected: '',  # default
+    inquirer.Token.Pointer: '#FF36AD bold',  # AWS orange
+    inquirer.Token.Instruction: '',  # default
+    inquirer.Token.Answer: '#FF36AD bold',  # AWS orange
+    inquirer.Token.Question: 'bold',
+})
 
 
 def confirm_transfer():
     """Prompt user to procede with a transfer of not."""
     questions = [
-        inquirer.List(
-            'confirm',
-            message="Confirm you want to execute tranfer tx",
-            choices=[
-                ('Yes, execute transfer', True),
-                ('No, get me out of here!', False)
+        {
+            'type': 'list',
+            'name': 'confirm',
+            'message': 'Confirm you want to execute tranfer tx',
+            'choices': [
+                {
+                    'name': 'Yes, execute transfer',
+                    'value': True
+                },
+                {
+                    'name': 'No, get me out of here!',
+                    'value': False
+                }
             ]
-        )
+        }
     ]
-    answers = inquirer.prompt(questions)
+    answers = inquirer.prompt(questions, style=aergo_style)
     return answers['confirm']
 
 
@@ -21,12 +38,13 @@ def prompt_number(message, formator=int):
     """Prompt a number."""
     while 1:
         questions = [
-            inquirer.Text(
-                'num',
-                message=message,
-            )
+            {
+                'type': 'input',
+                'name': 'num',
+                'message': message
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         try:
             num = formator(answers['num'])
             break
@@ -73,44 +91,51 @@ def prompt_new_bridge(net1, net2):
     """
     print('Bridge between {} and {}'.format(net1, net2))
     questions = [
-        inquirer.Text(
-            'bridge1',
-            message="Bridge contract address on {}".format(net1)
-        ),
-        inquirer.Text(
-            't_anchor1',
-            message="Anchoring periode of {} on {}".format(net2, net1)
-        ),
-        inquirer.Text(
-            't_final1',
-            message="Finality of {}".format(net2)
-        ),
-        inquirer.Text(
-            'bridge2',
-            message="Bridge contract address on {}".format(net2)
-        ),
-        inquirer.Text(
-            't_anchor2',
-            message="Anchoring periode of {} on {}".format(net1, net2)
-        ),
-        inquirer.Text(
-            't_final2',
-            message="Finality of {}".format(net1)
-        )
+        {
+            'type': 'input',
+            'name': 'bridge1',
+            'message':  'Bridge contract address on {}'.format(net1)
+        },
+        {
+            'type': 'input',
+            'name': 't_anchor1',
+            'message': 'Anchoring periode of {} on {}'.format(net2, net1)
+        },
+        {
+            'type': 'input',
+            'name': 't_final1',
+            'message': 'Finality of {}'.format(net2)
+        },
+        {
+            'type': 'input',
+            'name': 'bridge2',
+            'message': 'Bridge contract address on {}'.format(net2)
+        },
+        {
+            'type': 'input',
+            'name': 't_anchor2',
+            'message': 'Anchoring periode of {} on {}'.format(net1, net2)
+        },
+        {
+            'type': 'input',
+            'name': 't_final2',
+            'message': 'Finality of {}'.format(net1)
+        }
     ]
-    return inquirer.prompt(questions)
+    return inquirer.prompt(questions, style=aergo_style)
 
 
 def prompt_file_path(message):
     """Prompt user to input a path to a file and check it exists."""
     while 1:
         questions = [
-            inquirer.Text(
-                'path',
-                message=message
-            )
+            {
+                'type': 'input',
+                'name': 'path',
+                'message': message
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         path = answers['path']
         try:
             with open(path, "r") as f:
@@ -138,33 +163,43 @@ def prompt_new_network():
 
     """
     questions = [
-        inquirer.Text(
-            'name',
-            message="Network name"
-        ),
-        inquirer.Text(
-            'ip',
-            message="Network IP"
-        ),
-        inquirer.List(
-            'type',
-            message="Network type",
-            choices=[
-                'ethereum',
-                'aergo'
-            ]
-        )
+        {
+            'type': 'input',
+            'name': 'name',
+            'message': 'Network name'
+        },
+        {
+            'type': 'input',
+            'name': 'ip',
+            'message': 'Network IP'
+        },
+        {
+            'type': 'list',
+            'name': 'type',
+            'message': 'Network type',
+            'choices': ['ethereum', 'aergo']
+        }
     ]
-    answers = inquirer.prompt(questions)
+    answers = inquirer.prompt(questions, style=aergo_style)
     if answers['type'] == 'ethereum':
         questions = [
-            inquirer.List(
-                'isPOA',
-                message='Is this an Ethereum POA network ?',
-                choices=[True, False]
-            )
+            {
+                'type': 'list',
+                'name': 'isPOA',
+                'message': 'Is this an Ethereum POA network ?',
+                'choices': [
+                    {
+                        'name': 'Yes',
+                        'value': True
+                    },
+                    {
+                        'name': 'No',
+                        'value': False
+                    }
+                ]
+            }
         ]
-        is_poa = inquirer.prompt(questions)['isPOA']
+        is_poa = inquirer.prompt(questions, style=aergo_style)['isPOA']
         answers['isPOA'] = is_poa
     return answers
 
@@ -180,20 +215,23 @@ def prompt_eth_privkey():
     """
     while 1:
         questions = [
-            inquirer.Text(
-                'privkey_name',
-                message="Give your key a short descriptive name"
-            ),
-            inquirer.Text(
-                'privkey',
-                message="Path to json keystore"
-            ),
-            inquirer.Text(
-                'addr',
-                message="Ethereum address matching private key"
-            )
+            {
+                'type': 'input',
+                'name': 'privkey_name',
+                'message': 'Give your key a short descriptive name'
+            },
+            {
+                'type': 'input',
+                'name': 'privkey',
+                'message': 'Path to json keystore'
+            },
+            {
+                'type': 'input',
+                'name': 'addr',
+                'message': 'Ethereum address matching private key'
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         privkey_name = answers['privkey_name']
         privkey_path = answers['privkey']
         addr = answers['addr']
@@ -216,20 +254,23 @@ def prompt_aergo_privkey():
 
     """
     questions = [
-        inquirer.Text(
-            'privkey_name',
-            message="Give your key a short descriptive name"
-        ),
-        inquirer.Text(
-            'privkey',
-            message="Encrypted exported key string"
-        ),
-        inquirer.Text(
-            'addr',
-            message="Aergo address matching private key"
-        )
+        {
+            'type': 'input',
+            'name': 'privkey_name',
+            'message': 'Give your key a short descriptive name'
+        },
+        {
+            'type': 'input',
+            'name': 'privkey',
+            'message': 'Encrypted exported key string'
+        },
+        {
+            'type': 'input',
+            'name': 'addr',
+            'message': 'Aergo address matching private key'
+        }
     ]
-    answers = inquirer.prompt(questions)
+    answers = inquirer.prompt(questions, style=aergo_style)
     privkey = answers['privkey']
     privkey_name = answers['privkey_name']
     addr = answers['addr']
@@ -246,28 +287,41 @@ def prompt_new_asset(networks):
 
     """
     questions = [
-        inquirer.Text(
-            'name',
-            message="Asset name ('aergo_erc20' and 'aergo' are "
-                    "used for the real Aergo)"
-        ),
-        inquirer.List(
-            'origin',
-            message="Origin network "
-                    "(where the token was originally issued)",
-            choices=networks
-        ),
-        inquirer.Text(
-            'origin_addr',
-            message="Asset address"
-        ),
-        inquirer.List(
-            'add_peg',
-            message="Add pegged asset on another network",
-            choices=[True, False]
-        )
+        {
+            'type': 'input',
+            'name': 'name',
+            'message': "Asset name ('aergo_erc20' and 'aergo' are "
+                       "used for the real Aergo)"
+        },
+        {
+            'type': 'input',
+            'name': 'origin',
+            'message': 'Origin network '
+                       '(where the token was originally issued)',
+            'choices': networks
+        },
+        {
+            'type': 'input',
+            'name': 'origin_addr',
+            'message': 'Asset address'
+        },
+        {
+            'type': 'input',
+            'name': 'add_peg',
+            'message': 'Add pegged asset on another network',
+            'choices': [
+                {
+                    'name': 'Yes',
+                    'value': True
+                },
+                {
+                    'name': 'No',
+                    'value': False
+                }
+            ]
+        }
     ]
-    answers = inquirer.prompt(questions)
+    answers = inquirer.prompt(questions, style=aergo_style)
     name = answers['name']
     origin = answers['origin']
     origin_addr = answers['origin_addr']
@@ -280,22 +334,25 @@ def prompt_new_asset(networks):
             print('All pegged assets are registered in know networks')
             break
         questions = [
-            inquirer.List(
-                'peg',
-                message="Pegged network",
-                choices=networks
-            ),
-            inquirer.Text(
-                'peg_addr',
-                message="Asset address"
-            ),
-            inquirer.List(
-                'add_peg',
-                message="Add another pegged asset on another network",
-                choices=['Yes', 'No']
-            )
+            {
+                'type': 'list',
+                'name': 'peg',
+                'message': 'Pegged network',
+                'choices': networks
+            },
+            {
+                'type': 'input',
+                'name': 'peg_addr',
+                'message': 'Asset address'
+            },
+            {
+                'type': 'list',
+                'name': 'add_peg',
+                'message': 'Add another pegged asset on another network',
+                'choices':  ['Yes', 'No']
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         peg = answers['peg']
         peg_addr = answers['peg_addr']
         add_peg = answers['add_peg']
@@ -322,25 +379,38 @@ def prompt_new_validators():
     add_val = True
     while add_val:
         questions = [
-            inquirer.Text(
-                'addr',
-                message='Aergo Address',
-            ),
-            inquirer.Text(
-                'eth-addr',
-                message='Ethereum Address',
-            ),
-            inquirer.Text(
-                'ip',
-                message='Validator ip',
-            ),
-            inquirer.List(
-                'add_val',
-                message='Add next validator ?',
-                choices=[True, False]
-            )
+            {
+                'type': 'input',
+                'name': 'addr',
+                'message': 'Aergo Address',
+            },
+            {
+                'type': 'input',
+                'name': 'eth-addr',
+                'message': 'Ethereum Address',
+            },
+            {
+                'type': 'input',
+                'name': 'ip',
+                'message': 'Validator ip',
+            },
+            {
+                'type': 'list',
+                'name': 'add_val',
+                'message': 'Add next validator ?',
+                'choices': [
+                    {
+                        'name': 'Yes',
+                        'value': True
+                    },
+                    {
+                        'name': 'No',
+                        'value': False
+                    }
+                ]
+            }
         ]
-        answers = inquirer.prompt(questions)
+        answers = inquirer.prompt(questions, style=aergo_style)
         validators.append({'addr': answers['addr'],
                            'eth-addr': answers['eth-addr'],
                            'ip': answers['ip']}
