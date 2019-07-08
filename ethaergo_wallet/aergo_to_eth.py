@@ -6,7 +6,7 @@ from web3 import (
     Web3,
 )
 import aergo.herapy as herapy
-from ethaergo_wallet.exceptions import (
+from wallet.exceptions import (
     InvalidMerkleProofError,
     TxError,
     InvalidArgumentsError
@@ -392,7 +392,7 @@ def withdrawable(
     if deposit_proof.var_proofs[0].inclusion:
         anchored_deposit = int(deposit_proof.var_proofs[0].value
                                .decode('utf-8')[1:-1])
-                               
+
     withdrawable_balance = anchored_deposit - total_withdrawn
     pending = total_deposit - anchored_deposit
     return withdrawable_balance, pending

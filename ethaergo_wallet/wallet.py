@@ -19,7 +19,7 @@ from ethaergo_wallet.wallet_utils import (
     is_aergo_address,
     is_ethereum_address
 )
-from ethaergo_wallet.exceptions import (
+from wallet.exceptions import (
     InsufficientBalanceError,
     InvalidArgumentsError,
 )
@@ -892,7 +892,7 @@ class EthAergoWallet(WalletConfig):
         try:
             balance = aergo_u.get_balance(account_addr, asset_addr, aergo)
         except Exception as e:
-            raise InvalidArgumentsError(e, asset_addr)
+            raise InvalidArgumentsError(e)
         aergo.disconnect()
         return balance, asset_addr
 

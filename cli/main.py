@@ -7,7 +7,7 @@ from pyfiglet import Figlet
 from ethaergo_wallet.wallet import (
     EthAergoWallet,
 )
-from ethaergo_wallet.exceptions import (
+from wallet.exceptions import (
     InvalidArgumentsError,
     TxError,
     InsufficientBalanceError,

@@ -1,10 +1,3 @@
-import json
-import time
-
-from typing import (
-    Dict
-)
-
 from bridge_operator.eth_proposer_client import (
     EthProposerClient
 )

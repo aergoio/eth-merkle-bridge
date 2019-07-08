@@ -2,7 +2,7 @@ from web3 import (
     Web3,
 )
 from web3.exceptions import MismatchedABI
-from ethaergo_wallet.exceptions import (
+from wallet.exceptions import (
     InvalidArgumentsError,
     TxError
 )
