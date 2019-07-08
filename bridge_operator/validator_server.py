@@ -1,3 +1,4 @@
+import argparse
 from concurrent import (
     futures,
 )
@@ -554,7 +555,7 @@ def _serve_all(config_file_path, aergo_net, eth_net,
         config_data = json.load(f)
     validator_indexes = [i for i in range(len(config_data['validators']))]
     servers = [ValidatorServer(config_file_path, aergo_net, eth_net,
-                               privkey_name, privkey_pwd, index, True)
+                               privkey_name, '1234', index, True)
                for index in validator_indexes]
     worker = partial(_serve_worker, servers)
     pool = Pool(len(validator_indexes))
@@ -562,10 +563,41 @@ def _serve_all(config_file_path, aergo_net, eth_net,
 
 
 if __name__ == '__main__':
-    # validator = ValidatorServer(
-    #   "./test_config.json", 'aergo-local', 'eth-poa-local',
-    #   privkey_name='validator', privkey_pwd='1234', validator_index=1,
-    # )
-    # validator.run()
-    _serve_all("./test_config.json", 'aergo-local', 'eth-poa-local',
-               privkey_name='validator', privkey_pwd='1234')
+    parser = argparse.ArgumentParser(
+        description='Start a proposer on Ethereum and Aergo.')
+    # Add arguments
+    parser.add_argument(
+        '-c', '--config_file_path', type=str, help='Path to config.json',
+        required=True)
+    parser.add_argument(
+        '-a', '--aergo', type=str, help='Name of Aergo network in config file',
+        required=True)
+    parser.add_argument(
+        '-e', '--eth', type=str, help='Name of Ethereum network in config file',
+        required=True)
+    parser.add_argument(
+        '-i', '--validator_index', type=int, required=True,
+        help='Index of the validator in the ordered list of validators')
+    parser.add_argument(
+        '--privkey_name', type=str, help='Name of account in config file '
+        'to sign anchors', required=False)
+    parser.add_argument(
+        '--auto_update', dest='auto_update', action='store_true',
+        help='Update bridge contract when settings change in config file')
+    parser.add_argument(
+        '--local_test', dest='local_test', action='store_true',
+        help='Start all validators locally for convenient testing')
+    parser.set_defaults(auto_update=False)
+    parser.set_defaults(local_test=False)
+    args = parser.parse_args()
+
+    if args.local_test:
+        _serve_all(args.config_file_path, args.aergo, args.eth,
+                   privkey_name=args.privkey_name)
+    else:
+        validator = ValidatorServer(
+            args.config_file_path, args.aergo, args.eth,
+            privkey_name=args.privkey_name,
+            validator_index=args.validator_index,
+        )
+        validator.run()

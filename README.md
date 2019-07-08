@@ -18,8 +18,21 @@ The CLI can generate new config.json files, perform cross chain asset transfers 
 $ python3 -m cli.main
 ```
 
+## Bridge Operator
+### Proposer
+Start a proposer between an Aergo and an Ethereum network
+```sh
+$ python3 -m bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 3 --privkey_name "proposer" --auto_update
+```
+
+### Validator
+Start a validator between an Aergo and an Ethereum network
+```sh
+$ python3 -m bridge_operator.validator_server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --auto_update
+```
+
 ### Running tests
-Start 2 test networks in separate terminals
+Start 2 test networks locally in separate terminals
 ```sh
 $ make docker-eth
 $ make docker-aergo
@@ -40,7 +53,7 @@ $ make validator
 
 In a new terminal : test wallet transfers, bridge transfers and the bridge multisig
 ```sh
-$ python3 -m pytest -s tests/
+$ make tests
 ```
 Remove test networks data
 ```sh

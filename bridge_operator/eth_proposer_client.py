@@ -1,3 +1,4 @@
+import argparse
 from functools import (
     partial,
 )
@@ -603,7 +604,32 @@ class EthProposerClient(threading.Thread):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Start a proposer on Ethereum and Aergo.')
+    # Add arguments
+    parser.add_argument(
+        '-c', '--config_file_path', type=str, help='Path to config.json',
+        required=True)
+    parser.add_argument(
+        '-a', '--aergo', type=str, help='Name of Aergo network in config file',
+        required=True)
+    parser.add_argument(
+        '-e', '--eth', type=str, required=True,
+        help='Name of Ethereum network in config file')
+    parser.add_argument(
+        '--eth_block_time', type=int, help='Average Ethereum block time',
+        required=True)
+    parser.add_argument(
+        '--privkey_name', type=str, help='Name of account in config file '
+        'to sign anchors', required=False)
+    parser.add_argument(
+        '--auto_update', dest='auto_update', action='store_true',
+        help='Update bridge contract when settings change in config file')
+    parser.set_defaults(auto_update=False)
+    args = parser.parse_args()
+
     proposer = EthProposerClient(
-        "./test_config.json", 'aergo-local', 'eth-poa-local',
-        privkey_pwd='1234')
+        args.config_file_path, args.aergo, args.eth,
+        privkey_name=args.privkey_name, auto_update=args.auto_update
+    )
     proposer.run()

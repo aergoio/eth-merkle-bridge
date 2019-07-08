@@ -33,10 +33,10 @@ deploy_test_bridge:
 	python3 -m bridge_operator.bridge_deployer
 
 proposer:
-	python3 -m bridge_operator.proposer_client
+	python3 -m bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 3 --privkey_name "proposer" --auto_update
 
 validator:
-	python3 -m bridge_operator.validator_server
+	python3 -m bridge_operator.validator_server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --auto_update --local_test
 
 tests:
 	python3 -m pytest -s tests/
