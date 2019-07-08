@@ -17,18 +17,18 @@ def confirm_transfer():
     return answers['confirm']
 
 
-def prompt_number(message):
+def prompt_number(message, formator=int):
     """Prompt a number."""
     while 1:
+        questions = [
+            inquirer.Text(
+                'num',
+                message=message,
+            )
+        ]
+        answers = inquirer.prompt(questions)
         try:
-            questions = [
-                inquirer.Text(
-                    'num',
-                    message=message,
-                )
-            ]
-            answers = inquirer.prompt(questions)
-            num = int(answers['num'])
+            num = formator(answers['num'])
             break
         except ValueError:
             print("Invalid number")
@@ -37,7 +37,23 @@ def prompt_number(message):
 
 def prompt_amount():
     """Prompt a number of tokens to transfer."""
-    return prompt_number("Amount of assets to transfer") * 10**18
+    return prompt_number("Amount of assets to transfer", format_amount)
+
+
+def format_amount(num: str):
+    """Format a float string to an integer with 18 decimals.
+
+    Example:
+        '2.3' -> 2300000000000000000
+
+    """
+    periode = num.find('.')
+    if periode == -1:
+        return int(num) * 10**18
+    decimals = 0
+    for i, digit in enumerate(num[periode+1:]):
+        decimals += int(digit) * 10**(17-i)
+    return int(num[:periode]) * 10**18 + decimals
 
 
 def prompt_deposit_height():
