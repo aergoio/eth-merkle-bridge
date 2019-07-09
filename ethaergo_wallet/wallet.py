@@ -889,10 +889,7 @@ class EthAergoWallet(WalletConfig):
         aergo = self.connect_aergo(network_name)
         asset_addr = self.get_asset_address(asset_name, network_name,
                                             asset_origin_chain)
-        try:
-            balance = aergo_u.get_balance(account_addr, asset_addr, aergo)
-        except Exception as e:
-            raise InvalidArgumentsError(e)
+        balance = aergo_u.get_balance(account_addr, asset_addr, aergo)
         aergo.disconnect()
         return balance, asset_addr
 
@@ -924,10 +921,7 @@ class EthAergoWallet(WalletConfig):
         else:
             abi = self.load_minted_erc20_abi(network_name, asset_origin_chain)
 
-        try:
-            balance = eth_u.get_balance(account_addr, asset_addr, w3, abi)
-        except InvalidArgumentsError as e:
-            raise InvalidArgumentsError(e)
+        balance = eth_u.get_balance(account_addr, asset_addr, w3, abi)
         return balance, asset_addr
 
     def load_bridge_abi(

@@ -29,7 +29,7 @@ def format_proof_nodes(proof):
     return trie_proof
 
 
-def verify_eth_getProof(proof, root):
+def verify_eth_getProof_inclusion(proof, root):
     trie_root = Binary.fixed_length(32, allow_empty=True)
     hash32 = Binary.fixed_length(32)
 

@@ -24,7 +24,7 @@ from ethaergo_wallet.wallet_utils import (
     is_ethereum_address
 )
 from ethaergo_wallet.eth_utils.merkle_proof import (
-    verify_eth_getProof,
+    verify_eth_getProof_inclusion,
     format_proof_for_lua
 )
 
@@ -303,6 +303,13 @@ def _build_deposit_proof(
     # check last merged height
     _, aergo_current_height = aergo_to.get_blockchain_status()
     anchor_info = aergo_to.query_sc_state(bridge_to, ["_sv_Height"])
+    if not anchor_info.account.state_proof.inclusion:
+        raise InvalidArgumentsError(
+            "Contract doesnt exist in state, check contract deployed and "
+            "chain synced {}".format(anchor_info))
+    if not anchor_info.var_proofs[0].inclusion:
+        raise InvalidArgumentsError("Cannot query last anchored height",
+                                    anchor_info)
     last_merged_height_to = int(anchor_info.var_proofs[0].value)
     # waite for anchor containing our transfer
     stream = aergo_to.receive_event_stream(
@@ -321,9 +328,11 @@ def _build_deposit_proof(
     # get inclusion proof of lock in last merged block
     block = w3.eth.getBlock(last_merged_height_to)
     eth_proof = w3.eth.getProof(bridge_from, [trie_key], last_merged_height_to)
-    if not verify_eth_getProof(eth_proof, block.stateRoot):
+    try:
+        verify_eth_getProof_inclusion(eth_proof, block.stateRoot)
+    except AssertionError as e:
         raise InvalidMerkleProofError("Unable to verify deposit proof",
-                                      eth_proof)
+                                      eth_proof, e)
     if trie_key != eth_proof.storageProof[0].key:
         raise InvalidMerkleProofError("Proof doesnt match requested key",
                                       eth_proof, trie_key)
@@ -351,6 +360,10 @@ def withdrawable(
         bridge_to, ["_sv_Height", aergo_storage_key],
         compressed=False
     )
+    if not withdraw_proof.account.state_proof.inclusion:
+        raise InvalidArgumentsError(
+            "Contract doesnt exist in state, check contract deployed and "
+            "chain synced {}".format(withdraw_proof))
     if not withdraw_proof.var_proofs[0].inclusion:
         raise InvalidMerkleProofError("Cannot query last anchored height",
                                       withdraw_proof)

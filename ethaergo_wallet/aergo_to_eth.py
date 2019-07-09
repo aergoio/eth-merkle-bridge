@@ -5,6 +5,9 @@ from typing import (
 from web3 import (
     Web3,
 )
+from web3.exceptions import (
+    BadFunctionCallOutput,
+)
 import aergo.herapy as herapy
 from wallet.exceptions import (
     InvalidMerkleProofError,
@@ -321,7 +324,10 @@ def _build_deposit_proof(
         address=bridge_to,
         abi=bridge_to_abi
     )
-    last_merged_height_to = eth_bridge.functions.Height().call()
+    try:
+        last_merged_height_to = eth_bridge.functions.Height().call()
+    except BadFunctionCallOutput as e:
+        raise InvalidArgumentsError(e, bridge_to)
     # waite for anchor containing our transfer
     if last_merged_height_to < lock_height:
         print("deposit not recorded in current anchor, waiting new anchor "
@@ -334,7 +340,10 @@ def _build_deposit_proof(
             time.sleep(1)
             last_merged_height_to = eth_bridge.functions.Height().call()
     # get inclusion proof of lock in last merged block
-    print("Root: ", eth_bridge.functions.Root().call().hex())
+    try:
+        print("Root: ", eth_bridge.functions.Root().call().hex())
+    except BadFunctionCallOutput as e:
+        raise InvalidArgumentsError(e, bridge_to)
     merge_block_from = aergo_from.get_block(block_height=last_merged_height_to)
     # TODO store real bytes
     proof = aergo_from.query_sc_state(
@@ -344,9 +353,14 @@ def _build_deposit_proof(
     if not proof.verify_proof(merge_block_from.blocks_root_hash):
         raise InvalidMerkleProofError("Unable to verify deposit proof",
                                       proof)
+    if not proof.account.state_proof.inclusion:
+        raise InvalidMerkleProofError(
+            "Contract doesnt exist in state, check contract deployed and "
+            "chain synced {}".format(proof))
     if not proof.var_proofs[0].inclusion:
-        raise InvalidMerkleProofError("Trie key {} doesn't exist"
-                                      .format(trie_key))
+        raise InvalidMerkleProofError(
+            "No tokens deposited for this account reference: {}"
+            .format(proof))
     return proof
 
 
@@ -367,6 +381,10 @@ def withdrawable(
         bridge_from, [aergo_storage_key],
         root=block_from.blocks_root_hash, compressed=False
     )
+    if not deposit_proof.account.state_proof.inclusion:
+        raise InvalidArgumentsError(
+            "Contract doesnt exist in state, check contract deployed and "
+            "chain synced {}".format(deposit_proof))
     total_deposit = 0
     if deposit_proof.var_proofs[0].inclusion:
         total_deposit = int(deposit_proof.var_proofs[0].value
@@ -388,6 +406,10 @@ def withdrawable(
         bridge_from, [aergo_storage_key],
         root=block_from.blocks_root_hash, compressed=False
     )
+    if not deposit_proof.account.state_proof.inclusion:
+        raise InvalidArgumentsError(
+            "Contract doesnt exist in state, check contract deployed and "
+            "chain synced {}".format(deposit_proof))
     anchored_deposit = 0
     if deposit_proof.var_proofs[0].inclusion:
         anchored_deposit = int(deposit_proof.var_proofs[0].value

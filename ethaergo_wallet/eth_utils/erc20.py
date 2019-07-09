@@ -1,7 +1,10 @@
 from web3 import (
     Web3,
 )
-from web3.exceptions import MismatchedABI
+from web3.exceptions import (
+    MismatchedABI,
+    BadFunctionCallOutput,
+)
 from wallet.exceptions import (
     InvalidArgumentsError,
     TxError
@@ -35,7 +38,7 @@ def get_balance(
         )
         try:
             balance = token_contract.functions.balanceOf(account_addr).call()
-        except Exception as e:
+        except BadFunctionCallOutput as e:
             raise InvalidArgumentsError(e, asset_addr)
     return balance
 

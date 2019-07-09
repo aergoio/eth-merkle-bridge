@@ -3,7 +3,7 @@
 install:
 	pip install git+ssh://git@github.com/aergoio/herapy.git@4aabc7d2cb45cdbf263a972f6f11857c13118a87
 	pip install pytest
-	pip install git+ssh://git@github.com/aergoio/merkle-bridge.git@0393a251c56858d87e8968c9bdce157417d0af5e
+	pip install git+ssh://git@github.com/aergoio/merkle-bridge.git@0f9111918bbd6d3ac26549fac766d2984fc1536e
 	pip install git+ssh://git@github.com/ethereum/web3.py.git@11ef9df28dfbe4b83683a84fec184406165f18d5
 	pip install trie
 	pip install PyInquirer
