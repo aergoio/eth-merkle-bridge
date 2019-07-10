@@ -1,7 +1,7 @@
 .PHONY: install docker-aergo docker-eth deploy_test_bridge proposer validator tests clean compile_bridge compile_token protoc 
 
 install:
-	pip install git+ssh://git@github.com/aergoio/herapy.git@4aabc7d2cb45cdbf263a972f6f11857c13118a87
+	pip install git+ssh://git@github.com/aergoio/herapy.git@dc82a3bf83daba08f2b669fd416457ebe0708ca0
 	pip install pytest
 	pip install git+ssh://git@github.com/aergoio/merkle-bridge.git@0f9111918bbd6d3ac26549fac766d2984fc1536e
 	pip install git+ssh://git@github.com/ethereum/web3.py.git@11ef9df28dfbe4b83683a84fec184406165f18d5
@@ -10,6 +10,7 @@ install:
 	pip install pyfiglet
 
 docker-aergo:
+	docker build --build-arg GIT_TAG=d7a1c223d41195cdb81682f18d38785d4fc405ed -t aergo/node ./docker_test_nodes/aergo
 	docker-compose -f ./docker_test_nodes/aergo/docker-compose.yml up
 
 docker-eth:
