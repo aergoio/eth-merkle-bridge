@@ -70,7 +70,6 @@ def increase_approval(
     signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    print(receipt)
     if receipt.status != 1:
         print(receipt)
         raise TxError("Mint asset Tx execution failed")

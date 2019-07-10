@@ -8,9 +8,6 @@ from web3 import (
 from web3.exceptions import (
     BadFunctionCallOutput,
 )
-from web3._utils.encoding import (
-    pad_bytes,
-)
 import aergo.herapy as herapy
 from wallet.exceptions import (
     InvalidMerkleProofError,
@@ -114,20 +111,15 @@ def mint(
             "token_origin {} must be an Aergo address".format(token_origin)
         )
     receiver = Web3.toChecksumAddress(receiver)
-    print("version:", w3.clientVersion)
     balance = int(lock_proof.var_proofs[0].value.decode('utf-8')[1:-1])
     ap = lock_proof.var_proofs[0].auditPath
-    print("ap: ", [item.hex() for item in ap])
     bitmap = lock_proof.var_proofs[0].bitmap
-    print("bitmap: ", bitmap.hex())
     leaf_height = lock_proof.var_proofs[0].height
     # call mint on ethereum with the lock proof from aergo_from
     eth_bridge = w3.eth.contract(
         address=bridge_to,
         abi=bridge_to_abi
     )
-    print(eth_bridge)
-    print(receiver, balance, token_origin, ap, bitmap, leaf_height)
     construct_txn = eth_bridge.functions.mint(
         receiver, balance, token_origin, ap, bitmap, leaf_height
     ).buildTransaction({
@@ -142,13 +134,10 @@ def mint(
     signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    print(receipt)
-
     if receipt.status != 1:
         print(lock_proof, receipt)
         raise TxError("Mint asset Tx execution failed")
     events = eth_bridge.events.mintEvent().processReceipt(receipt)
-    print("\nevents: ", events)
     token_pegged = events[0]['args']['token_address']
 
     return token_pegged, tx_hash
@@ -239,20 +228,15 @@ def unlock(
             "token_origin {} must be an Ethereum address".format(token_origin)
         )
     receiver = Web3.toChecksumAddress(receiver)
-    print("version:", w3.clientVersion)
     balance = int(burn_proof.var_proofs[0].value.decode('utf-8')[1:-1])
     ap = burn_proof.var_proofs[0].auditPath
-    print("ap: ", [item.hex() for item in ap])
     bitmap = burn_proof.var_proofs[0].bitmap
-    print("bitmap: ", bitmap.hex())
     leaf_height = burn_proof.var_proofs[0].height
     # call mint on ethereum with the lock proof from aergo_from
     eth_bridge = w3.eth.contract(
         address=bridge_to,
         abi=bridge_to_abi
     )
-    print(eth_bridge)
-    print(receiver, balance, token_origin, ap, bitmap, leaf_height)
     construct_txn = eth_bridge.functions.unlock(
         receiver, balance, token_origin, ap, bitmap, leaf_height
     ).buildTransaction({
@@ -267,13 +251,9 @@ def unlock(
     signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    print(receipt)
-
     if receipt.status != 1:
         print(burn_proof, receipt)
         raise TxError("Unlock asset Tx execution failed")
-    events = eth_bridge.events.unlockEvent().processReceipt(receipt)
-    print("\nevents: ", events)
     return tx_hash
 
 
@@ -290,7 +270,6 @@ def freeze(
         raise InvalidArgumentsError(
             "Receiver {} must be an Ethereum address".format(receiver)
         )
-    print('receiver:', receiver)
     args = (receiver[2:].lower(), str(value))
     tx, result = aergo_from.call_sc(
         bridge_from, "freeze", amount=value, args=args
@@ -333,8 +312,8 @@ def _build_deposit_proof(
         raise InvalidArgumentsError(e, bridge_to)
     # waite for anchor containing our transfer
     if last_merged_height_to < deposit_height:
-        print("deposit not recorded in current anchor, waiting new anchor "
-              "event... / "
+        print("\u23F0 deposit not recorded in current anchor, waiting new "
+              "anchor event... / "
               "deposit height : {} / "
               "last anchor height : {} / "
               .format(deposit_height, last_merged_height_to)
@@ -343,10 +322,6 @@ def _build_deposit_proof(
             time.sleep(1)
             last_merged_height_to = eth_bridge.functions.Height().call()
     # get inclusion proof of lock in last merged block
-    try:
-        print("Root: ", eth_bridge.functions.Root().call().hex())
-    except BadFunctionCallOutput as e:
-        raise InvalidArgumentsError(e, bridge_to)
     merge_block_from = aergo_from.get_block(block_height=last_merged_height_to)
     proof = aergo_from.query_sc_state(
         bridge_from, [trie_key],

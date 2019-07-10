@@ -51,7 +51,6 @@ def lock(
         address=bridge_from,
         abi=bridge_from_abi
     )
-    print(receiver, amount, erc20_address)
     if next_nonce is None:
         next_nonce = w3.eth.getTransactionCount(signer_acct.address)
     construct_txn = eth_bridge.functions.lock(
@@ -69,8 +68,6 @@ def lock(
     if receipt.status != 1:
         print(receipt)
         raise TxError("Lock asset Tx execution failed")
-    events = eth_bridge.events.lockEvent().processReceipt(receipt)
-    print("\nevents: ", events)
     return receipt.blockNumber, tx_hash
 
 
@@ -97,7 +94,6 @@ def build_lock_proof(
     account_ref = receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
     # 'Burns is the 4th state var defined in solitity contract
     position = b'\x03'
-    print(account_ref.rjust(32, b'\0') + position.rjust(32, b'\0'))
     trie_key = keccak(account_ref + position.rjust(32, b'\0'))
     return _build_deposit_proof(
         w3, aergo_to, bridge_from, bridge_to, lock_height, trie_key
@@ -124,8 +120,6 @@ def mint(
         )
     ap = format_proof_for_lua(lock_proof.storageProof[0].proof)
     balance = int.from_bytes(lock_proof.storageProof[0].value, "big")
-    print(ap)
-    print(balance, lock_proof.storageProof[0].value, ap)
     # call unlock on aergo_to with the burn proof from aergo_from
     tx, result = aergo_to.call_sc(bridge_to, "mint",
                                   args=[receiver, balance,
@@ -167,7 +161,6 @@ def burn(
         address=bridge_from,
         abi=bridge_from_abi
     )
-    print(receiver, amount, token_pegged)
     construct_txn = eth_bridge.functions.burn(
         receiver, amount, token_pegged
     ).buildTransaction({
@@ -182,12 +175,9 @@ def burn(
     signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    print(receipt)
     if receipt.status != 1:
         print(receipt)
         raise TxError("Burn asset Tx execution failed")
-    events = eth_bridge.events.burnEvent().processReceipt(receipt)
-    print("\nevents: ", events)
     return receipt.blockNumber, tx_hash
 
 
@@ -214,7 +204,6 @@ def build_burn_proof(
     account_ref = (receiver + token_origin).encode('utf-8')
     # 'Burns is the 6th state var defined in solitity contract
     position = b'\x05'
-    print(account_ref.rjust(32, b'\0') + position.rjust(32, b'\0'))
     trie_key = keccak(account_ref + position.rjust(32, b'\0'))
     return _build_deposit_proof(
         w3, aergo_to, bridge_from, bridge_to, burn_height, trie_key
@@ -241,8 +230,6 @@ def unlock(
         )
     ap = format_proof_for_lua(burn_proof.storageProof[0].proof)
     balance = int.from_bytes(burn_proof.storageProof[0].value, "big")
-    print(ap)
-    print(balance, burn_proof.storageProof[0].value, ap)
     # call unlock on aergo_to with the burn proof from aergo_from
     tx, result = aergo_to.call_sc(bridge_to, "unlock",
                                   args=[receiver, balance,
@@ -273,8 +260,6 @@ def unfreeze(
         )
     ap = format_proof_for_lua(lock_proof.storageProof[0].proof)
     balance = int.from_bytes(lock_proof.storageProof[0].value, "big")
-    print(ap)
-    print(balance, lock_proof.storageProof[0].value, ap)
     # call unlock on aergo_to with the burn proof from aergo_from
     tx, result = aergo_to.call_sc(bridge_to, "unfreeze",
                                   args=[receiver, balance, ap])
@@ -316,8 +301,8 @@ def _build_deposit_proof(
         bridge_to, "set_root", start_block_no=aergo_current_height
     )
     while last_merged_height_to < deposit_height:
-        print("deposit not recorded in current anchor, waiting new anchor "
-              "event... / "
+        print("\u23F0 deposit not recorded in current anchor, waiting new "
+              "anchor event... / "
               "deposit height : {} / "
               "last anchor height : {} "
               .format(deposit_height, last_merged_height_to)
