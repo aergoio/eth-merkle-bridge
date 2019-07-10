@@ -259,7 +259,7 @@ contract EthMerkleBridge {
     }
 
     function bit_is_set(bytes32 bits, uint8 i) public pure returns (bool) {
-        return bits[i/8]&bytes1(1<<uint8(7-i%8)) != 0;
+        return bits[i/8]&bytes1(uint8(1)<<uint8(7-i%8)) != 0;
     }
 
     function uint_to_str(uint num) public pure returns(string memory) {

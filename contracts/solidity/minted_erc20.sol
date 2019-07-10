@@ -1,6 +1,6 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.10;
 
-import "github.com/OpenZeppelin/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "github.com/OpenZeppelin/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol#852e11c2dbb19a4000decacf1840f5e4c29c5543";
 
 
 contract MintedERC20 is ERC20 {
