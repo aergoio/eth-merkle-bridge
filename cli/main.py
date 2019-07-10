@@ -630,7 +630,7 @@ class EthMerkleBridgeCli():
             [from_chain, to_chain, asset_name, receiver, deposit_height]
         self.store_pending_transfers()
 
-    def finalize_transfer_arguments(self):
+    def finalize_transfer_arguments(self, prompt_last_deposit=True):
         """Prompt the arguments needed to finalize a transfer.
 
         The arguments can be taken from the pending transfers or
@@ -659,7 +659,9 @@ class EthMerkleBridgeCli():
         if answers['transfer'] == 'Custom transfer':
             from_chain, to_chain, from_assets, to_assets, asset_name, \
                 receiver = self.prompt_commun_transfer_params()
-            deposit_height = prompt_deposit_height()
+            deposit_height = 0
+            if prompt_last_deposit:
+                deposit_height = prompt_deposit_height()
         elif answers['transfer'] == 'Back':
             return None
         else:
@@ -777,7 +779,8 @@ class EthMerkleBridgeCli():
 
     def check_withdrawable_balance(self):
         """Check the status of cross chain transfers."""
-        arguments = self.finalize_transfer_arguments()
+        arguments = self.finalize_transfer_arguments(
+            prompt_last_deposit=False)
         if arguments is None:
             return
         from_chain, to_chain, from_assets, to_assets, asset_name, receiver, \
