@@ -780,13 +780,12 @@ class EthAergoWallet(WalletConfig):
             )
         hera = self.connect_aergo(from_chain)
         w3 = self.get_web3(to_chain)
-        # TODO bytes.fromhex(receiver[2:]) + token_origin.encode('utf-8')
-        # TODO change this when real bytes are stored
         account_ref_eth = \
-            receiver[2:].lower().encode('utf-8') + token_origin.encode('utf-8')
+            bytes.fromhex(receiver[2:]) + token_origin.encode('utf-8')
         position = b'\x06'  # Mints
         eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
-        aergo_storage_key = '_sv_Locks-' + receiver[2:].lower() + token_origin
+        aergo_storage_key = '_sv_Locks-'.encode('utf-8') \
+            + bytes.fromhex(receiver[2:]) + token_origin.encode('utf-8')
         return aergo_to_eth.withdrawable(
             bridge_from, bridge_to, hera, w3, aergo_storage_key, eth_trie_key
         )
@@ -813,13 +812,12 @@ class EthAergoWallet(WalletConfig):
             )
         hera = self.connect_aergo(from_chain)
         w3 = self.get_web3(to_chain)
-        account_ref = (receiver[2:] + token_origin[2:]).lower()
+        account_ref = receiver[2:] + token_origin[2:]
         position = b'\x04'  # Unlocks
-        # TODO change when real bytes are used
-        # TODO eth_trie_key = keccak(bytes.fromhex(account_ref)
-        eth_trie_key = keccak(account_ref.encode('utf-8')
-                              + position.rjust(32, b'\0'))
-        aergo_storage_key = '_sv_Burns-' + account_ref
+        eth_trie_key = keccak(
+            bytes.fromhex(account_ref) + position.rjust(32, b'\0'))
+        aergo_storage_key = '_sv_Burns-'.encode('utf-8') \
+            + bytes.fromhex(account_ref)
         return aergo_to_eth.withdrawable(
             bridge_from, bridge_to, hera, w3, aergo_storage_key, eth_trie_key
         )

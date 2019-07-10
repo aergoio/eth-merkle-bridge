@@ -8,6 +8,9 @@ from web3 import (
 from web3.exceptions import (
     BadFunctionCallOutput,
 )
+from web3._utils.encoding import (
+    pad_bytes,
+)
 import aergo.herapy as herapy
 from wallet.exceptions import (
     InvalidMerkleProofError,
@@ -82,8 +85,8 @@ def build_lock_proof(
         raise InvalidArgumentsError(
             "token_origin {} must be an Aergo address".format(token_origin)
         )
-    account_ref = receiver[2:].lower() + token_origin
-    trie_key = "_sv_Locks-" + account_ref
+    trie_key = "_sv_Locks-".encode('utf-8') + bytes.fromhex(receiver[2:]) \
+        + token_origin.encode('utf-8')
     return _build_deposit_proof(
         aergo_from, w3, bridge_from, bridge_to, bridge_to_abi, lock_height,
         trie_key
@@ -207,8 +210,8 @@ def build_burn_proof(
         raise InvalidArgumentsError(
             "token_origin {} must be an Ethereum address".format(token_origin)
         )
-    account_ref = receiver[2:].lower() + token_origin[2:].lower()
-    trie_key = "_sv_Burns-" + account_ref
+    trie_key = "_sv_Burns-".encode('utf-8') + bytes.fromhex(receiver[2:]) \
+        + bytes.fromhex(token_origin[2:])
     return _build_deposit_proof(
         aergo_from, w3, bridge_from, bridge_to, bridge_to_abi, burn_height,
         trie_key
@@ -313,8 +316,8 @@ def _build_deposit_proof(
     bridge_from: str,
     bridge_to: str,
     bridge_to_abi: str,
-    lock_height: int,
-    trie_key: str,
+    deposit_height: int,
+    trie_key: bytes,
 ):
     """ Check the last anchored root includes the deposit and build
     a deposit proof for that root
@@ -329,14 +332,14 @@ def _build_deposit_proof(
     except BadFunctionCallOutput as e:
         raise InvalidArgumentsError(e, bridge_to)
     # waite for anchor containing our transfer
-    if last_merged_height_to < lock_height:
+    if last_merged_height_to < deposit_height:
         print("deposit not recorded in current anchor, waiting new anchor "
               "event... / "
               "deposit height : {} / "
               "last anchor height : {} / "
-              .format(lock_height, last_merged_height_to)
+              .format(deposit_height, last_merged_height_to)
               )
-        while last_merged_height_to < lock_height:
+        while last_merged_height_to < deposit_height:
             time.sleep(1)
             last_merged_height_to = eth_bridge.functions.Height().call()
     # get inclusion proof of lock in last merged block
@@ -345,7 +348,6 @@ def _build_deposit_proof(
     except BadFunctionCallOutput as e:
         raise InvalidArgumentsError(e, bridge_to)
     merge_block_from = aergo_from.get_block(block_height=last_merged_height_to)
-    # TODO store real bytes
     proof = aergo_from.query_sc_state(
         bridge_from, [trie_key],
         root=merge_block_from.blocks_root_hash, compressed=True
@@ -369,7 +371,7 @@ def withdrawable(
     bridge_to: str,
     hera: herapy.Aergo,
     w3: Web3,
-    aergo_storage_key: str,
+    aergo_storage_key: bytes,
     eth_trie_key: bytes,
 ) -> Tuple[int, int]:
     # total_deposit : total latest deposit including pending

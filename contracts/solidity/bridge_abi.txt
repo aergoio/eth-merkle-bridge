@@ -80,25 +80,6 @@
 		"constant": true,
 		"inputs": [
 			{
-				"name": "_addr",
-				"type": "address"
-			}
-		],
-		"name": "addr_to_str",
-		"outputs": [
-			{
-				"name": "",
-				"type": "string"
-			}
-		],
-		"payable": false,
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
 				"name": "",
 				"type": "bytes"
 			}

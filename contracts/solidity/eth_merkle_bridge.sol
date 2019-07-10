@@ -66,7 +66,7 @@ contract EthMerkleBridge {
     function get_validators() public view returns (address[] memory) {
         return Validators;
     }
-    
+
     function update_validators(
         address[] memory new_validators,
         uint[] memory signers,
@@ -81,7 +81,7 @@ contract EthMerkleBridge {
         Nonce += 1;
         emit newValidatorsEvent(new_validators);
     }
-    
+
     function update_t_anchor(
         uint new_t_anchor,
         uint[] memory signers,
@@ -96,7 +96,7 @@ contract EthMerkleBridge {
         Nonce += 1;
         emit newTAnchorEvent(new_t_anchor);
     }
-    
+
     function update_t_final(
         uint new_t_final,
         uint[] memory signers,
@@ -146,7 +146,7 @@ contract EthMerkleBridge {
       }
         return true;
     }
-    
+
     function lock(
         string memory receiver,
         uint amount,
@@ -162,7 +162,7 @@ contract EthMerkleBridge {
         emit lockEvent(token, receiver, amount);
         return true;
     }
-    
+
     function unlock(
         address receiver,
         uint balance,
@@ -172,7 +172,7 @@ contract EthMerkleBridge {
         uint8 leaf_height
     ) public returns(bool) {
         require(balance>0, "Balance must be positive");
-        bytes memory account_ref = abi.encodePacked(addr_to_str(receiver), addr_to_str(address(token)));
+        bytes memory account_ref = abi.encodePacked(receiver, address(token));
         require(verify_mp("_sv_Burns-", account_ref, balance, mp, bitmap, leaf_height), "Failed to verify lock proof");
         uint unlocked_so_far = Unlocks[account_ref];
         uint to_transfer = balance - unlocked_so_far;
@@ -192,7 +192,7 @@ contract EthMerkleBridge {
         uint8 leaf_height
     ) public returns(bool) {
         require(balance>0, "Balance must be positive");
-        bytes memory account_ref = abi.encodePacked(addr_to_str(receiver), token_origin);
+        bytes memory account_ref = abi.encodePacked(receiver, token_origin);
         require(verify_mp("_sv_Locks-", account_ref, balance, mp, bitmap, leaf_height), "Failed to verify lock proof");
         uint minted_so_far = Mints[account_ref];
         uint to_transfer = balance - minted_so_far;
@@ -210,7 +210,7 @@ contract EthMerkleBridge {
         emit mintEvent(mint_address, receiver, to_transfer);
         return true;
     }
-    
+
     function burn(
         string memory receiver,
         uint amount,
@@ -239,7 +239,7 @@ contract EthMerkleBridge {
         bytes32 trie_value = sha256(abi.encodePacked("\"", uint_to_str(balance), "\""));
         bytes32 node_hash = sha256(abi.encodePacked(trie_key, trie_value, uint8(256-leaf_height)));
         uint proof_index = 0;
-        for (uint8 i=leaf_height; i>0; i--){
+        for (uint8 i = leaf_height; i>0; i--){
             if (bit_is_set(bitmap, leaf_height-i)) {
                 if (bit_is_set(trie_key, i-1)) {
                     node_hash = sha256(abi.encodePacked(mp[proof_index], node_hash));
@@ -256,18 +256,6 @@ contract EthMerkleBridge {
             }
         }
         return Root == node_hash;
-    }
-
-    function addr_to_str(address _addr) public pure returns(string memory) {
-        //https://ethereum.stackexchange.com/questions/30290/conversion-of-address-to-string-in-solidity?rq=1
-        bytes32 value = bytes32(uint256(_addr));
-        bytes memory alphabet = "0123456789abcdef";
-        bytes memory str = new bytes(40);
-        for (uint i = 0; i < 20; i++) {
-            str[i*2] = alphabet[uint8(value[i + 12] >> 4)];
-            str[1+i*2] = alphabet[uint8(value[i + 12] & 0x0f)];
-        }
-        return string(str);
     }
 
     function bit_is_set(bytes32 bits, uint8 i) public pure returns (bool) {

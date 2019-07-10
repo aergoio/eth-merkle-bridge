@@ -172,6 +172,12 @@ function join(array)
     return str
 end
 
+function abi_encode(hex_address)
+    return (hex_address:gsub('..', function (cc)
+        return string.char(tonumber(cc, 16))
+    end))
+end
+
 -- lock and burn must be distinct because tokens on both sides could have the same address. Also adds clarity because burning is only applicable to minted tokens.
 -- nonce and signature are used when making a token lockup
 -- delegated transfers to ethereum not supported
@@ -184,7 +190,8 @@ function lock(receiver, amount, token_address, nonce, signature)
     assert(bamount > b0, "amount must be positive")
 
     -- Add locked amount to total
-    local account_ref = receiver .. token_address
+    -- left pad address to 32 bytes to match abi.encodePacked(address)
+    local account_ref =  abi_encode(receiver) .. token_address
     local old = Locks[account_ref]
     local locked_balance
     if old == nil then
@@ -264,7 +271,7 @@ function burn(receiver, amount, mint_address)
     local origin_address = MintedTokens[mint_address]
     assert(origin_address ~= nil, "cannot burn token : must have been minted by bridge")
     -- Add burnt amount to total
-    local account_ref = receiver .. origin_address
+    local account_ref = abi_encode(receiver .. origin_address)
     local old = Burns[account_ref]
     local burnt_balance
     if old == nil then
@@ -327,7 +334,7 @@ function freeze(receiver, amount)
     assert(system.getAmount() == bignum.tostring(bamount), "for safety and clarity, amount must match the amount sent in the tx")
 
     -- Add freezed amount to total
-    local account_ref = receiver .. AergoERC20:get()
+    local account_ref = abi_encode(receiver .. AergoERC20:get())
     -- NOTE : it seems ok to store freezed balances in Burns so that Unlock can be same for all ERC20 tokens
     local old = Burns[account_ref]
     local freezed_balance
