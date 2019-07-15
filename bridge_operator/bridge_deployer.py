@@ -1,11 +1,7 @@
+import argparse
 from getpass import getpass
 import json
-import os
 import time
-
-from typing import (
-    Dict,
-)
 
 import aergo.herapy as herapy
 
@@ -24,11 +20,9 @@ COMMIT_TIME = 3
 
 
 def deploy_bridge(
-    config_data: Dict,
     config_path: str,
-    lua_bytecode: str,
-    sol_bytecode: str,
-    bridge_abi: str,
+    lua_bytecode_path: str,
+    sol_bytecode_path: str,
     bridge_abi_path: str,
     minted_erc20_abi_path: str,
     t_anchor_eth: int,
@@ -36,10 +30,20 @@ def deploy_bridge(
     eth_finality: int,
     eth_net: str,
     aergo_net: str,
-    aergo_erc20: str,
+    aergo_erc20: str = 'aergo_erc20',
     privkey_name: str = None,
     privkey_pwd: str = None,
 ) -> None:
+    """ Deploy brige contract on Aergo and Ethereum."""
+
+    with open(config_path, "r") as f:
+        config_data = json.load(f)
+    with open(lua_bytecode_path, "r") as f:
+        lua_bytecode = f.read()[:-1]
+    with open(sol_bytecode_path, "r") as f:
+        sol_bytecode = f.read()
+    with open(bridge_abi_path, "r") as f:
+        bridge_abi = f.read()
     if privkey_name is None:
         privkey_name = 'proposer'
     print("------ DEPLOY BRIDGE BETWEEN Aergo & Ethereum -----------")
@@ -120,25 +124,6 @@ def deploy_bridge(
     aergo_bridge = result.contract_address
     aergo_id = result.detail[1:-1]
 
-    print("------ Freeze aergo in bridge -----------")
-    aergo_vault = config_data['wallet']['bridge-vault']['priv_key']
-    aergo.import_account(aergo_vault, privkey_pwd)
-    # NOTE watch out for tx fees, they shouldnt be deducted from the vault value.
-    tx, result = aergo.send_payload(
-        to_address=aergo_bridge, amount=100000000000000000000000,
-        payload=None
-    )
-    if result.status != herapy.CommitStatus.TX_OK:
-        print("Transfer aergo Tx commit failed : {}".format(result))
-        return
-
-    time.sleep(COMMIT_TIME)
-    # Check freeze success
-    result = aergo.get_tx_result(tx.tx_hash)
-    if result.status != herapy.TxResultStatus.SUCCESS:
-        print("Transfer aergo Tx execution failed : {}".format(result))
-        return
-
     print("------ Deploy Ethereum SC -----------")
     receipt = deploy_contract(
         sol_bytecode, bridge_abi, w3, 6700000, 20, privkey,
@@ -186,16 +171,30 @@ def deploy_bridge(
 
 
 if __name__ == '__main__':
-    with open("./test_config.json", "r") as f:
-        config_data = json.load(f)
-    with open("./contracts/lua/bridge_bytecode.txt", "r") as f:
-        lua_bytecode = f.read()[:-1]
-    with open("./contracts/solidity/bridge_bytecode.txt", "r") as f:
-        sol_bytecode = f.read()
-    minted_erc20_abi_path = "contracts/solidity/minted_erc20_abi.txt"
-    bridge_abi_path = "contracts/solidity/bridge_abi.txt"
-    with open(bridge_abi_path, "r") as f:
-        bridge_abi = f.read()
+    parser = argparse.ArgumentParser(
+        description='Deploy bridge contracts between Ethereum and Aergo.')
+    # Add arguments
+    parser.add_argument(
+        '-c', '--config_file_path', type=str, help='Path to config.json',
+        required=True)
+    parser.add_argument(
+        '-a', '--aergo', type=str, help='Name of Aergo network in config file',
+        required=True)
+    parser.add_argument(
+        '-e', '--eth', type=str, help='Name of Ethereum network in config file',
+        required=True)
+    parser.add_argument(
+        '--privkey_name', type=str, help='Name of account in config file '
+        'to sign anchors', required=False)
+
+    args = parser.parse_args()
+    # eth_net = 'eth-poa-local'
+    # aergo_net = 'aergo-local'
+    # config_path = "./test_config.json"
+    lua_bytecode_path = "./contracts/lua/bridge_bytecode.txt"
+    sol_bytecode_path = "./contracts/solidity/bridge_bytecode.txt"
+    minted_erc20_abi_path = "./contracts/solidity/minted_erc20_abi.txt"
+    bridge_abi_path = "./contracts/solidity/bridge_abi.txt"
 
     # NOTE t_final is the minimum time to get lib : only informative (not
     # actually used in code except for Eth bridge because Eth doesn't have LIB)
@@ -203,8 +202,8 @@ if __name__ == '__main__':
     t_anchor_aergo = 6  # ethereum anchoring periord on aergo
     eth_finality = 4  # blocks after which ethereum is considered finalized
     deploy_bridge(
-        config_data, "./test_config.json", lua_bytecode, sol_bytecode,
-        bridge_abi, bridge_abi_path, minted_erc20_abi_path, t_anchor_eth,
-        t_anchor_aergo, eth_finality, 'eth-poa-local', 'aergo-local',
-        'aergo_erc20', privkey_pwd='1234'
+        args.config_file_path, lua_bytecode_path, sol_bytecode_path,
+        bridge_abi_path, minted_erc20_abi_path, t_anchor_eth,
+        t_anchor_aergo, eth_finality, args.eth, args.aergo,
+        'aergo_erc20', privkey_name=args.privkey_name
     )

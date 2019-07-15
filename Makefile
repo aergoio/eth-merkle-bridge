@@ -10,7 +10,7 @@ install:
 	pip install pyfiglet
 
 docker-aergo:
-	docker build --build-arg GIT_TAG=d7a1c223d41195cdb81682f18d38785d4fc405ed -t aergo/node ./docker_test_nodes/aergo
+	docker build --build-arg GIT_TAG=528f5a6b755528503e510f2eb530131d48dfad55 -t aergo/node ./docker_test_nodes/aergo
 	docker-compose -f ./docker_test_nodes/aergo/docker-compose.yml up
 
 docker-eth:
@@ -31,7 +31,8 @@ docker-eth:
 
 deploy_test_bridge:
 	python3 -m ethaergo_wallet.eth_utils.aergo_erc20_deployer
-	python3 -m bridge_operator.bridge_deployer
+	python3 -m bridge_operator.bridge_deployer -c './test_config.json' -a 'aergo-local' -e eth-poa-local --privkey_name "proposer"
+	python3 -m bridge_operator.freeze_aergo
 
 proposer:
 	python3 -m bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 3 --privkey_name "proposer" --auto_update
