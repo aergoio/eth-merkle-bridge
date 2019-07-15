@@ -1,3 +1,6 @@
+from typing import (
+    Tuple,
+)
 from web3 import (
     Web3,
 )
@@ -50,7 +53,7 @@ def increase_approval(
     w3: Web3,
     erc20_abi: str,
     signer_acct
-) -> int:
+) -> Tuple[int, str]:
     """ Increase approval increases the amount of tokens that spender
         can withdraw. For older tokens without the increaseApproval
         function in the abi, approval should be set to 0 and then to amount.
@@ -73,7 +76,7 @@ def increase_approval(
     if receipt.status != 1:
         print(receipt)
         raise TxError("Mint asset Tx execution failed")
-    return approval_nonce + 1
+    return approval_nonce + 1, tx_hash.hex()
 
 
 def get_abi_function(
@@ -101,5 +104,6 @@ def get_abi_function(
         pass
     raise InvalidArgumentsError(
         "Impossible to send ERC20 tokens to bridge contract: "
-        "'increaseAllowance' or 'increaseApproval' must be included in ERC20 abi"
+        "'increaseAllowance' or 'increaseApproval' must be included "
+        "in ERC20 abi"
     )

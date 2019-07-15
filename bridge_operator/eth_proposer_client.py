@@ -45,10 +45,9 @@ from bridge_operator.op_utils import (
     query_eth_tempo,
     query_eth_validators,
 )
-
-
-class ValidatorMajorityError(Exception):
-    pass
+from bridge_operator.exceptions import (
+    ValidatorMajorityError,
+)
 
 
 class EthProposerClient(threading.Thread):
@@ -62,12 +61,12 @@ class EthProposerClient(threading.Thread):
 
     Note on config_data:
         - config_data is used to store current validators and their ip when the
-        proposer starts. (change validators after the proposer has started)
+          proposer starts. (change validators after the proposer has started)
         - After starting, when users change the config.json, the proposer will
-        attempt to gather signatures to reflect the changes.
+          attempt to gather signatures to reflect the changes.
         - t_anchor value is always taken from the bridge contract
         - validators are taken from the config_data because ip information is
-        not stored on chain
+          not stored on chain
         - when a validator set update succeeds, self.config_data is updated
     """
 
@@ -313,7 +312,7 @@ class EthProposerClient(threading.Thread):
             print("\n{0}| Last anchor from Aergo:\n"
                   "{0}| -----------------------\n"
                   "{0}| height: {1}\n"
-                  "{0}| contract trie root: {2}...\n"
+                  "{0}| contract trie root: 0x{2}...\n"
                   "{0}| current update nonce: {3}\n"
                   .format(self.tab, merged_height_from,
                           merged_root_from.hex()[0:20], nonce_to))

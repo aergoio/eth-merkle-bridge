@@ -99,7 +99,7 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
     ) -> Tuple[int, str]:
         """ Initiate ERC20 token or Ether transfer to Aergo sidechain """
-        print(from_chain + ' -> ' + to_chain)
+        print('\n' + from_chain + ' -> ' + to_chain)
         if not is_aergo_address(receiver):
             raise InvalidArgumentsError(
                 "Receiver {} must be an Aergo address".format(receiver)
@@ -125,16 +125,16 @@ class EthAergoWallet(WalletConfig):
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
-        print("Increase approval")
-        next_nonce = eth_u.increase_approval(
+        next_nonce, tx_hash = eth_u.increase_approval(
             bridge_from, erc20_address, amount, w3, erc20_abi, signer_acct
         )
+        print("\u2b06 Increase approval success: ", tx_hash)
 
         lock_height, tx_hash = eth_to_aergo.lock(
             w3, signer_acct, receiver, amount, bridge_from, bridge_from_abi,
             erc20_address, fee_limit, self.fee_price, next_nonce
         )
-        print('\U0001f512 Lock success')
+        print('\U0001f512 Lock success: ', tx_hash)
 
         balance = eth_u.get_balance(token_owner, erc20_address, w3,
                                     erc20_abi)
@@ -153,7 +153,7 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
     ) -> str:
         """ Finalize ERC20 token or Ether transfer to Aergo sidechain """
-        print(from_chain + ' -> ' + to_chain)
+        print('\n' + from_chain + ' -> ' + to_chain)
         w3 = self.get_web3(from_chain)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
         tx_sender = str(aergo_to.account.address)
@@ -194,7 +194,7 @@ class EthAergoWallet(WalletConfig):
             aergo_to, receiver, lock_proof, asset_address, bridge_to,
             fee_limit, self.fee_price
         )
-        print('\u26cf Mint success')
+        print('\u26cf Mint success: ', tx_hash)
         # new balance on destination
         balance = aergo_u.get_balance(receiver, token_pegged, aergo_to)
         print("{} balance on destination after transfer: {}"
@@ -221,7 +221,7 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
     ) -> Tuple[int, str]:
         """ Initiate minted Standard token transfer back to aergo origin"""
-        print(from_chain + ' -> ' + to_chain)
+        print('\n' + from_chain + ' -> ' + to_chain)
         if not is_aergo_address(receiver):
             raise InvalidArgumentsError(
                 "Receiver {} must be an Aergo address".format(receiver)
@@ -252,7 +252,7 @@ class EthAergoWallet(WalletConfig):
             w3, signer_acct, receiver, amount, bridge_from, bridge_from_abi,
             token_pegged, fee_limit, self.fee_price
         )
-        print('\U0001f525 Burn success')
+        print('\U0001f525 Burn success: ', tx_hash)
 
         balance = eth_u.get_balance(token_owner, token_pegged, w3,
                                     minted_erc20_abi)
@@ -272,7 +272,7 @@ class EthAergoWallet(WalletConfig):
         """ Finalize ERC20Aergo transfer to Aergo Mainnet by unfreezing
             (aers are already minted and freezed in the bridge contract)
         """
-        print(from_chain + ' -> ' + to_chain)
+        print('\n' + from_chain + ' -> ' + to_chain)
         asset_name = 'aergo_erc20'
         w3 = self.get_web3(from_chain)
         aergo_to = self.get_aergo(to_chain, privkey_name, privkey_pwd)
@@ -308,7 +308,7 @@ class EthAergoWallet(WalletConfig):
             aergo_to, receiver, lock_proof, bridge_to, fee_limit,
             self.fee_price
         )
-        print('\U0001f4a7 Unfreeze success')
+        print('\U0001f4a7 Unfreeze success: ', tx_hash)
         # new balance on destination
         balance = aergo_u.get_balance(receiver, 'aergo', aergo_to)
         print("{} balance on destination after transfer: {}"
@@ -329,7 +329,7 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
     ) -> str:
         """ Finalize Aergo Standard token transfer back to Aergo Origin"""
-        print(from_chain + ' -> ' + to_chain)
+        print('\n' + from_chain + ' -> ' + to_chain)
         if not is_aergo_address(receiver):
             raise InvalidArgumentsError(
                 "Receiver {} must be an Aergo address".format(receiver)
@@ -361,7 +361,7 @@ class EthAergoWallet(WalletConfig):
             aergo_to, receiver, burn_proof, asset_address, bridge_to,
             fee_limit, self.fee_price
         )
-        print('\U0001f513 Unlock success')
+        print('\U0001f513 Unlock success: ', tx_hash)
 
         # new balance on origin
         balance = aergo_u.get_balance(receiver, asset_address, aergo_to)
@@ -480,7 +480,7 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
     ) -> Tuple[int, str]:
         """ Initiate Aer transfer back to Ethereum AergoERC20 sidechain"""
-        print(from_chain + ' -> ' + to_chain)
+        print('\n' + from_chain + ' -> ' + to_chain)
         if not is_ethereum_address(receiver):
             raise InvalidArgumentsError(
                 "receiver {} must be an Ethereum address".format(receiver)
@@ -501,7 +501,7 @@ class EthAergoWallet(WalletConfig):
             aergo_from, bridge_from, receiver, amount, fee_limit,
             self.fee_price
         )
-        print('\u2744 Freeze success')
+        print('\u2744 Freeze success: ', tx_hash)
 
         # remaining balance on origin : aer or asset
         balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
@@ -522,7 +522,7 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None
     ) -> Tuple[int, str]:
         """ Initiate Aergo Standard Token transfer to Ethereum sidechain"""
-        print(from_chain + ' -> ' + to_chain)
+        print('\n' + from_chain + ' -> ' + to_chain)
         if not is_ethereum_address(receiver):
             raise InvalidArgumentsError(
                 "receiver {} must be an Ethereum address".format(receiver)
@@ -557,7 +557,7 @@ class EthAergoWallet(WalletConfig):
             aergo_from, bridge_from, receiver, amount,
             asset_address, fee_limit, self.fee_price, signed_transfer
         )
-        print('\U0001f512 Lock success')
+        print('\U0001f512 Lock success: ', tx_hash)
 
         # remaining balance on origin : aer or asset
         balance = aergo_u.get_balance(sender, asset_address, aergo_from)
@@ -583,7 +583,7 @@ class EthAergoWallet(WalletConfig):
         already minted amount.
         Bridge tempo is taken from config_data
         """
-        print(from_chain + ' -> ' + to_chain)
+        print('\n' + from_chain + ' -> ' + to_chain)
         bridge_to_abi = self.load_bridge_abi(to_chain, from_chain)
         minted_erc20_abi = self.load_minted_erc20_abi(to_chain, from_chain)
         aergo_from = self.connect_aergo(from_chain)
@@ -628,7 +628,7 @@ class EthAergoWallet(WalletConfig):
             w3, signer_acct, receiver, lock_proof, asset_address, bridge_to,
             bridge_to_abi, fee_limit, self.fee_price
         )
-        print('\u26cf Mint success')
+        print('\u26cf Mint success: ', tx_hash)
 
         # new balance on sidechain
         balance = eth_u.get_balance(receiver, token_pegged, w3,
@@ -658,7 +658,7 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
     ) -> Tuple[int, str]:
         """ Initiate minted token transfer back to ethereum origin"""
-        print(from_chain + ' -> ' + to_chain)
+        print('\n' + from_chain + ' -> ' + to_chain)
         if not is_ethereum_address(receiver):
             raise InvalidArgumentsError(
                 "receiver {} must be an Ethereum address".format(receiver)
@@ -685,7 +685,7 @@ class EthAergoWallet(WalletConfig):
             aergo_from, bridge_from, receiver, amount, token_pegged,
             fee_limit, self.fee_price
         )
-        print('\U0001f525 Burn success')
+        print('\U0001f525 Burn success: ', tx_hash)
 
         # remaining balance on origin : aer or asset
         balance = aergo_u.get_balance(sender, token_pegged, aergo_from)
@@ -706,7 +706,7 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
     ) -> Tuple[str, str]:
         """ Finalize ERC20 or Eth transfer back to Ethereum origin """
-        print(from_chain + ' -> ' + to_chain)
+        print('\n' + from_chain + ' -> ' + to_chain)
         bridge_to_abi = self.load_bridge_abi(to_chain, from_chain)
         erc20_abi = self.load_erc20_abi(to_chain, asset_name)
         aergo_from = self.connect_aergo(from_chain)
@@ -745,7 +745,7 @@ class EthAergoWallet(WalletConfig):
             w3, signer_acct, receiver, lock_proof, asset_address, bridge_to,
             bridge_to_abi, fee_limit, self.fee_price
         )
-        print('\U0001f513 Unlock success')
+        print('\U0001f513 Unlock success: ', tx_hash)
 
         # new balance on origin
         balance = eth_u.get_balance(receiver, asset_address, w3,

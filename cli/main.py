@@ -26,14 +26,15 @@ from cli.utils import (
     prompt_file_path,
     prompt_bridge_abi_paths,
     prompt_number,
-    aergo_style
+    aergo_style,
+    promptYN,
 )
 
 
 class EthMerkleBridgeCli():
     """CLI tool for interacting with the EthAergoWallet.
 
-    First choose an existing config file of create one from scratch.
+    First choose an existing config file or create one from scratch.
     Once a config file is chosen, the CLI provides an interface to the
     EthAergoWallet and has the following features:
     - edit config file settings
@@ -166,11 +167,9 @@ class EthMerkleBridgeCli():
                 elif answers['action'] == 'S':
                     self.edit_settings()
             except (TypeError, KeyboardInterrupt, InvalidArgumentsError,
-                    TxError, InsufficientBalanceError) as e:
+                    TxError, InsufficientBalanceError, KeyError) as e:
                 print('Someting went wrong, check the status of your pending '
                       'transfers\nError msg: {}'.format(e))
-            except KeyError:
-                pass
 
     def check_balances(self):
         """Iterate every registered wallet, network and asset and query
@@ -312,7 +311,8 @@ class EthMerkleBridgeCli():
         net1_type = answers['type']
         new_config['networks'] = {net1: {'ip': answers['ip'],
                                          'type': net1_type,
-                                         'tokens': {}
+                                         'tokens': {},
+                                         'bridges': {}
                                          }
                                   }
         if net1_type == 'ethereum':
@@ -322,37 +322,40 @@ class EthMerkleBridgeCli():
         net2_type = answers['type']
         new_config['networks'][net2] = {'ip': answers['ip'],
                                         'type': net2_type,
-                                        'tokens': {}
+                                        'tokens': {},
+                                        'bridges': {}
                                         }
         if net2_type == 'ethereum':
             new_config['networks'][net2]['isPOA'] = answers['isPOA']
         # Register bridge contracts on each network
-        answers = prompt_new_bridge(net1, net2)
-        new_config['networks'][net1]['bridges'] = {
-            net2: {'addr': answers['bridge1'],
-                   't_anchor': int(answers['t_anchor1']),
-                   't_final': int(answers['t_final1'])
-                   }
-        }
-        new_config['networks'][net2]['bridges'] = {
-            net1: {'addr': answers['bridge2'],
-                   't_anchor': int(answers['t_anchor2']),
-                   't_final': int(answers['t_final2'])
-                   }
-        }
-        # Register paths to abis
-        if net1_type == 'ethereum':
-            bridge_abi, minted_abi = prompt_bridge_abi_paths()
-            new_config['networks'][net1]['bridges'][net2]['bridge_abi'] = \
-                bridge_abi
-            new_config['networks'][net1]['bridges'][net2]['minted_abi'] = \
-                minted_abi
-        if net2_type == 'ethereum':
-            bridge_abi, minted_abi = prompt_bridge_abi_paths()
-            new_config['networks'][net2]['bridges'][net1]['bridge_abi'] = \
-                bridge_abi
-            new_config['networks'][net2]['bridges'][net1]['minted_abi'] = \
-                minted_abi
+        if promptYN('Would you like to register a bridge ? '
+                    '(needed if already deployed)', 'Yes', 'No'):
+            answers = prompt_new_bridge(net1, net2)
+            new_config['networks'][net1]['bridges'] = {
+                net2: {'addr': answers['bridge1'],
+                       't_anchor': int(answers['t_anchor1']),
+                       't_final': int(answers['t_final1'])
+                       }
+            }
+            new_config['networks'][net2]['bridges'] = {
+                net1: {'addr': answers['bridge2'],
+                       't_anchor': int(answers['t_anchor2']),
+                       't_final': int(answers['t_final2'])
+                       }
+            }
+            # Register paths to abis
+            if net1_type == 'ethereum':
+                bridge_abi, minted_abi = prompt_bridge_abi_paths()
+                new_config['networks'][net1]['bridges'][net2]['bridge_abi'] = \
+                    bridge_abi
+                new_config['networks'][net1]['bridges'][net2]['minted_abi'] = \
+                    minted_abi
+            if net2_type == 'ethereum':
+                bridge_abi, minted_abi = prompt_bridge_abi_paths()
+                new_config['networks'][net2]['bridges'][net1]['bridge_abi'] = \
+                    bridge_abi
+                new_config['networks'][net2]['bridges'][net1]['minted_abi'] = \
+                    minted_abi
         # Register a new private key for each network
         new_config['wallet-eth'] = {}
         new_config['wallet'] = {}
@@ -378,16 +381,8 @@ class EthMerkleBridgeCli():
                                           "priv_key": privkey}
 
         # Register bridge validators
-        questions = [
-            {
-                'type': 'list',
-                'name': 'YN',
-                'message': 'Would you like to register validators ? '
-                           '(not needed for bridge users)',
-                'choices': ['Yes', 'No']
-            }
-        ]
-        if inquirer.prompt(questions, style=aergo_style)['YN'] == 'Yes':
+        if promptYN('Would you like to register validators ? '
+                    '(not needed for bridge users)', 'Yes', 'No'):
             validators = prompt_new_validators()
             new_config['validators'] = validators
         else:
@@ -524,7 +519,8 @@ class EthMerkleBridgeCli():
             return addr
         except KeyError:
             pass
-        raise InvalidArgumentsError('asset not properly registered in config.json')
+        raise InvalidArgumentsError(
+            'asset not properly registered in config.json')
 
     def initiate_transfer(self):
         """Initiate a new transfer of tokens between 2 networks."""
@@ -926,6 +922,8 @@ class EthMerkleBridgeCli():
         from_chain = answers['from_chain']
         networks = [net for net in
                     self.wallet.config_data('networks', from_chain, 'bridges')]
+        if len(networks) == 0:
+            raise InvalidArgumentsError('No bridge registered to this network')
         questions = [
             {
                 'type': 'list',

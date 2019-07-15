@@ -12,19 +12,27 @@ aergo_style = inquirer.style_from_dict({
 
 
 def confirm_transfer():
+    return promptYN(
+        'Confirm you want to execute tranfer tx', 'Yes, execute transfer',
+        'No, get me out of here!'
+    )
+
+
+def promptYN(q, y, n):
     """Prompt user to procede with a transfer of not."""
+    print('sldfsdkfjsdf')
     questions = [
         {
             'type': 'list',
             'name': 'confirm',
-            'message': 'Confirm you want to execute tranfer tx',
+            'message': q,
             'choices': [
                 {
-                    'name': 'Yes, execute transfer',
+                    'name': y,
                     'value': True
                 },
                 {
-                    'name': 'No, get me out of here!',
+                    'name': n,
                     'value': False
                 }
             ]
@@ -182,24 +190,9 @@ def prompt_new_network():
     ]
     answers = inquirer.prompt(questions, style=aergo_style)
     if answers['type'] == 'ethereum':
-        questions = [
-            {
-                'type': 'list',
-                'name': 'isPOA',
-                'message': 'Is this an Ethereum POA network ?',
-                'choices': [
-                    {
-                        'name': 'Yes',
-                        'value': True
-                    },
-                    {
-                        'name': 'No',
-                        'value': False
-                    }
-                ]
-            }
-        ]
-        is_poa = inquirer.prompt(questions, style=aergo_style)['isPOA']
+        is_poa = promptYN(
+            'Is this an Ethereum POA network ?', 'Yes', 'No'
+        )
         answers['isPOA'] = is_poa
     return answers
 

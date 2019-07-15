@@ -79,6 +79,6 @@ if __name__ == '__main__':
     with open(abi_path, "r") as f:
         abi = f.read()
 
-    deploy_aergo_erc20(config_data, "./test_config.json", bytecode, abi, abi_path,
-                       'eth-poa-local', 'aergo_erc20', 'default', '1234')
-
+    deploy_aergo_erc20(config_data, "./test_config.json", bytecode, abi,
+                       abi_path, 'eth-poa-local', 'aergo_erc20', 'default',
+                       '1234')

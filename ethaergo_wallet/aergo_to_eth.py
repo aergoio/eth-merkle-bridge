@@ -140,7 +140,7 @@ def mint(
     events = eth_bridge.events.mintEvent().processReceipt(receipt)
     token_pegged = events[0]['args']['token_address']
 
-    return token_pegged, tx_hash
+    return token_pegged, tx_hash.hex()
 
 
 def burn(
@@ -254,7 +254,7 @@ def unlock(
     if receipt.status != 1:
         print(burn_proof, receipt)
         raise TxError("Unlock asset Tx execution failed")
-    return tx_hash
+    return tx_hash.hex()
 
 
 def freeze(

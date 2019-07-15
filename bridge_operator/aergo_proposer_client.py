@@ -37,6 +37,9 @@ from bridge_operator.op_utils import (
     query_aergo_tempo,
     query_aergo_validators,
 )
+from bridge_operator.exceptions import (
+    ValidatorMajorityError,
+)
 from web3 import (
     Web3,
 )
@@ -49,10 +52,6 @@ COMMIT_TIME = 3
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
-class ValidatorMajorityError(Exception):
-    pass
-
-
 class AergoProposerClient(threading.Thread):
     """The bridge proposer periodically (every t_anchor) broadcasts
     the finalized trie state root (after lib) of the bridge contract
@@ -63,13 +62,14 @@ class AergoProposerClient(threading.Thread):
 
     Note on config_data:
         - config_data is used to store current validators and their ip when the
-        proposer starts. (change validators after the proposer has started)
+          proposer starts. (change validators after the proposer has started)
         - After starting, when users change the config.json, the proposer will
-        attempt to gather signatures to reflect the changes.
+          attempt to gather signatures to reflect the changes.
         - t_anchor value is always taken from the bridge contract
         - validators are taken from the config_data because ip information is
-        not stored on chain
+          not stored on chain
         - when a validator set update succeeds, self.config_data is updated
+
     """
 
     def __init__(
@@ -297,7 +297,7 @@ class AergoProposerClient(threading.Thread):
             print("\n{0}| Last anchor from Ethereum:\n"
                   "{0}| --------------------------\n"
                   "{0}| height: {1}\n"
-                  "{0}| contract trie root: {2}...\n"
+                  "{0}| contract trie root: 0x{2}...\n"
                   "{0}| current update nonce: {3}\n"
                   .format(self.tab, merged_height_from,
                           root_from.decode('utf-8')[1:20], nonce_to))

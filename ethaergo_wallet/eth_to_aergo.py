@@ -68,7 +68,7 @@ def lock(
     if receipt.status != 1:
         print(receipt)
         raise TxError("Lock asset Tx execution failed")
-    return receipt.blockNumber, tx_hash
+    return receipt.blockNumber, tx_hash.hex()
 
 
 def build_lock_proof(
@@ -178,7 +178,7 @@ def burn(
     if receipt.status != 1:
         print(receipt)
         raise TxError("Burn asset Tx execution failed")
-    return receipt.blockNumber, tx_hash
+    return receipt.blockNumber, tx_hash.hex()
 
 
 def build_burn_proof(

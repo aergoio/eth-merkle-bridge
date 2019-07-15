@@ -12,6 +12,7 @@ def deploy_contract(
     privkey: bytes,
     *args,
 ):
+    """ Deploy a new contract to ethereum."""
     contract_ = w3.eth.contract(
         abi=abi,
         bytecode=bytecode)
