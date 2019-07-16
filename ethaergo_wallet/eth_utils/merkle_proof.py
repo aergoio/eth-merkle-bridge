@@ -15,11 +15,10 @@ from web3._utils.encoding import (
 
 
 def format_proof_for_lua(proof):
-    proof_bytes = []
+    proof_hex = []
     for p in proof:
-        # https://blog.kchung.co/encoding-non-printable-bytes-in-python-3/
-        proof_bytes.append(bytes(p).decode('latin-1'))
-    return proof_bytes
+        proof_hex.append(p.hex())
+    return proof_hex
 
 
 def format_proof_nodes(proof):

@@ -114,7 +114,7 @@ class EthAergoWallet(WalletConfig):
 
         balance = eth_u.get_balance(token_owner, erc20_address, w3,
                                     erc20_abi)
-        print("{} balance on destination before transfer : {}"
+        print("\U0001f4b0 {} balance on destination before transfer : {}"
               .format(asset_name, balance/10**18))
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
@@ -138,7 +138,7 @@ class EthAergoWallet(WalletConfig):
 
         balance = eth_u.get_balance(token_owner, erc20_address, w3,
                                     erc20_abi)
-        print("remaining {} balance on origin after transfer: {}"
+        print("\U0001f4b0 remaining {} balance on origin after transfer: {}"
               .format(asset_name, balance/10**18))
         return lock_height, tx_hash
 
@@ -172,7 +172,7 @@ class EthAergoWallet(WalletConfig):
             token_pegged = self.get_asset_address(
                 asset_name, to_chain, asset_origin_chain=from_chain)
             balance = aergo_u.get_balance(receiver, token_pegged, aergo_to)
-            print("{} balance on destination before transfer: {}"
+            print("\U0001f4b0 {} balance on destination before transfer: {}"
                   .format(asset_name, balance/10**18))
         except KeyError:
             print("Pegged token unknow by wallet")
@@ -197,7 +197,7 @@ class EthAergoWallet(WalletConfig):
         print('\u26cf Mint success: ', tx_hash)
         # new balance on destination
         balance = aergo_u.get_balance(receiver, token_pegged, aergo_to)
-        print("{} balance on destination after transfer: {}"
+        print("\U0001f4b0 {} balance on destination after transfer: {}"
               .format(asset_name, balance/10**18))
         aergo_to.disconnect()
 
@@ -237,7 +237,7 @@ class EthAergoWallet(WalletConfig):
 
         balance = eth_u.get_balance(token_owner, token_pegged, w3,
                                     minted_erc20_abi)
-        print("{} balance on destination before transfer : {}"
+        print("\U0001f4b0 {} balance on destination before transfer : {}"
               .format(asset_name, balance/10**18))
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
@@ -256,7 +256,7 @@ class EthAergoWallet(WalletConfig):
 
         balance = eth_u.get_balance(token_owner, token_pegged, w3,
                                     minted_erc20_abi)
-        print("remaining {} balance on origin after transfer: {}"
+        print("\U0001f4b0 remaining {} balance on origin after transfer: {}"
               .format(asset_name, balance/10**18))
         return burn_height, tx_hash
 
@@ -288,7 +288,7 @@ class EthAergoWallet(WalletConfig):
             )
 
         balance = aergo_u.get_balance(receiver, 'aergo', aergo_to)
-        print("{} balance on destination before transfer: {}"
+        print("\U0001f4b0 {} balance on destination before transfer: {}"
               .format(asset_name, balance/10**18))
 
         fee_limit = 0
@@ -311,7 +311,7 @@ class EthAergoWallet(WalletConfig):
         print('\U0001f4a7 Unfreeze success: ', tx_hash)
         # new balance on destination
         balance = aergo_u.get_balance(receiver, 'aergo', aergo_to)
-        print("{} balance on destination after transfer: {}"
+        print("\U0001f4b0 {} balance on destination after transfer: {}"
               .format(asset_name, balance/10**18))
         aergo_to.disconnect()
 
@@ -348,7 +348,7 @@ class EthAergoWallet(WalletConfig):
         print("\u2699 Built burn proof")
 
         balance = aergo_u.get_balance(receiver, asset_address, aergo_to)
-        print("{} balance on destination before transfer: {}"
+        print("\U0001f4b0 {} balance on destination before transfer: {}"
               .format(asset_name, balance/10**18))
 
         fee_limit = 0
@@ -365,7 +365,7 @@ class EthAergoWallet(WalletConfig):
 
         # new balance on origin
         balance = aergo_u.get_balance(receiver, asset_address, aergo_to)
-        print("{} balance on destination after transfer: {}"
+        print("\U0001f4b0 {} balance on destination after transfer: {}"
               .format(asset_name, balance/10**18))
 
         return tx_hash
@@ -494,7 +494,7 @@ class EthAergoWallet(WalletConfig):
         balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
         if balance < amount + fee_limit * self.fee_price:
             raise InsufficientBalanceError("not enough token balance")
-        print("{} balance on sidechain before transfer: {}"
+        print("\U0001f4b0 {} balance on sidechain before transfer: {}"
               .format(asset_name, balance/10**18))
 
         freeze_height, tx_hash = aergo_to_eth.freeze(
@@ -505,7 +505,7 @@ class EthAergoWallet(WalletConfig):
 
         # remaining balance on origin : aer or asset
         balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
-        print("remaining {} balance on origin after transfer: {}"
+        print("\U0001f4b0 remaining {} balance on origin after transfer: {}"
               .format(asset_name, balance/10**18))
 
         aergo_from.disconnect()
@@ -550,7 +550,7 @@ class EthAergoWallet(WalletConfig):
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
-        print("{} balance on origin before transfer: {}"
+        print("\U0001f4b0 {} balance on origin before transfer: {}"
               .format(asset_name, balance/10**18))
 
         lock_height, tx_hash = aergo_to_eth.lock(
@@ -561,7 +561,7 @@ class EthAergoWallet(WalletConfig):
 
         # remaining balance on origin : aer or asset
         balance = aergo_u.get_balance(sender, asset_address, aergo_from)
-        print("remaining {} balance on origin after transfer: {}"
+        print("\U0001f4b0 remaining {} balance on origin after transfer: {}"
               .format(asset_name, balance/10**18))
 
         aergo_from.disconnect()
@@ -606,7 +606,7 @@ class EthAergoWallet(WalletConfig):
                 asset_name, to_chain, asset_origin_chain=from_chain)
             balance = eth_u.get_balance(receiver, token_pegged, w3,
                                         minted_erc20_abi)
-            print("{} balance on destination before transfer : {}"
+            print("\U0001f4b0 {} balance on destination before transfer : {}"
                   .format(asset_name, balance/10**18))
         except KeyError:
             print("Pegged token unknow by wallet")
@@ -633,7 +633,7 @@ class EthAergoWallet(WalletConfig):
         # new balance on sidechain
         balance = eth_u.get_balance(receiver, token_pegged, w3,
                                     minted_erc20_abi)
-        print("{} balance on destination after transfer : {}"
+        print("\U0001f4b0 {} balance on destination after transfer : {}"
               .format(asset_name, balance/10**18))
 
         aergo_from.disconnect()
@@ -673,7 +673,7 @@ class EthAergoWallet(WalletConfig):
         balance = aergo_u.get_balance(sender, token_pegged, aergo_from)
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
-        print("{} balance on sidechain before transfer: {}"
+        print("\U0001f4b0 {} balance on sidechain before transfer: {}"
               .format(asset_name, balance/10**18))
 
         aer_balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
@@ -689,7 +689,7 @@ class EthAergoWallet(WalletConfig):
 
         # remaining balance on origin : aer or asset
         balance = aergo_u.get_balance(sender, token_pegged, aergo_from)
-        print("remaining {} balance on origin after transfer: {}"
+        print("\U0001f4b0 remaining {} balance on origin after transfer: {}"
               .format(asset_name, balance/10**18))
 
         aergo_from.disconnect()
@@ -726,7 +726,7 @@ class EthAergoWallet(WalletConfig):
         bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
         asset_address = self.get_asset_address(asset_name, to_chain)
         balance = eth_u.get_balance(receiver, asset_address, w3, erc20_abi)
-        print("{} balance on destination before transfer : {}"
+        print("\U0001f4b0 {} balance on destination before transfer : {}"
               .format(asset_name, balance/10**18))
 
         fee_limit = 0
@@ -750,7 +750,7 @@ class EthAergoWallet(WalletConfig):
         # new balance on origin
         balance = eth_u.get_balance(receiver, asset_address, w3,
                                     erc20_abi)
-        print("{} balance on destination after transfer : {}"
+        print("\U0001f4b0 {} balance on destination after transfer : {}"
               .format(asset_name, balance/10**18))
 
         aergo_from.disconnect()

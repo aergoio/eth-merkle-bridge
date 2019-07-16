@@ -20,7 +20,6 @@ def confirm_transfer():
 
 def promptYN(q, y, n):
     """Prompt user to procede with a transfer of not."""
-    print('sldfsdkfjsdf')
     questions = [
         {
             'type': 'list',

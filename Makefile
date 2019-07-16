@@ -10,7 +10,7 @@ install:
 	pip install pyfiglet
 
 docker-aergo:
-	docker build --build-arg GIT_TAG=528f5a6b755528503e510f2eb530131d48dfad55 -t aergo/node ./docker_test_nodes/aergo
+	docker build --build-arg GIT_TAG=5a16373a3c535f77304709f725e10284dccfbea1 -t aergo/node ./docker_test_nodes/aergo
 	docker-compose -f ./docker_test_nodes/aergo/docker-compose.yml up
 
 docker-eth:

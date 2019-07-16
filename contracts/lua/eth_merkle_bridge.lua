@@ -65,12 +65,12 @@ state.var {
     -- ContractID is a replay protection between sidechains as the same addresses can be validators
     -- on multiple chains.
     ContractID = state.value(),
-    -- AergoERC20 is the address of Aergo token contract on ethereum
+    -- AergoERC20 is the Aergo token contract address bytes on ethereum
     AergoERC20 = state.value(),
 }
 
 function constructor(aergo_erc20, addresses, t_anchor, t_final)
-    AergoERC20:set(aergo_erc20)
+    AergoERC20:set(abi_encode(aergo_erc20))
     T_anchor:set(t_anchor)
     T_final:set(t_final)
     Root:set("constructor")
@@ -105,7 +105,7 @@ function set_root(root, height, signers, signatures)
     old_nonce = Nonce:get()
     message = crypto.sha256(root..','..tostring(height)..','..tostring(old_nonce)..ContractID:get().."R")
     assert(validate_signatures(message, signers, signatures), "Failed signature validation")
-    Root:set("0x"..root)
+    Root:set(root)
     Height:set(height)
     Nonce:set(old_nonce + 1)
     contract.event("set_root", height, root)
@@ -218,13 +218,13 @@ function mint(receiver, balance, token_origin, merkle_proof)
     local b0 = bignum.number(0)
     assert(address.isValidAddress(receiver), "invalid address format: " .. receiver)
     assert(bbalance > b0, "minteable balance must be positive")
-    assert(token_origin ~= AergoERC20:get(), "Aergo cannot be minted, must be unfreezed")
+    token_origin_bytes = abi_encode(token_origin)
+    assert(token_origin_bytes ~= AergoERC20:get(), "Aergo cannot be minted, must be unfreezed")
 
     -- Verify merkle proof of locked balance
-    local account_ref = receiver .. token_origin
-    local balance_str = "\""..bignum.tostring(bbalance).."\""
-    -- TODO : the key is determined with position of Lock in bridge_contract.sol
-    if not _verify_patricia(account_ref, 0, balance_str, merkle_proof) then
+    local account_ref = receiver .. token_origin_bytes
+    -- Locks is the 4th variable of eth_merkle_bridge.col so map_position = 3
+    if not verify_deposit_proof(account_ref, 3, bignum.tobyte(bbalance), merkle_proof) then
         error("failed to verify deposit balance merkle proof")
     end
 
@@ -297,9 +297,8 @@ function unlock(receiver, balance, token_address, merkle_proof)
 
     -- Verify merkle proof of burnt balance
     local account_ref = receiver .. token_address
-    local balance_str = "\""..bignum.tostring(bbalance).."\""
-    -- TODO : the key is determined with position of Burn in bridge_contract.sol
-    if not _verify_patricia(account_ref, 3, balance_str, merkle_proof) then
+    -- Burns is the 6th variable of eth_merkle_bridge.col so map_position = 5
+    if not verify_deposit_proof(account_ref, 5, bignum.tobyte(bbalance), merkle_proof) then
         error("failed to verify burnt balance merkle proof")
     end
 
@@ -334,7 +333,7 @@ function freeze(receiver, amount)
     assert(system.getAmount() == bignum.tostring(bamount), "for safety and clarity, amount must match the amount sent in the tx")
 
     -- Add freezed amount to total
-    local account_ref = abi_encode(receiver .. AergoERC20:get())
+    local account_ref = abi_encode(receiver) .. AergoERC20:get()
     -- NOTE : it seems ok to store freezed balances in Burns so that Unlock can be same for all ERC20 tokens
     local old = Burns[account_ref]
     local freezed_balance
@@ -357,11 +356,11 @@ function unfreeze(receiver, balance, merkle_proof)
     assert(bbalance > bignum.number(0), "unlockeable balance must be positive")
 
     -- Verify merkle proof of burnt balance
+    -- TODO no need store aergoERC20 encoded from the begining
     local account_ref = receiver .. AergoERC20:get()
-    local balance_str = "\""..bignum.tostring(bbalance).."\""
-    -- TODO : the key is determined with position of Lock in bridge_contract.sol
-    if not _verify_patricia(account_ref, 0, balance_str, merkle_proof) then
-        error("failed to verify burnt balance merkle proof")
+    -- Locks is the 4th variable of eth_merkle_bridge.col so map_position = 3
+    if not verify_deposit_proof(account_ref, 3, bignum.tobyte(bbalance), merkle_proof) then
+        error("failed to verify locked balance merkle proof")
     end
 
     -- Calculate amount to unlock
@@ -385,11 +384,12 @@ function unfreeze(receiver, balance, merkle_proof)
 end
 
 
--- (In solidity, only bytes32[] is supported, so byte(0) cannot be passed and it is
--- more efficient to use a compressed proof)
 -- Ethereum Patricia State Trie Merkle proof verification
-function _verify_patricia(map_key, map_position, value, merkle_proof)
-    return true
+function verify_deposit_proof(map_key, map_position, value, merkle_proof)
+    -- map key is always >= 32 bytes so no padding needed
+    padded_position = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" .. string.char(map_position)
+    key = crypto.keccak256(map_key..padded_position)
+    return crypto.verifyProof(key, value, "0x" .. Root:get(), unpack(merkle_proof))
 end
 
 function _deploy_minteable_token()
