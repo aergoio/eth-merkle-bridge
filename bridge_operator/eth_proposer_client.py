@@ -482,7 +482,7 @@ class EthProposerClient(threading.Thread):
             concat_vals += pad_bytes(b'\x00', 32, bytes.fromhex(val[2:]))
         msg_bytes = concat_vals \
             + nonce.to_bytes(32, byteorder='big') \
-            + bytes.fromhex(self.eth_id)\
+            + self.eth_id \
             + bytes("V", 'utf-8')
         h = keccak(msg_bytes)
         # get validator signatures and verify sig in worker
@@ -584,7 +584,7 @@ class EthProposerClient(threading.Thread):
             tempo=tempo, destination_nonce=nonce)
         msg_bytes = tempo.to_bytes(32, byteorder='big') \
             + nonce.to_bytes(32, byteorder='big') \
-            + bytes.fromhex(self.eth_id)\
+            + self.eth_id \
             + bytes(tempo_id, 'utf-8')
         h = keccak(msg_bytes)
         validator_indexes = [i for i in range(len(self.stubs))]

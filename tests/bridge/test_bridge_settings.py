@@ -45,6 +45,7 @@ def test_eth_tempo_update(bridge_wallet):
     assert t_final == t_final_before
 
     # increase tempo
+    nonce_before = eth_bridge.functions.Nonce().call()
     bridge_wallet.config_data(
         'networks', 'eth-poa-local', 'bridges', 'aergo-local', 't_anchor',
         value=t_anchor_before + 1
@@ -55,7 +56,6 @@ def test_eth_tempo_update(bridge_wallet):
     )
     bridge_wallet.save_config()
 
-    nonce_before = eth_bridge.functions.Nonce().call()
     nonce = nonce_before
     while nonce <= nonce_before + 2:
         time.sleep(t_anchor)
@@ -66,6 +66,7 @@ def test_eth_tempo_update(bridge_wallet):
     assert t_final == t_final_before + 1
 
     # decrease tempo
+    nonce_before = eth_bridge.functions.Nonce().call()
     bridge_wallet.config_data(
         'networks', 'eth-poa-local', 'bridges', 'aergo-local', 't_anchor',
         value=t_anchor_before
@@ -75,7 +76,6 @@ def test_eth_tempo_update(bridge_wallet):
         value=t_final_before
     )
     bridge_wallet.save_config()
-    nonce_before = eth_bridge.functions.Nonce().call()
     nonce = nonce_before
     while nonce <= nonce_before + 2:
         time.sleep(t_anchor)
@@ -103,6 +103,9 @@ def test_aergo_tempo_update(bridge_wallet):
     assert t_final == t_final_before
 
     # increase tempo
+    nonce_before = int(
+        hera.query_sc_state(aergo_bridge, ["_sv_Nonce"]).var_proofs[0].value
+    )
     bridge_wallet.config_data(
         'networks', 'aergo-local', 'bridges', 'eth-poa-local', 't_anchor',
         value=t_anchor_before + 1
@@ -112,9 +115,6 @@ def test_aergo_tempo_update(bridge_wallet):
         value=t_final_before + 1
     )
     bridge_wallet.save_config()
-    nonce_before = int(
-        hera.query_sc_state(aergo_bridge, ["_sv_Nonce"]).var_proofs[0].value
-    )
     nonce = nonce_before
     while nonce <= nonce_before + 2:
         time.sleep(t_anchor_before*eth_block_time)
@@ -128,6 +128,9 @@ def test_aergo_tempo_update(bridge_wallet):
     assert t_final == t_final_before + 1
 
     # decrease tempo
+    nonce_before = int(
+        hera.query_sc_state(aergo_bridge, ["_sv_Nonce"]).var_proofs[0].value
+    )
     bridge_wallet.config_data(
         'networks', 'aergo-local', 'bridges', 'eth-poa-local', 't_anchor',
         value=t_anchor_before
@@ -137,9 +140,6 @@ def test_aergo_tempo_update(bridge_wallet):
         value=t_final_before
     )
     bridge_wallet.save_config()
-    nonce_before = int(
-        hera.query_sc_state(aergo_bridge, ["_sv_Nonce"]).var_proofs[0].value
-    )
     nonce = nonce_before
     while nonce <= nonce_before + 2:
         time.sleep(t_anchor_before*eth_block_time)
@@ -191,14 +191,14 @@ def test_validators_update(bridge_wallet):
     assert eth_validators == eth_validators_before
 
     # add a validatos
+    aergo_nonce_before = int(
+        hera.query_sc_state(aergo_bridge, ["_sv_Nonce"]).var_proofs[0].value
+    )
     new_validators = validators_before + [validators_before[0]]
     bridge_wallet.config_data('validators', value=new_validators)
 
     bridge_wallet.save_config()
     # wait for changes to be reflacted
-    aergo_nonce_before = int(
-        hera.query_sc_state(aergo_bridge, ["_sv_Nonce"]).var_proofs[0].value
-    )
     eth_nonce_before = eth_bridge.functions.Nonce().call()
     nonce = aergo_nonce_before
     while nonce <= aergo_nonce_before + 2:
@@ -220,12 +220,12 @@ def test_validators_update(bridge_wallet):
         eth_validators_before + [eth_validators_before[0]]
 
     # remove added validator
-    bridge_wallet.config_data('validators', value=new_validators[:-1])
-    bridge_wallet.save_config()
-    # wait for changes to be reflacted
     aergo_nonce_before = int(
         hera.query_sc_state(aergo_bridge, ["_sv_Nonce"]).var_proofs[0].value
     )
+    bridge_wallet.config_data('validators', value=new_validators[:-1])
+    bridge_wallet.save_config()
+    # wait for changes to be reflacted
     eth_nonce_before = eth_bridge.functions.Nonce().call()
     nonce = aergo_nonce_before
     while nonce <= aergo_nonce_before + 2:
