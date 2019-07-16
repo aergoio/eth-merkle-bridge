@@ -89,7 +89,7 @@ contract EthMerkleBridge {
         bytes32[] memory rs,
         bytes32[] memory ss
     ) public {
-        // validators should not sign a number that is equal to the current on to prevent spamming
+        // validators should not sign a number that is equal to the current one to prevent spamming
         bytes32 message = keccak256(abi.encodePacked(new_t_anchor, Nonce, ContractID, "A"));
         validate_signatures(message, signers, vs, rs, ss);
         T_anchor = new_t_anchor;
@@ -104,7 +104,7 @@ contract EthMerkleBridge {
         bytes32[] memory rs,
         bytes32[] memory ss
     ) public {
-        // validators should not sign a number that is equal to the current on to prevent spamming
+        // validators should not sign a number that is equal to the current one to prevent spamming
         bytes32 message = keccak256(abi.encodePacked(new_t_final, Nonce, ContractID, "F"));
         validate_signatures(message, signers, vs, rs, ss);
         T_final = new_t_final;

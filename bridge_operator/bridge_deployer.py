@@ -1,7 +1,6 @@
 import argparse
 from getpass import getpass
 import json
-import time
 
 import aergo.herapy as herapy
 
@@ -15,8 +14,6 @@ from web3.middleware import (
 from ethaergo_wallet.eth_utils.contract_deployer import (
     deploy_contract,
 )
-
-COMMIT_TIME = 3
 
 
 def deploy_bridge(
@@ -112,9 +109,7 @@ def deploy_bridge(
     print("    > result[{0}] : {1}"
           .format(result.tx_id, result.status.name))
 
-    time.sleep(COMMIT_TIME)
-
-    result = aergo.get_tx_result(tx.tx_hash)
+    result = aergo.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.CREATED:
         print("  > ERROR[{0}]:{1}: {2}"
               .format(result.contract_address, result.status,

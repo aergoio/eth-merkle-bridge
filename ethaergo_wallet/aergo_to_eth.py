@@ -18,7 +18,6 @@ from ethaergo_wallet.wallet_utils import (
     is_ethereum_address,
     is_aergo_address
 )
-COMMIT_TIME = 3
 
 
 def lock(
@@ -49,10 +48,9 @@ def lock(
                                     amount=0)
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Lock asset Tx commit failed : {}".format(result))
-    time.sleep(COMMIT_TIME)
 
     # Check lock success
-    result = aergo_from.get_tx_result(tx.tx_hash)
+    result = aergo_from.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Lock asset Tx execution failed : {}".format(result))
     # get precise lock height
@@ -166,10 +164,9 @@ def burn(
 
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Burn asset Tx commit failed : {}".format(result))
-    time.sleep(COMMIT_TIME)
 
     # Check burn success
-    result = aergo_from.get_tx_result(tx.tx_hash)
+    result = aergo_from.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Burn asset Tx execution failed : {}".format(result))
     # get precise burn height
@@ -277,10 +274,9 @@ def freeze(
 
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Burn asset Tx commit failed : {}".format(result))
-    time.sleep(COMMIT_TIME)
 
     # Check freeze success
-    result = aergo_from.get_tx_result(tx.tx_hash)
+    result = aergo_from.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Freeze Aer Tx execution failed : {}".format(result))
     # get precise burn height

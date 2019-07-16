@@ -49,7 +49,6 @@ from web3.middleware import (
 )
 
 
-COMMIT_TIME = 3
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
@@ -266,8 +265,7 @@ class AergoProposerClient(threading.Thread):
                   .format(self.tab, result))
             return
 
-        time.sleep(COMMIT_TIME)
-        result = self.hera.get_tx_result(tx.tx_hash)
+        result = self.hera.wait_tx_result(tx.tx_hash)
         if result.status != herapy.TxResultStatus.SUCCESS:
             print("{}Anchor failed: already anchored, or invalid "
                   "signature: {}".format(self.tab, result))
@@ -441,8 +439,7 @@ class AergoProposerClient(threading.Thread):
                   .format(self.tab, result))
             return False
 
-        time.sleep(COMMIT_TIME)
-        result = self.hera.get_tx_result(tx.tx_hash)
+        result = self.hera.wait_tx_result(tx.tx_hash)
         if result.status != herapy.TxResultStatus.SUCCESS:
             print("{}Set new validators failed : nonce already used, or "
                   "invalid signature: {}".format(self.tab, result))
@@ -508,8 +505,7 @@ class AergoProposerClient(threading.Thread):
                   .format(self.tab, result))
             return False
 
-        time.sleep(COMMIT_TIME)
-        result = self.hera.get_tx_result(tx.tx_hash)
+        result = self.hera.wait_tx_result(tx.tx_hash)
         if result.status != herapy.TxResultStatus.SUCCESS:
             print("{}Set {} failed: nonce already used, or invalid "
                   "signature: {}".format(self.tab, contract_function, result))
