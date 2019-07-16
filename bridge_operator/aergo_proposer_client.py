@@ -36,6 +36,7 @@ from bridge_operator.bridge_operator_pb2 import (
 from bridge_operator.op_utils import (
     query_aergo_tempo,
     query_aergo_validators,
+    query_aergo_id,
 )
 from bridge_operator.exceptions import (
     ValidatorMajorityError,
@@ -69,6 +70,9 @@ class AergoProposerClient(threading.Thread):
         - validators are taken from the config_data because ip information is
           not stored on chain
         - when a validator set update succeeds, self.config_data is updated
+        - if another proposer updates to a new set of validators and the
+          proposer doesnt know about it, proposer must be restarted with the
+          new current validator set to create new connections to them.
 
     """
 
@@ -106,10 +110,7 @@ class AergoProposerClient(threading.Thread):
                            [aergo_net]['addr'])
         self.aergo_bridge = (self.config_data['networks'][aergo_net]['bridges']
                              [eth_net]['addr'])
-        self.aergo_id = (self.config_data['networks'][aergo_net]['bridges']
-                         [eth_net]['id'])
-        self.eth_id = (self.config_data['networks'][eth_net]['bridges']
-                       [aergo_net]['id'])
+        self.aergo_id = query_aergo_id(self.hera, self.aergo_bridge)
 
         print("------ Connect to Validators -----------")
         validators = query_aergo_validators(self.hera, self.aergo_bridge)
@@ -117,11 +118,15 @@ class AergoProposerClient(threading.Thread):
         # create all channels with validators
         self.channels: List[grpc._channel.Channel] = []
         self.stubs: List[BridgeOperatorStub] = []
+        assert len(validators) == len(self.config_data['validators']), \
+            "Validators in config file must match bridge validators " \
+            "when starting (current validators connection needed to make "\
+            "updates).\nExpected validators: {}".format(validators)
         for i, validator in enumerate(self.config_data['validators']):
-            # TODO just inform. the config file is only for changing things
             assert validators[i] == validator['addr'], \
-                "Validators in config file do not match bridge validators"\
-                "Expected validators: {}".format(validators)
+                "Validators in config file must match bridge validators " \
+                "when starting (current validators connection needed to make "\
+                "updates).\nExpected validators: {}".format(validators)
             ip = validator['ip']
             channel = grpc.insecure_channel(ip)
             stub = BridgeOperatorStub(channel)

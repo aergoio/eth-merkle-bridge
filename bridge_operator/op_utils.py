@@ -28,6 +28,12 @@ def query_aergo_validators(aergo: herapy.Aergo, bridge: str) -> List[str]:
     return validators
 
 
+def query_aergo_id(aergo: herapy.Aergo, bridge: str) -> str:
+    id_q = aergo.query_sc_state(bridge, ["_sv_ContractID"])
+    id = id_q.var_proofs[0].value.decode('utf-8')[1:-1]
+    return id
+
+
 def query_eth_validators(w3: Web3, address: str, abi: str):
     bridge_contract = w3.eth.contract(
         address=address,
@@ -44,3 +50,11 @@ def query_eth_tempo(w3: Web3, address: str, abi: str):
     return (bridge_contract.functions.T_anchor().call(),
             bridge_contract.functions.T_final().call(),
             )
+
+
+def query_eth_id(w3: Web3, address: str, abi: str):
+    bridge_contract = w3.eth.contract(
+        address=address,
+        abi=abi
+    )
+    return bridge_contract.functions.ContractID().call()

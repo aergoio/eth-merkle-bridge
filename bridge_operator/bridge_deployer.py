@@ -122,7 +122,6 @@ def deploy_bridge(
         aergo.disconnect()
         return
     aergo_bridge = result.contract_address
-    aergo_id = result.detail[1:-1]
 
     print("------ Deploy Ethereum SC -----------")
     receipt = deploy_contract(
@@ -130,26 +129,18 @@ def deploy_bridge(
         eth_validators,
         t_anchor_eth, t_final_aergo
     )
-    bridge_contract = w3.eth.contract(
-        address=receipt.contractAddress,
-        abi=bridge_abi
-    )
-    eth_id = bridge_contract.functions.ContractID().call().hex()
+    eth_bridge = receipt.contractAddress
 
-    eth_address = receipt.contractAddress
-
-    print("  > SC Address Ethereum: {}".format(eth_address))
+    print("  > SC Address Ethereum: {}".format(eth_bridge))
     print("  > SC Address Aergo: {}".format(aergo_bridge))
 
     print("------ Store bridge addresses in test_config.json  -----------")
     config_data['networks'][eth_net]['bridges'][aergo_net] = {}
     config_data['networks'][aergo_net]['bridges'][eth_net] = {}
     (config_data['networks'][eth_net]['bridges'][aergo_net]
-        ['addr']) = eth_address
+        ['addr']) = eth_bridge
     (config_data['networks'][aergo_net]['bridges'][eth_net]
         ['addr']) = aergo_bridge
-    config_data['networks'][eth_net]['bridges'][aergo_net]['id'] = eth_id
-    config_data['networks'][aergo_net]['bridges'][eth_net]['id'] = aergo_id
     (config_data['networks'][eth_net]['bridges'][aergo_net]
         ['t_anchor']) = t_anchor_eth
     (config_data['networks'][eth_net]['bridges'][aergo_net]

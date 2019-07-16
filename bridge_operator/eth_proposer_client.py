@@ -44,6 +44,7 @@ from bridge_operator.bridge_operator_pb2 import (
 from bridge_operator.op_utils import (
     query_eth_tempo,
     query_eth_validators,
+    query_eth_id,
 )
 from bridge_operator.exceptions import (
     ValidatorMajorityError,
@@ -68,6 +69,10 @@ class EthProposerClient(threading.Thread):
         - validators are taken from the config_data because ip information is
           not stored on chain
         - when a validator set update succeeds, self.config_data is updated
+        - if another proposer updates to a new set of validators and the
+          proposer doesnt know about it, proposer must be restarted with the
+          new current validator set to create new connections to them.
+
     """
 
     def __init__(
@@ -111,10 +116,7 @@ class EthProposerClient(threading.Thread):
         )
         self.aergo_bridge = (config_data['networks'][aergo_net]['bridges']
                              [eth_net]['addr'])
-        self.aergo_id = (config_data['networks'][aergo_net]['bridges'][eth_net]
-                         ['id'])
-        self.eth_id = (config_data['networks'][eth_net]['bridges'][aergo_net]
-                       ['id'])
+        self.eth_id = query_eth_id(self.web3, eth_bridge_address, eth_abi)
 
         print("------ Connect to Validators -----------")
         validators = query_eth_validators(self.web3, eth_bridge_address,
@@ -123,10 +125,15 @@ class EthProposerClient(threading.Thread):
         # create all channels with validators
         self.channels: List[grpc._channel.Channel] = []
         self.stubs: List[BridgeOperatorStub] = []
+        assert len(validators) == len(config_data['validators']), \
+            "Validators in config file must match bridge validators " \
+            "when starting (current validators connection needed to make "\
+            "updates).\nExpected validators: {}".format(validators)
         for i, validator in enumerate(config_data['validators']):
             assert validators[i] == validator['eth-addr'], \
-                "Validators in config file do not match bridge validators"\
-                "Expected validators: {}".format(validators)
+                "Validators in config file must match bridge validators " \
+                "when starting (current validators connection needed to make "\
+                "updates).\nExpected validators: {}".format(validators)
             ip = validator['ip']
             channel = grpc.insecure_channel(ip)
             stub = BridgeOperatorStub(channel)
@@ -167,7 +174,7 @@ class EthProposerClient(threading.Thread):
         # messages to get signed
         msg_bytes = root + merge_height.to_bytes(32, byteorder='big') \
             + nonce.to_bytes(32, byteorder='big') \
-            + bytes.fromhex(self.eth_id) \
+            + self.eth_id \
             + bytes("R", 'utf-8')
         h = keccak(msg_bytes)
 

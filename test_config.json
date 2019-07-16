@@ -4,15 +4,13 @@
             "bridges": {
                 "": {
                     "addr": "bridge address on mainnet",
-                    "id": "bridge ContractID variable",
                     "t_anchor": "t_anchor of ethereum on aergo mainnet",
                     "t_final": "t_final of ethereum"
                 },
                 "eth-poa-local": {
                     "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
-                    "id": "6bd91b04ce1c8ca1a4805ccd89b16f76",
-                    "t_anchor": 10,
-                    "t_final": 10
+                    "t_anchor": 6,
+                    "t_final": 4
                 }
             },
             "ip": "localhost:7845",
@@ -22,9 +20,9 @@
                     "pegs": {}
                 },
                 "token1": {
-                    "addr": "AmgizsqQ1FjHjGZhjjAD4tJwWLB99xY7Whco2oiiW74CJpv82vSV",
+                    "addr": "AmgMamRigqVumAXtzAXBr7nyMAz7o6SwVdiYSW6MZaysp1N9QKmt",
                     "pegs": {
-                        "eth-poa-local": "0x89142Df0Ea00dED67B6aC93c76aef612E8D2B3fa"
+                        "eth-poa-local": "0x65c88DF2c72a6730a9bA0642e24C545fC13e70F3"
                     }
                 }
             },
@@ -34,16 +32,14 @@
             "bridges": {
                 "": {
                     "addr": "bridge address on sidechain",
-                    "id": "bridge ContractID variable",
                     "t_anchor": "t_anchor of aergo mainnet on ethereum",
                     "t_final": "t_final of aergo mainnet"
                 },
                 "aergo-local": {
                     "addr": "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
-                    "bridge_abi": "contracts/solidity/bridge_abi.txt",
-                    "id": "05a8e335e49fad6ce9d7e7ef31259df497bccd38e82e2e3ff26782ed73d4a19c",
-                    "minted_abi": "contracts/solidity/minted_erc20_abi.txt",
-                    "t_anchor": 25,
+                    "bridge_abi": "./contracts/solidity/bridge_abi.txt",
+                    "minted_abi": "./contracts/solidity/minted_erc20_abi.txt",
+                    "t_anchor": 7,
                     "t_final": 4
                 }
             },
@@ -63,9 +59,9 @@
                 },
                 "test_erc20": {
                     "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0x16792B29cdD33878288527C7A1aaB8FA85bdc08d",
+                    "addr": "0x416ac7b876436662Dcb0FB531EfDd2fa0C9F0bad",
                     "pegs": {
-                        "aergo-local": "AmgLb3tp5KiyFmq4CNzd44NSpqmFw4QnhqacCrbseqDSZz1i9MQV"
+                        "aergo-local": "AmhiUx2hZ9phVDMZoBShEWD2sCFXPJ5BZpagNC8WfssPuZg7wzZS"
                     }
                 }
             },

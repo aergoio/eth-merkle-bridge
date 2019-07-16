@@ -46,6 +46,8 @@ from bridge_operator.op_utils import (
     query_eth_tempo,
     query_aergo_validators,
     query_eth_validators,
+    query_aergo_id,
+    query_eth_id,
 )
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
@@ -102,35 +104,16 @@ class ValidatorService(BridgeOperatorServicer):
         )
         self.aergo_bridge = (config_data['networks'][aergo_net]['bridges']
                              [eth_net]['addr'])
-        #TODO query id from contract / register with cli
-        self.aergo_id = (config_data['networks'][aergo_net]['bridges'][eth_net]
-                         ['id'])
-        self.eth_id = (config_data['networks'][eth_net]['bridges'][aergo_net]
-                       ['id'])
+        self.aergo_id = query_aergo_id(self.hera, self.aergo_bridge)
+        self.eth_id = query_eth_id(self.web3, self.eth_bridge_addr, eth_abi)
 
         # check validators are correct and warn the validator will vote for
         # a new validator set
         aergo_vals = query_aergo_validators(self.hera, self.aergo_bridge)
         eth_vals = query_eth_validators(self.web3, self.eth_bridge_addr,
                                         eth_abi)
-        for i, validator in enumerate(config_data['validators']):
-            # TODO this raises list index out of range if nb of validators
-            # changes
-            if validator['addr'] != aergo_vals[i]:
-                print("Validators in config file do not match bridge "
-                      "validators.\nExpected aergo validators: {}"
-                      .format(aergo_vals))
-            if validator['eth-addr'] != eth_vals[i]:
-                print("Validators in config file do not match bridge "
-                      "validators.\nExpected eth validators: {}"
-                      .format(eth_vals))
-
-        print("Aergo validators : ", aergo_vals)
-        print("Ethereum validators : ", eth_vals)
-        if auto_update:
-            print("WARNING: this validator will vote for settings update in "
-                  "config.json")
-
+        print("Current Aergo validators : ", aergo_vals)
+        print("Current Ethereum validators : ", eth_vals)
         # get the current t_anchor and t_final for both sides of bridge
         self.t_anchor_aergo, self.t_final_aergo = query_aergo_tempo(
             self.hera, self.aergo_bridge
@@ -143,6 +126,51 @@ class ValidatorService(BridgeOperatorServicer):
                       self.t_anchor_aergo))
         print("{} (t_final={}) -> {}              : t_anchor={}"
               .format(aergo_net, self.t_final_eth, eth_net, self.t_anchor_eth))
+
+        if auto_update:
+            print("WARNING: This validator will vote for settings update in "
+                  "config.json")
+            if len(aergo_vals) != len(eth_vals):
+                print("WARNING: different number fo validators on both sides "
+                      "of the bridge")
+            if len(config_data['validators']) != len(aergo_vals):
+                print("WARNING: This validator is voting for a new set of "
+                      "aergo validators")
+            if len(config_data['validators']) != len(eth_vals):
+                print("WARNING: This validator is voting for a new set of eth "
+                      "validators")
+            try:
+                for i, validator in enumerate(config_data['validators']):
+                    if validator['addr'] != aergo_vals[i]:
+                        print("WARNING: This validator is voting for a new "
+                              "set of validators\n")
+                    if validator['eth-addr'] != eth_vals[i]:
+                        print("WARNING: This validator is voting for a new "
+                              "set of validators\n")
+                    break
+            except IndexError:
+                pass
+
+            t_anchor_aergo = (config_data['networks'][self.aergo_net]
+                              ['bridges'][self.eth_net]['t_anchor'])
+            t_final_aergo = (config_data['networks'][self.aergo_net]['bridges']
+                             [self.eth_net]['t_final'])
+            t_anchor_eth = (config_data['networks'][self.eth_net]['bridges']
+                            [self.aergo_net]['t_anchor'])
+            t_final_eth = (config_data['networks'][self.eth_net]['bridges']
+                           [self.aergo_net]['t_final'])
+            if t_anchor_aergo != self.t_anchor_aergo:
+                print("WARNING: This validator is voting to update anchoring "
+                      "periode on aergo")
+            if t_final_aergo != self.t_final_aergo:
+                print("WARNING: This validator is voting to update finality of "
+                      "eth on aergo")
+            if t_anchor_eth != self.t_anchor_eth:
+                print("WARNING: This validator is voting to update anchoring "
+                      "periode on eth")
+            if t_final_eth != self.t_final_eth:
+                print("WARNING: This validator is voting to update finality of "
+                      "aergo on eth")
 
         print("------ Set Signer Account -----------")
         if privkey_name is None:
@@ -193,7 +221,7 @@ class ValidatorService(BridgeOperatorServicer):
         # sign anchor and return approval
         msg_bytes = anchor.root + anchor.height.to_bytes(32, byteorder='big') \
             + anchor.destination_nonce.to_bytes(32, byteorder='big') \
-            + bytes.fromhex(self.eth_id)\
+            + self.eth_id \
             + bytes("R", 'utf-8')
         h = keccak(msg_bytes)
         sig = self.web3.eth.account.signHash(h, private_key=self.eth_privkey)
@@ -418,7 +446,7 @@ class ValidatorService(BridgeOperatorServicer):
         # sign anchor and return approval
         msg_bytes = tempo.to_bytes(32, byteorder='big') \
             + nonce.to_bytes(32, byteorder='big') \
-            + bytes.fromhex(self.eth_id) \
+            + self.eth_id \
             + bytes(tempo_id, 'utf-8')
         h = keccak(msg_bytes)
         sig = self.web3.eth.account.signHash(h, private_key=self.eth_privkey)
@@ -491,7 +519,7 @@ class ValidatorService(BridgeOperatorServicer):
             concat_vals += pad_bytes(b'\x00', 32, bytes.fromhex(val[2:]))
         msg_bytes = concat_vals \
             + nonce.to_bytes(32, byteorder='big') \
-            + bytes.fromhex(self.eth_id)\
+            + self.eth_id \
             + bytes("V", 'utf-8')
         h = keccak(msg_bytes)
         sig = self.web3.eth.account.signHash(h, private_key=self.eth_privkey)
