@@ -70,5 +70,5 @@ so that aergo can be unfroozen.
         > SC Address Aergo: AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw
         ------ Store bridge addresses in test_config.json  -----------
 
-After deployment, the aer on the aergo network should be be sent (frozen) to the bridge contract so 
+After deployment, the aer on the Aergo network should be sent (frozen) to the bridge contract so 
 that it can be unfrozen when users sent their erc20 from the ethereum network.

@@ -1,6 +1,6 @@
-git+ssh://git@github.com/aergoio/herapy.git@dc82a3bf83daba08f2b669fd416457ebe0708ca0
-git+ssh://git@github.com/aergoio/merkle-bridge.git@0f9111918bbd6d3ac26549fac766d2984fc1536e
-git+ssh://git@github.com/ethereum/web3.py.git@11ef9df28dfbe4b83683a84fec184406165f18d5
+git+git://github.com/aergoio/herapy.git@dc82a3bf83daba08f2b669fd416457ebe0708ca0
+git+git://github.com/aergoio/merkle-bridge.git@0f9111918bbd6d3ac26549fac766d2984fc1536e
+git+git://github.com/ethereum/web3.py.git@11ef9df28dfbe4b83683a84fec184406165f18d5
 trie
 PyInquirer
 pyfiglet
