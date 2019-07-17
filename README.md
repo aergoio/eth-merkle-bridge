@@ -1,5 +1,6 @@
 # eth-merkle-bridge
 Eth&lt;-->Aergo Merkle Bridge 
+https://eth-merkle-bridge.readthedocs.io/
 
 The Eth-Aergo Merkle bridge follows a similar design to the Aergo-Aergo Merkle bridge with some key differences : the total aer supply is already minted on Aergo mainnet (freezed in the Lua bridge contract so Aer is unfreezed/freezed instead of minted/burnt) and the Lua bridge contract needs to verify Ethereum Patricia Lock tree merkle proofs.
 
