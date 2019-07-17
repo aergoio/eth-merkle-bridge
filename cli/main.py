@@ -346,12 +346,16 @@ class EthMerkleBridgeCli():
             # Register paths to abis
             if net1_type == 'ethereum':
                 bridge_abi, minted_abi = prompt_bridge_abi_paths()
+                bridge_abi = os.path.relpath(bridge_abi, self.root_path)
+                minted_abi = os.path.relpath(minted_abi, self.root_path)
                 new_config['networks'][net1]['bridges'][net2]['bridge_abi'] = \
                     bridge_abi
                 new_config['networks'][net1]['bridges'][net2]['minted_abi'] = \
                     minted_abi
             if net2_type == 'ethereum':
                 bridge_abi, minted_abi = prompt_bridge_abi_paths()
+                bridge_abi = os.path.relpath(bridge_abi, self.root_path)
+                minted_abi = os.path.relpath(minted_abi, self.root_path)
                 new_config['networks'][net2]['bridges'][net1]['bridge_abi'] = \
                     bridge_abi
                 new_config['networks'][net2]['bridges'][net1]['minted_abi'] = \
@@ -420,6 +424,25 @@ class EthMerkleBridgeCli():
                    't_final': int(answers['t_final2'])
                    }
         )
+        # Register paths to abis
+        net1_type = self.wallet.config_data('networks', net1, 'type')
+        net2_type = self.wallet.config_data('networks', net2, 'type')
+        if net1_type == 'ethereum':
+            bridge_abi, minted_abi = prompt_bridge_abi_paths()
+            bridge_abi = os.path.relpath(bridge_abi, self.root_path)
+            minted_abi = os.path.relpath(minted_abi, self.root_path)
+            self.wallet.config_data('networks', net1, 'bridges', net2,
+                                    'bridge_abi', value=bridge_abi)
+            self.wallet.config_data('networks', net1, 'bridges', net2,
+                                    'minted_abi', value=minted_abi)
+        if net2_type == 'ethereum':
+            bridge_abi, minted_abi = prompt_bridge_abi_paths()
+            bridge_abi = os.path.relpath(bridge_abi, self.root_path)
+            minted_abi = os.path.relpath(minted_abi, self.root_path)
+            self.wallet.config_data('networks', net2, 'bridges', net1,
+                                    'bridge_abi', value=bridge_abi)
+            self.wallet.config_data('networks', net2, 'bridges', net1,
+                                    'minted_abi', value=minted_abi)
         self.wallet.save_config()
 
     def register_asset(self):
@@ -493,16 +516,16 @@ class EthMerkleBridgeCli():
     def update_t_anchor(self):
         from_chain, to_chain = self.prompt_transfer_networks()
         t_anchor = prompt_number("New anchoring periode (nb of blocks) of {} "
-                                 "onto {}".format(to_chain, from_chain))
-        self.wallet.config_data('networks', from_chain, 'bridges', to_chain,
+                                 "onto {}".format(from_chain, to_chain))
+        self.wallet.config_data('networks', to_chain, 'bridges', from_chain,
                                 't_anchor', value=t_anchor)
         self.wallet.save_config()
 
     def update_t_final(self):
         from_chain, to_chain = self.prompt_transfer_networks()
         t_final = prompt_number("New finality (nb of blocks) of {}"
-                                .format(to_chain))
-        self.wallet.config_data('networks', from_chain, 'bridges', to_chain,
+                                .format(from_chain))
+        self.wallet.config_data('networks', to_chain, 'bridges', from_chain,
                                 't_final', value=t_final)
         self.wallet.save_config()
 

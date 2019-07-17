@@ -627,5 +627,6 @@ if __name__ == '__main__':
             args.config_file_path, args.aergo, args.eth,
             privkey_name=args.privkey_name,
             validator_index=args.validator_index,
+            auto_update=args.auto_update
         )
         validator.run()

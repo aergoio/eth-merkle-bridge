@@ -23,8 +23,9 @@ def deploy_bridge(
     bridge_abi_path: str,
     minted_erc20_abi_path: str,
     t_anchor_eth: int,
+    t_final_eth: int,
     t_anchor_aergo: int,
-    eth_finality: int,
+    t_final_aergo: int,
     eth_net: str,
     aergo_net: str,
     aergo_erc20: str = 'aergo_erc20',
@@ -56,13 +57,8 @@ def deploy_bridge(
         w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     assert w3.isConnected()
 
-    status = aergo.get_status()
-    height = status.best_block_height
-    lib = status.consensus_info.status['LibNo']
-    # aergo finalization time
-    t_final_aergo = height - lib
-    print("aergo finality: ", t_final_aergo)
-    print("ethereum finality: ", eth_finality)
+    print("aergo finality: ", t_final_eth)
+    print("ethereum finality: ", t_final_aergo)
 
     print("------ Set Sender Account -----------")
     if privkey_pwd is None:
@@ -100,7 +96,7 @@ def deploy_bridge(
                                  args=[aergo_erc20_addr[2:].lower(),
                                        aergo_validators,
                                        t_anchor_aergo,
-                                       eth_finality])
+                                       t_final_aergo])
     if result.status != herapy.CommitStatus.TX_OK:
         print("    > ERROR[{0}]: {1}"
               .format(result.status, result.detail))
@@ -122,7 +118,7 @@ def deploy_bridge(
     receipt = deploy_contract(
         sol_bytecode, bridge_abi, w3, 6700000, 20, privkey,
         eth_validators,
-        t_anchor_eth, t_final_aergo
+        t_anchor_eth, t_final_eth
     )
     eth_bridge = receipt.contractAddress
 
@@ -139,11 +135,11 @@ def deploy_bridge(
     (config_data['networks'][eth_net]['bridges'][aergo_net]
         ['t_anchor']) = t_anchor_eth
     (config_data['networks'][eth_net]['bridges'][aergo_net]
-        ['t_final']) = t_final_aergo
+        ['t_final']) = t_final_eth
     (config_data['networks'][aergo_net]['bridges'][eth_net]
         ['t_anchor']) = t_anchor_aergo
     (config_data['networks'][aergo_net]['bridges'][eth_net]
-        ['t_final']) = eth_finality
+        ['t_final']) = t_final_aergo
     (config_data['networks'][eth_net]['bridges'][aergo_net]
         ['bridge_abi']) = bridge_abi_path
     (config_data['networks'][eth_net]['bridges'][aergo_net]
@@ -164,32 +160,40 @@ if __name__ == '__main__':
         '-c', '--config_file_path', type=str, help='Path to config.json',
         required=True)
     parser.add_argument(
-        '-a', '--aergo', type=str, help='Name of Aergo network in config file',
-        required=True)
+        '-a', '--aergo', type=str, required=True,
+        help='Name of Aergo network in config file')
     parser.add_argument(
-        '-e', '--eth', type=str, help='Name of Ethereum network in config file',
-        required=True)
+        '-e', '--eth', type=str, required=True,
+        help='Name of Ethereum network in config file')
+    parser.add_argument(
+        '--t_anchor_eth', type=int, required=True,
+        help='Anchoring periode (in Aergo blocks) of Aergo on ethereum')
+    parser.add_argument(
+        '--t_final_eth', type=int, required=True,
+        help='Finality of Aergo (in Aergo blocks) root anchored on Ethereum')
+    parser.add_argument(
+        '--t_anchor_aergo', type=int, required=True,
+        help='Anchoring periode (in Ethereum blocks) of Ethereum on Aergo')
+    parser.add_argument(
+        '--t_final_aergo', type=int, required=True,
+        help='Finality of Ethereum (in Ethereum blocks) root anchored on Aergo')
     parser.add_argument(
         '--privkey_name', type=str, help='Name of account in config file '
         'to sign anchors', required=False)
 
     args = parser.parse_args()
-    # eth_net = 'eth-poa-local'
-    # aergo_net = 'aergo-local'
-    # config_path = "./test_config.json"
-    lua_bytecode_path = "./contracts/lua/bridge_bytecode.txt"
-    sol_bytecode_path = "./contracts/solidity/bridge_bytecode.txt"
-    minted_erc20_abi_path = "./contracts/solidity/minted_erc20_abi.txt"
-    bridge_abi_path = "./contracts/solidity/bridge_abi.txt"
+
+    lua_bytecode_path = "contracts/lua/bridge_bytecode.txt"
+    sol_bytecode_path = "contracts/solidity/bridge_bytecode.txt"
+    minted_erc20_abi_path = "contracts/solidity/minted_erc20_abi.txt"
+    bridge_abi_path = "contracts/solidity/bridge_abi.txt"
 
     # NOTE t_final is the minimum time to get lib : only informative (not
     # actually used in code except for Eth bridge because Eth doesn't have LIB)
-    t_anchor_eth = 7  # aergo anchoring periord on ethereum
-    t_anchor_aergo = 6  # ethereum anchoring periord on aergo
-    eth_finality = 4  # blocks after which ethereum is considered finalized
+
     deploy_bridge(
         args.config_file_path, lua_bytecode_path, sol_bytecode_path,
-        bridge_abi_path, minted_erc20_abi_path, t_anchor_eth,
-        t_anchor_aergo, eth_finality, args.eth, args.aergo,
-        'aergo_erc20', privkey_name=args.privkey_name
+        bridge_abi_path, minted_erc20_abi_path, args.t_anchor_eth,
+        args.t_final_eth, args.t_anchor_aergo, args.t_final_aergo, args.eth,
+        args.aergo, 'aergo_erc20', privkey_name=args.privkey_name
     )

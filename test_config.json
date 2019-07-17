@@ -2,11 +2,6 @@
     "networks": {
         "aergo-local": {
             "bridges": {
-                "": {
-                    "addr": "bridge address on mainnet",
-                    "t_anchor": "t_anchor of ethereum on aergo mainnet",
-                    "t_final": "t_final of ethereum"
-                },
                 "eth-poa-local": {
                     "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
                     "t_anchor": 6,
@@ -20,7 +15,7 @@
                     "pegs": {}
                 },
                 "token1": {
-                    "addr": "AmgMamRigqVumAXtzAXBr7nyMAz7o6SwVdiYSW6MZaysp1N9QKmt",
+                    "addr": "AmgpYGMMPEnb7ukcJkhpGCGJXwqEq2MgpneN47hHrbBS7C3AjDke",
                     "pegs": {
                         "eth-poa-local": "0x65c88DF2c72a6730a9bA0642e24C545fC13e70F3"
                     }
@@ -30,17 +25,12 @@
         },
         "eth-poa-local": {
             "bridges": {
-                "": {
-                    "addr": "bridge address on sidechain",
-                    "t_anchor": "t_anchor of aergo mainnet on ethereum",
-                    "t_final": "t_final of aergo mainnet"
-                },
                 "aergo-local": {
                     "addr": "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
-                    "bridge_abi": "./contracts/solidity/bridge_abi.txt",
-                    "minted_abi": "./contracts/solidity/minted_erc20_abi.txt",
+                    "bridge_abi": "contracts/solidity/bridge_abi.txt",
+                    "minted_abi": "contracts/solidity/minted_erc20_abi.txt",
                     "t_anchor": 7,
-                    "t_final": 4
+                    "t_final": 5
                 }
             },
             "ip": "localhost:8545",
@@ -48,7 +38,7 @@
             "tokens": {
                 "aergo_erc20": {
                     "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
+                    "addr": "0x3f79E699eBb125054E425BD2cce38225CB861664",
                     "pegs": {
                         "aergo-local": "aergo"
                     }
@@ -59,9 +49,9 @@
                 },
                 "test_erc20": {
                     "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0x416ac7b876436662Dcb0FB531EfDd2fa0C9F0bad",
+                    "addr": "0x737ED67385C69E22F4423AF7645954711e390416",
                     "pegs": {
-                        "aergo-local": "AmhiUx2hZ9phVDMZoBShEWD2sCFXPJ5BZpagNC8WfssPuZg7wzZS"
+                        "aergo-local": "AmhoYqbizfrTLCx1QCXKoQuyuwtjyWQRwVEfVPMPLkZJEcAY2nSa"
                     }
                 }
             },
