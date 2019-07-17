@@ -17,7 +17,14 @@ Install dependencies
     $ cd eth-merkle-bridge
     $ virtualenv -p python3 venv
     $ source venv/bin/activate
-    $ make install
+    $ pip install -r requirements.txt
+
+
+Optional dev dependencies (lint, testing...)
+
+.. code-block:: bash
+
+    $ pip install -r dev-dependencies.txt
 
 
 Now you can start using the bridge tools to: 

@@ -9,7 +9,12 @@ The Eth-Aergo Merkle bridge follows a similar design to the Aergo-Aergo Merkle b
 $ cd eth-merkle-bridge/
 $ virtualenv -p python3 venv
 $ source venv/bin/activate
-$ make install
+$ pip install -r requirements.txt
+```
+
+Optional dev dependencies (lint, testing...)
+```sh
+$ pip install -r dev-dependencies.txt
 ```
 
 ## CLI

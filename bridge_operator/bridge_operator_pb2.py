@@ -197,32 +197,32 @@ DESCRIPTOR.message_types_by_name['NewTempo'] = _NEWTEMPO
 DESCRIPTOR.message_types_by_name['NewValidators'] = _NEWVALIDATORS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-Anchor = _reflection.GeneratedProtocolMessageType('Anchor', (_message.Message,), dict(
-  DESCRIPTOR = _ANCHOR,
-  __module__ = 'bridge_operator.bridge_operator_pb2'
+Anchor = _reflection.GeneratedProtocolMessageType('Anchor', (_message.Message,), {
+  'DESCRIPTOR' : _ANCHOR,
+  '__module__' : 'bridge_operator.bridge_operator_pb2'
   # @@protoc_insertion_point(class_scope:Anchor)
-  ))
+  })
 _sym_db.RegisterMessage(Anchor)
 
-Approval = _reflection.GeneratedProtocolMessageType('Approval', (_message.Message,), dict(
-  DESCRIPTOR = _APPROVAL,
-  __module__ = 'bridge_operator.bridge_operator_pb2'
+Approval = _reflection.GeneratedProtocolMessageType('Approval', (_message.Message,), {
+  'DESCRIPTOR' : _APPROVAL,
+  '__module__' : 'bridge_operator.bridge_operator_pb2'
   # @@protoc_insertion_point(class_scope:Approval)
-  ))
+  })
 _sym_db.RegisterMessage(Approval)
 
-NewTempo = _reflection.GeneratedProtocolMessageType('NewTempo', (_message.Message,), dict(
-  DESCRIPTOR = _NEWTEMPO,
-  __module__ = 'bridge_operator.bridge_operator_pb2'
+NewTempo = _reflection.GeneratedProtocolMessageType('NewTempo', (_message.Message,), {
+  'DESCRIPTOR' : _NEWTEMPO,
+  '__module__' : 'bridge_operator.bridge_operator_pb2'
   # @@protoc_insertion_point(class_scope:NewTempo)
-  ))
+  })
 _sym_db.RegisterMessage(NewTempo)
 
-NewValidators = _reflection.GeneratedProtocolMessageType('NewValidators', (_message.Message,), dict(
-  DESCRIPTOR = _NEWVALIDATORS,
-  __module__ = 'bridge_operator.bridge_operator_pb2'
+NewValidators = _reflection.GeneratedProtocolMessageType('NewValidators', (_message.Message,), {
+  'DESCRIPTOR' : _NEWVALIDATORS,
+  '__module__' : 'bridge_operator.bridge_operator_pb2'
   # @@protoc_insertion_point(class_scope:NewValidators)
-  ))
+  })
 _sym_db.RegisterMessage(NewValidators)
 
 
