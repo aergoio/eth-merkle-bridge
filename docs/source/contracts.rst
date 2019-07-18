@@ -1,12 +1,6 @@
 Deploying a new bridge
 ======================
 
-Bridge smart contracts
-----------------------
-
-Bridge deployer
----------------
-
 Before using the bridge deployer, a config file should be create to register network node connections, 
 validators and the address of aergo_erc20 on ethereum. The aergo bridge contract must record the aergo_erc20 address
 so that aergo can be unfroozen.

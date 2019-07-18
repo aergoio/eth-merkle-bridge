@@ -4,3 +4,4 @@ flake8
 mypy
 grpcio-tools
 sphinx
+sphinx_rtd_theme

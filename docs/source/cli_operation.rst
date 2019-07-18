@@ -58,3 +58,20 @@ Transfering a registered asset
 .. image:: images/initiate.png
 
 .. image:: images/finalize.png
+
+
+Check pending transfers
+^^^^^^^^^^^^^^^^^^^^^^^
+
+It is possible to check withdrawable balances of pending transfer between chains.
+
+.. image:: images/pending.png
+
+If a transfer was made with the cli, the transfer parameters are recorded but it is also
+possible to check the withdrawable balance of a custom transfer between any chain.
+'Withdrawable' is the balance that can be immediatly withdrawn on the other side of the bridge.
+'Pending' is the balance that was deposited in the bridge contract but the anchor has not 
+happened on the other side of the bridge so it is not yet withdrawable.
+
+Pending transfers are recorded as an array of [departure chain, destination chain, asset name, receiver, block height of lock/burn/freeze].
+All pending transfer are store in cli/pending_transfers.json and deleted once finalized.
