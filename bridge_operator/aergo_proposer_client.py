@@ -322,10 +322,11 @@ class AergoProposerClient(threading.Thread):
             print("{}{} Gathering signatures from validators ..."
                   .format(self.tab, u'\U0001f58b'))
 
+            nonce_to = int(self.hera.query_sc_state(
+                self.aergo_bridge, ["_sv_Nonce"]
+            ).var_proofs[0].value)
+
             try:
-                nonce_to = int(self.hera.query_sc_state(
-                    self.aergo_bridge, ["_sv_Nonce"]
-                ).var_proofs[0].value)
                 sigs, validator_indexes = self.get_anchor_signatures(
                         root, next_anchor_height, nonce_to
                     )

@@ -115,23 +115,23 @@ class ValidatorService(BridgeOperatorServicer):
         print("Current Aergo validators : ", aergo_vals)
         print("Current Ethereum validators : ", eth_vals)
         # get the current t_anchor and t_final for both sides of bridge
-        self.t_anchor_aergo, self.t_final_aergo = query_aergo_tempo(
+        t_anchor_aergo, t_final_aergo = query_aergo_tempo(
             self.hera, self.aergo_bridge
         )
-        self.t_anchor_eth, self.t_final_eth = query_eth_tempo(
+        t_anchor_eth, t_final_eth = query_eth_tempo(
             self.web3, self.eth_bridge_addr, eth_abi
         )
         print("{}             <- {} (t_final={}) : t_anchor={}"
-              .format(aergo_net, eth_net, self.t_final_aergo,
-                      self.t_anchor_aergo))
+              .format(aergo_net, eth_net, t_final_aergo,
+                      t_anchor_aergo))
         print("{} (t_final={}) -> {}              : t_anchor={}"
-              .format(aergo_net, self.t_final_eth, eth_net, self.t_anchor_eth))
+              .format(aergo_net, t_final_eth, eth_net, t_anchor_eth))
 
         if auto_update:
             print("WARNING: This validator will vote for settings update in "
                   "config.json")
             if len(aergo_vals) != len(eth_vals):
-                print("WARNING: different number fo validators on both sides "
+                print("WARNING: different number of validators on both sides "
                       "of the bridge")
             if len(config_data['validators']) != len(aergo_vals):
                 print("WARNING: This validator is voting for a new set of "
@@ -151,26 +151,26 @@ class ValidatorService(BridgeOperatorServicer):
             except IndexError:
                 pass
 
-            t_anchor_aergo = (config_data['networks'][self.aergo_net]
-                              ['bridges'][self.eth_net]['t_anchor'])
-            t_final_aergo = (config_data['networks'][self.aergo_net]['bridges']
-                             [self.eth_net]['t_final'])
-            t_anchor_eth = (config_data['networks'][self.eth_net]['bridges']
-                            [self.aergo_net]['t_anchor'])
-            t_final_eth = (config_data['networks'][self.eth_net]['bridges']
-                           [self.aergo_net]['t_final'])
-            if t_anchor_aergo != self.t_anchor_aergo:
+            t_anchor_aergo_c = (config_data['networks'][self.aergo_net]
+                                ['bridges'][self.eth_net]['t_anchor'])
+            t_final_aergo_c = (config_data['networks'][self.aergo_net]
+                               ['bridges'][self.eth_net]['t_final'])
+            t_anchor_eth_c = (config_data['networks'][self.eth_net]['bridges']
+                              [self.aergo_net]['t_anchor'])
+            t_final_eth_c = (config_data['networks'][self.eth_net]['bridges']
+                             [self.aergo_net]['t_final'])
+            if t_anchor_aergo_c != t_anchor_aergo:
                 print("WARNING: This validator is voting to update anchoring "
                       "periode on aergo")
-            if t_final_aergo != self.t_final_aergo:
-                print("WARNING: This validator is voting to update finality of "
-                      "eth on aergo")
-            if t_anchor_eth != self.t_anchor_eth:
+            if t_final_aergo_c != t_final_aergo:
+                print("WARNING: This validator is voting to update finality "
+                      "of eth on aergo")
+            if t_anchor_eth_c != t_anchor_eth:
                 print("WARNING: This validator is voting to update anchoring "
                       "periode on eth")
-            if t_final_eth != self.t_final_eth:
-                print("WARNING: This validator is voting to update finality of "
-                      "aergo on eth")
+            if t_final_eth_c != t_final_eth:
+                print("WARNING: This validator is voting to update finality "
+                      "of aergo on eth")
 
         print("------ Set Signer Account -----------")
         if privkey_name is None:
@@ -370,7 +370,7 @@ class ValidatorService(BridgeOperatorServicer):
 
         """
         current_tempo = int(self.hera.query_sc_state(
-            self.aergo_bridge, ["_sv_T_anchor"]
+            self.aergo_bridge, ["_sv_T_final"]
         ).var_proofs[0].value)
         return self.get_eth_tempo(tempo_msg, 't_final', "F", current_tempo)
 
@@ -583,7 +583,7 @@ def _serve_all(config_file_path, aergo_net, eth_net,
         config_data = json.load(f)
     validator_indexes = [i for i in range(len(config_data['validators']))]
     servers = [ValidatorServer(config_file_path, aergo_net, eth_net,
-                               privkey_name, '1234', index, True)
+                               privkey_name, privkey_pwd, index, True)
                for index in validator_indexes]
     worker = partial(_serve_worker, servers)
     pool = Pool(len(validator_indexes))
@@ -592,7 +592,7 @@ def _serve_all(config_file_path, aergo_net, eth_net,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Start a proposer on Ethereum and Aergo.')
+        description='Start a validator on Ethereum and Aergo.')
     # Add arguments
     parser.add_argument(
         '-c', '--config_file_path', type=str, help='Path to config.json',
@@ -621,7 +621,7 @@ if __name__ == '__main__':
 
     if args.local_test:
         _serve_all(args.config_file_path, args.aergo, args.eth,
-                   privkey_name=args.privkey_name)
+                   privkey_name=args.privkey_name, privkey_pwd='1234')
     else:
         validator = ValidatorServer(
             args.config_file_path, args.aergo, args.eth,
