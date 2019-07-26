@@ -258,7 +258,11 @@ class EthMerkleBridgeCli():
                             'value': 'B'
                         },
                         {
-                            'name': 'Register new set of validators',
+                            'name': 'Register new encrypted private key',
+                            'value': 'K'
+                        },
+                        {
+                            'name': 'Update validators set',
                             'value': 'V'
                         },
                         {
@@ -285,6 +289,8 @@ class EthMerkleBridgeCli():
                     self.register_new_validators()
                 elif answers['action'] == 'B':
                     self.register_bridge()
+                elif answers['action'] == 'K':
+                    self.register_key()
                 elif answers['action'] == 'UA':
                     self.update_t_anchor()
                 elif answers['action'] == 'UF':
@@ -296,7 +302,7 @@ class EthMerkleBridgeCli():
     def create_config(self):
         """Create a new configuration file from scratch.
 
-        This tool registers 2 networks, bridge contracts, bridge validators,
+        This tool registers 2 networks, bridge contracts,
         paths to bridge abis, a private key for each network and
         bridge validators
 
@@ -451,25 +457,17 @@ class EthMerkleBridgeCli():
 
         """
         networks = self.get_registered_networks()
-        name, origin, origin_addr, pegs, peg_addrs = prompt_new_asset(networks)
-        try:
-            self.wallet.config_data('networks', origin, 'tokens', name)
-            questions = [
-                {
-                    'type': 'list',
-                    'name': 'YN',
-                    'message': 'Warning: '
-                               'override existing asset with same name',
-                    'choices': ['Yes', 'No']
-                }
-            ]
-            if inquirer.prompt(questions, style=aergo_style)['YN'] == 'No':
+        name, origin, origin_addr, pegs, peg_addrs = prompt_new_asset(
+            networks.copy())
+        for net in networks:
+            try:
+                self.wallet.config_data('networks', net, 'tokens', name)
+                print("Asset name already used")
                 return
-            self.wallet.config_data('networks', origin, 'tokens', name,
-                                    value={'pegs': {}})
-        except KeyError:
-            self.wallet.config_data('networks', origin, 'tokens', name,
-                                    value={'pegs': {}})
+            except KeyError:
+                pass
+        self.wallet.config_data('networks', origin, 'tokens', name,
+                                value={'addr': {}, 'pegs': {}})
         self.wallet.config_data(
             'networks', origin, 'tokens', name, 'addr', value=origin_addr)
         # if ethereum query abi path
@@ -503,6 +501,34 @@ class EthMerkleBridgeCli():
                 'networks', net, value={'ip': ip, 'type': net_type,
                                         'tokens': {}, 'bridges': {}}
             )
+        self.wallet.save_config()
+
+    def register_key(self):
+        """Register new key in wallet's config."""
+        is_eth_key = promptYN(
+            'Which type of key would you like to register ?', 'Ethereum',
+            'Aergo'
+        )
+        if is_eth_key:
+            name, addr, privkey_path = prompt_eth_privkey()
+            privkey_path = os.path.relpath(privkey_path, self.root_path)
+        else:
+            name, addr, privkey = prompt_aergo_privkey()
+
+        try:
+            self.wallet.config_data('wallet', name)
+            print("Key name already used")
+            return
+        except KeyError:
+            pass
+
+        if is_eth_key:
+            self.wallet.config_data(
+                'wallet-eth', name, value={'addr': addr,
+                                           'keystore': privkey_path})
+        else:
+            self.wallet.config_data(
+                'wallet', name, value={'addr': addr, 'priv_key': privkey})
         self.wallet.save_config()
 
     def register_new_validators(self):
