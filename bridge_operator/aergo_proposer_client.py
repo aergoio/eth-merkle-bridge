@@ -160,7 +160,7 @@ class AergoProposerClient(threading.Thread):
         """ Query all validators and gather 2/3 of their signatures. """
 
         # messages to get signed
-        msg_str = root + ',' + str(merge_height) + ',' + str(nonce) \
+        msg_str = root + ',' + str(merge_height) + str(nonce) \
             + self.aergo_id + "R"
         msg = bytes(msg_str, 'utf-8')
         h = hashlib.sha256(msg).digest()
@@ -539,7 +539,7 @@ class AergoProposerClient(threading.Thread):
         )
         new_tempo_msg = NewTempo(tempo=tempo, destination_nonce=nonce)
         msg = bytes(
-            str(tempo) + ',' + str(nonce) + self.aergo_id + tempo_id,
+            str(tempo) + str(nonce) + self.aergo_id + tempo_id,
             'utf-8'
         )
         h = hashlib.sha256(msg).digest()

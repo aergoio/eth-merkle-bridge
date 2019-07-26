@@ -294,7 +294,7 @@ class ValidatorService(BridgeOperatorServicer):
 
         # sign anchor and return approval
         msg = bytes(
-            anchor.root.hex() + ',' + str(anchor.height) + ','
+            anchor.root.hex() + ',' + str(anchor.height)
             + str(anchor.destination_nonce) + self.aergo_id + "R",
             'utf-8')
         h = hashlib.sha256(msg).digest()
@@ -396,7 +396,7 @@ class ValidatorService(BridgeOperatorServicer):
             return Approval(error="Refused to vote for this anchor periode")
         # sign anchor and return approval
         msg = bytes(
-            str(tempo) + ',' + str(nonce) + self.aergo_id + tempo_id,
+            str(tempo) + str(nonce) + self.aergo_id + tempo_id,
             'utf-8'
         )
         h = hashlib.sha256(msg).digest()

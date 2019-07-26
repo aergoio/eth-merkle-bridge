@@ -103,7 +103,7 @@ function set_root(root, height, signers, signatures)
     -- (a malicious BP could commit a user's mint tx after set_root on purpose for user to lose tx fee.)
     assert(height > Height:get() + T_anchor:get(), "Next anchor height not reached")
     old_nonce = Nonce:get()
-    message = crypto.sha256(root..','..tostring(height)..','..tostring(old_nonce)..ContractID:get().."R")
+    message = crypto.sha256(root..','..tostring(height)..tostring(old_nonce)..ContractID:get().."R")
     assert(validate_signatures(message, signers, signatures), "Failed signature validation")
     Root:set(root)
     Height:set(height)
@@ -128,7 +128,6 @@ end
 -- new_validators replaces the list of validators
 -- signers is the index of signers in Validators
 function update_validators(addresses, signers, signatures)
-    -- TODO check validators and tempos are actually changed
     old_nonce = Nonce:get()
     message = crypto.sha256(join(addresses)..tostring(old_nonce)..ContractID:get().."V")
     assert(validate_signatures(message, signers, signatures), "Failed signature validation")
@@ -150,7 +149,7 @@ end
 
 function update_t_anchor(t_anchor, signers, signatures)
     old_nonce = Nonce:get()
-    message = crypto.sha256(tostring(t_anchor)..','..tostring(old_nonce)..ContractID:get().."A")
+    message = crypto.sha256(tostring(t_anchor)..tostring(old_nonce)..ContractID:get().."A")
     assert(validate_signatures(message, signers, signatures), "Failed signature validation")
     T_anchor:set(t_anchor)
     Nonce:set(old_nonce + 1)
@@ -158,13 +157,14 @@ end
 
 function update_t_final(t_final, signers, signatures)
     old_nonce = Nonce:get()
-    message = crypto.sha256(tostring(t_final)..','..tostring(old_nonce)..ContractID:get().."F")
+    message = crypto.sha256(tostring(t_final)..tostring(old_nonce)..ContractID:get().."F")
     assert(validate_signatures(message, signers, signatures), "Failed signature validation")
     T_final:set(t_final)
     Nonce:set(old_nonce + 1)
 end
 
 function join(array)
+    -- not using a separator is safe for signing if the length of items is checked with isValidAddress for example
     str = ""
     for i, data in ipairs(array) do
         str = str..data
