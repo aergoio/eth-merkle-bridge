@@ -1,10 +1,10 @@
-:mod:`cli`
+:mod:`ethaergo_cli`
 =======================
 
 
-.. automodule:: cli.main
+.. automodule:: ethaergo_cli.main
     :members:
 
 
-.. automodule:: cli.utils
+.. automodule:: ethaergo_cli.utils
     :members:

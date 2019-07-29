@@ -2,25 +2,25 @@
 =======================
 
 
-.. automodule:: bridge_operator.validator_server
+.. automodule:: ethaergo_bridge_operator.validator_server
     :members:
 
 
-.. automodule:: bridge_operator.proposer_client
+.. automodule:: ethaergo_bridge_operator.proposer_client
     :members:
 
 
-.. automodule:: bridge_operator.eth_proposer_client
+.. automodule:: ethaergo_bridge_operator.eth_proposer_client
     :members:
 
 
-.. automodule:: bridge_operator.aergo_proposer_client
+.. automodule:: ethaergo_bridge_operator.aergo_proposer_client
     :members:
 
 
-.. automodule:: bridge_operator.bridge_deployer
+.. automodule:: ethaergo_bridge_operator.bridge_deployer
     :members:
 
 
-.. automodule:: bridge_operator.exceptions
+.. automodule:: ethaergo_bridge_operator.exceptions
     :members:

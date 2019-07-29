@@ -13,7 +13,7 @@ Starting a Proposer
 
 .. code-block:: bash
 
-    $ python3 -m bridge_operator.proposer_client --help
+    $ python3 -m ethaergo_bridge_operator.proposer_client --help
 
         usage: proposer_client.py [-h] -c CONFIG_FILE_PATH -a AERGO -e ETH
                                   --eth_block_time ETH_BLOCK_TIME
@@ -35,7 +35,7 @@ Starting a Proposer
         --auto_update         Update bridge contract when settings change in config
                                 file
 
-    $ python3 -m bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 3 --privkey_name "proposer" --auto_update
+    $ python3 -m ethaergo_bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 3 --privkey_name "proposer" --auto_update
 
         ------ Connect Aergo and Ethereum -----------
         ------ Connect to Validators -----------

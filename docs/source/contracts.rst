@@ -12,7 +12,7 @@ so that aergo can be unfroozen.
 
 .. code-block:: bash
 
-    $ python3 -m bridge_operator.bridge_deployer --help                                                                                                                                                                           18h17m ⚑ ◒  
+    $ python3 -m ethaergo_bridge_operator.bridge_deployer --help                                                                                                                                                                           18h17m ⚑ ◒  
         usage: bridge_deployer.py [-h] -c CONFIG_FILE_PATH -a AERGO -e ETH
                                   --t_anchor_eth T_ANCHOR_ETH --t_final_eth
                                   T_FINAL_ETH --t_anchor_aergo T_ANCHOR_AERGO
@@ -43,7 +43,7 @@ so that aergo can be unfroozen.
         --privkey_name PRIVKEY_NAME
                                 Name of account in config file to sign anchors
 
-    $ python3 -m bridge_operator.bridge_deployer -c './test_config.json' -a 'aergo-local' -e eth-poa-local --t_anchor_aergo 6 --t_final_aergo 4 --t_anchor_eth 7 --t_final_eth 5 --privkey_name "proposer"
+    $ python3 -m ethaergo_bridge_operator.bridge_deployer -c './test_config.json' -a 'aergo-local' -e eth-poa-local --t_anchor_aergo 6 --t_final_aergo 4 --t_anchor_eth 7 --t_final_eth 5 --privkey_name "proposer"
 
         ------ DEPLOY BRIDGE BETWEEN Aergo & Ethereum -----------
         ------ Connect AERGO -----------
