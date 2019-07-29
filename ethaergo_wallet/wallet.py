@@ -4,7 +4,7 @@ from typing import (
     Dict,
     Tuple
 )
-import wallet.wallet_utils as aergo_u
+import aergo_wallet.wallet_utils as aergo_u
 from eth_utils import (
     keccak,
 )
@@ -19,7 +19,7 @@ from ethaergo_wallet.wallet_utils import (
     is_aergo_address,
     is_ethereum_address
 )
-from wallet.exceptions import (
+from aergo_wallet.exceptions import (
     InsufficientBalanceError,
     InvalidArgumentsError,
 )

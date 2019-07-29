@@ -14,7 +14,7 @@ from web3 import (
     Web3,
 )
 import aergo.herapy as herapy
-from wallet.exceptions import (
+from aergo_wallet.exceptions import (
     InvalidMerkleProofError,
     TxError,
     InvalidArgumentsError

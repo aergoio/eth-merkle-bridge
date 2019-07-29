@@ -1,5 +1,5 @@
 import json
-from wallet.wallet import Wallet
+from aergo_wallet.wallet import AergoWallet
 from ethaergo_wallet.wallet import EthAergoWallet
 from ethaergo_wallet.eth_utils.contract_deployer import (
     deploy_contract,
@@ -16,7 +16,7 @@ import pytest
 
 @pytest.fixture(scope="session")
 def aergo_wallet():
-    wallet = Wallet("./test_config.json")
+    wallet = AergoWallet("./test_config.json")
     # deploy test token
     total_supply = 500*10**6*10**18
     with open("./contracts/lua/std_token_bytecode.txt", "r") as f:

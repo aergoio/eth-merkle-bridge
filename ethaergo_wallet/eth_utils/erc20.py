@@ -8,7 +8,7 @@ from web3.exceptions import (
     MismatchedABI,
     BadFunctionCallOutput,
 )
-from wallet.exceptions import (
+from aergo_wallet.exceptions import (
     InvalidArgumentsError,
     TxError
 )

@@ -1,6 +1,6 @@
 from getpass import getpass
 
-from wallet.wallet import Wallet
+from aergo_wallet.wallet import AergoWallet
 
 
 def freeze_aergo(
@@ -21,7 +21,7 @@ def freeze_aergo(
     if privkey_pwd is None:
         privkey_pwd = getpass("Decrypt Aergo private key '{}'\nPassword: "
                               .format(bridge_vault))
-    w = Wallet(config_file_path)
+    w = AergoWallet(config_file_path)
     aergo_bridge = w.config_data('networks', aergo_net, 'bridges', eth_net,
                                  'addr')
     tx_hash = w.transfer(amount, aergo_bridge, 'aergo', aergo_net,

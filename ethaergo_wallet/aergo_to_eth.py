@@ -9,7 +9,7 @@ from web3.exceptions import (
     BadFunctionCallOutput,
 )
 import aergo.herapy as herapy
-from wallet.exceptions import (
+from aergo_wallet.exceptions import (
     InvalidMerkleProofError,
     TxError,
     InvalidArgumentsError
