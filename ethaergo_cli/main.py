@@ -7,13 +7,13 @@ from pyfiglet import Figlet
 from ethaergo_wallet.wallet import (
     EthAergoWallet,
 )
-from wallet.exceptions import (
+from aergo_wallet.exceptions import (
     InvalidArgumentsError,
     TxError,
     InsufficientBalanceError,
 )
 
-from cli.utils import (
+from ethaergo_cli.utils import (
     confirm_transfer,
     prompt_amount,
     prompt_deposit_height,
@@ -1006,7 +1006,8 @@ class EthMerkleBridgeCli():
         later.
 
         """
-        with open(self.root_path + 'cli/pending_transfers.json', 'w') as file:
+        with open(self.root_path
+                  + 'ethaergo_cli/pending_transfers.json', 'w') as file:
             json.dump(self.pending_transfers, file, indent=4)
 
 

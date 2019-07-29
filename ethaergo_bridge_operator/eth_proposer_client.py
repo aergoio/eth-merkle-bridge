@@ -33,20 +33,20 @@ from eth_utils import (
     keccak,
 )
 
-from bridge_operator.bridge_operator_pb2_grpc import (
+from ethaergo_bridge_operator.bridge_operator_pb2_grpc import (
     BridgeOperatorStub,
 )
-from bridge_operator.bridge_operator_pb2 import (
+from ethaergo_bridge_operator.bridge_operator_pb2 import (
     Anchor,
     NewValidators,
     NewTempo
 )
-from bridge_operator.op_utils import (
+from ethaergo_bridge_operator.op_utils import (
     query_eth_tempo,
     query_eth_validators,
     query_eth_id,
 )
-from bridge_operator.exceptions import (
+from ethaergo_bridge_operator.exceptions import (
     ValidatorMajorityError,
 )
 

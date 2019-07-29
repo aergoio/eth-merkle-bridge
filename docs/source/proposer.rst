@@ -1,6 +1,13 @@
 Proposer
 ========
 
+A proposer connects to all validators and requests them to sign a new anchor 
+with the GetEthAnchorSignature and GetAergoAnchorSignature rpc requests.
+To prevent downtime, anybody can become a proposer and request signatures to validators.
+It is the validator's responsibility to only sign correct anchors.
+The bridge contracts will not update the state root if the anchoring time is not reached (t_anchor).
+
+
 Starting a Proposer
 -------------------
 

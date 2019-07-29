@@ -34,14 +34,14 @@ from eth_utils import (
     keccak,
 )
 
-from bridge_operator.bridge_operator_pb2_grpc import (
+from ethaergo_bridge_operator.bridge_operator_pb2_grpc import (
     BridgeOperatorServicer,
     add_BridgeOperatorServicer_to_server,
 )
-from bridge_operator.bridge_operator_pb2 import (
+from ethaergo_bridge_operator.bridge_operator_pb2 import (
     Approval,
 )
-from bridge_operator.op_utils import (
+from ethaergo_bridge_operator.op_utils import (
     query_aergo_tempo,
     query_eth_tempo,
     query_aergo_validators,

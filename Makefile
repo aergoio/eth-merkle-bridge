@@ -24,14 +24,14 @@ docker-eth:
 
 deploy_test_bridge:
 	python3 -m ethaergo_wallet.eth_utils.aergo_erc20_deployer
-	python3 -m bridge_operator.bridge_deployer -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --t_anchor_aergo 6 --t_final_aergo 4 --t_anchor_eth 7 --t_final_eth 5 --privkey_name "proposer"
-	python3 -m bridge_operator.freeze_aergo
+	python3 -m ethaergo_bridge_operator.bridge_deployer -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --t_anchor_aergo 6 --t_final_aergo 4 --t_anchor_eth 7 --t_final_eth 5 --privkey_name "proposer"
+	python3 -m ethaergo_bridge_operator.freeze_aergo
 
 proposer:
-	python3 -m bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 3 --privkey_name "proposer" --auto_update
+	python3 -m ethaergo_bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 3 --privkey_name "proposer" --auto_update
 
 validator:
-	python3 -m bridge_operator.validator_server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --auto_update --local_test
+	python3 -m ethaergo_bridge_operator.validator_server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --auto_update --local_test
 
 tests:
 	python3 -m pytest -s tests/
@@ -52,4 +52,4 @@ protoc:
 		-I proto \
 		--python_out=. \
 		--grpc_python_out=. \
-		./proto/bridge_operator/*.proto
+		./proto/ethaergo_bridge_operator/*.proto

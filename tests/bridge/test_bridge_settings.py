@@ -9,7 +9,7 @@ from web3.middleware import (
     geth_poa_middleware,
 )
 
-from bridge_operator.op_utils import (
+from ethaergo_bridge_operator.op_utils import (
     query_aergo_tempo,
     query_aergo_validators,
     query_eth_tempo,

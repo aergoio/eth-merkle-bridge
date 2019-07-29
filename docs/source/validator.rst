@@ -1,6 +1,12 @@
 Validator
 =========
 
+A validator will sign any state root from any proposer via the GetAnchorSignature rpc request as long as it is valid.
+Therefore a validator must run a full node.
+Assets on the sidechain are secure as long as 2/3 of the validators validate both chains and are honnest.
+Since signature verification only happens when anchoring (and not when transfering assets), 
+the number of validators can be very high as the signature verification cost is necessary only once per anchor.
+
 Starting a Validator
 --------------------
 

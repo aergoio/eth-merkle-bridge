@@ -2,9 +2,9 @@ Configuration file
 ==================
 
 The config file is used by the bridge operators, the wallet and the cli to store information about
-node connections, validator connections, bridge parameters, wallet assets and private keys.
+node connections, validator connections, bridge parameters, assets and private keys.
 
-It can be craeted and updated manually of with the help of the cli.
+It can be created and updated manually of with the help of the cli.
 
 .. code-block:: js
 

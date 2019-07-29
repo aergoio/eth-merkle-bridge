@@ -25,20 +25,20 @@ from aergo.herapy.utils.signature import (
     verify_sig,
 )
 
-from bridge_operator.bridge_operator_pb2_grpc import (
+from ethaergo_bridge_operator.bridge_operator_pb2_grpc import (
     BridgeOperatorStub,
 )
-from bridge_operator.bridge_operator_pb2 import (
+from ethaergo_bridge_operator.bridge_operator_pb2 import (
     Anchor,
     NewValidators,
     NewTempo
 )
-from bridge_operator.op_utils import (
+from ethaergo_bridge_operator.op_utils import (
     query_aergo_tempo,
     query_aergo_validators,
     query_aergo_id,
 )
-from bridge_operator.exceptions import (
+from ethaergo_bridge_operator.exceptions import (
     ValidatorMajorityError,
 )
 from web3 import (
