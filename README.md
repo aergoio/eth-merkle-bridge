@@ -21,20 +21,20 @@ $ pip install -r dev-dependencies.txt
 ## CLI
 The CLI can generate new config.json files, perform cross chain asset transfers and query balances and pending transfer amounts. 
 ```sh
-$ python3 -m cli.main
+$ python3 -m ethaergo_cli.main
 ```
 
 ## Bridge Operator
 ### Proposer
 Start a proposer between an Aergo and an Ethereum network
 ```sh
-$ python3 -m bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 3 --privkey_name "proposer" --auto_update
+$ python3 -m ethaergo_bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 3 --privkey_name "proposer" --auto_update
 ```
 
 ### Validator
 Start a validator between an Aergo and an Ethereum network
 ```sh
-$ python3 -m bridge_operator.validator_server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --auto_update
+$ python3 -m ethaergo_bridge_operator.validator_server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --auto_update
 ```
 
 ### Running tests
