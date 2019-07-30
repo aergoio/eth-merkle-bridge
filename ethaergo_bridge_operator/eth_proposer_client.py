@@ -8,7 +8,6 @@ import json
 from multiprocessing.dummy import (
     Pool,
 )
-import os
 import threading
 import time
 
@@ -83,7 +82,8 @@ class EthProposerClient(threading.Thread):
         privkey_name: str = None,
         privkey_pwd: str = None,
         tab: str = "",
-        auto_update: bool = False
+        auto_update: bool = False,
+        root_path: str = './'
     ) -> None:
         threading.Thread.__init__(self)
         self.config_file_path = config_file_path
@@ -152,8 +152,6 @@ class EthProposerClient(threading.Thread):
         if privkey_name is None:
             privkey_name = 'proposer'
         keystore = config_data["wallet-eth"][privkey_name]['keystore']
-        file_path = os.path.dirname(os.path.realpath(__file__))
-        root_path = os.path.dirname(file_path) + '/'
         with open(root_path + keystore, "r") as f:
             encrypted_key = f.read()
         if privkey_pwd is None:

@@ -12,7 +12,6 @@ import json
 from multiprocessing.dummy import (
     Pool,
 )
-import os
 import time
 
 from typing import (
@@ -72,6 +71,7 @@ class ValidatorService(BridgeOperatorServicer):
         privkey_pwd: str = None,
         validator_index: int = 0,
         auto_update: bool = False,
+        root_path: str = './'
     ) -> None:
         """ Initialize parameters of the bridge validator"""
         self.config_file_path = config_file_path
@@ -187,8 +187,6 @@ class ValidatorService(BridgeOperatorServicer):
 
         # record private key for signing AergoAnchor
         keystore = config_data["wallet-eth"][privkey_name]['keystore']
-        file_path = os.path.dirname(os.path.realpath(__file__))
-        root_path = os.path.dirname(file_path) + '/'
         with open(root_path + keystore, "r") as f:
             encrypted_key = f.read()
 
@@ -542,12 +540,13 @@ class ValidatorServer:
         privkey_pwd: str = None,
         validator_index: int = 0,
         auto_update: bool = False,
+        root_path: str = './'
     ) -> None:
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         add_BridgeOperatorServicer_to_server(
             ValidatorService(
                 config_file_path, aergo_net, eth_net, privkey_name,
-                privkey_pwd, validator_index, auto_update
+                privkey_pwd, validator_index, auto_update, root_path
             ),
             self.server
         )

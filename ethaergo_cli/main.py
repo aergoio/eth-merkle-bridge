@@ -46,14 +46,13 @@ class EthMerkleBridgeCli():
 
     """
 
-    def __init__(self):
+    def __init__(self, root_path: str = './'):
         """Load the pending transfers."""
-        file_path = os.path.dirname(os.path.realpath(__file__))
-        # root_path is the path/to/eth-merkle-bridge from which files are
-        # tracked
-        self.root_path = os.path.dirname(file_path) + '/'
-        with open(file_path + '/pending_transfers.json', 'r') as file:
+        # root_path is the path from which files are tracked
+        with open(root_path
+                  + 'ethaergo_cli/pending_transfers.json', 'r') as file:
             self.pending_transfers = json.load(file)
+        self.root_path = root_path
 
     def start(self):
         """Entry point of cli : load a wallet configuration file of create a
@@ -180,7 +179,7 @@ class EthMerkleBridgeCli():
         """
         col_widths = [24, 55, 23]
         print('Ethereum wallet: ')
-        print('   ==============')
+        print('=================')
         for wallet, info in self.wallet.config_data('wallet-eth').items():
             print('\n' + wallet + ': ' + info['addr'])
             print_balance_table_header()

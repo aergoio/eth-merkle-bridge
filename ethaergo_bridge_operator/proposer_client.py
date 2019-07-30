@@ -20,11 +20,12 @@ class ProposerClient:
         eth_block_time: int,
         privkey_name: str = None,
         privkey_pwd: str = None,
-        auto_update: bool = False
+        auto_update: bool = False,
+        root_path: str = './'
     ) -> None:
         self.t_eth_client = EthProposerClient(
             config_file_path, aergo_net, eth_net, privkey_name,
-            privkey_pwd, "", auto_update
+            privkey_pwd, "", auto_update, root_path
         )
         self.t_aergo_client = AergoProposerClient(
             config_file_path, aergo_net, eth_net, eth_block_time, privkey_name,

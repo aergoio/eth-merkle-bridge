@@ -1,5 +1,4 @@
 from getpass import getpass
-import os
 from typing import (
     Dict,
     Tuple
@@ -42,14 +41,15 @@ class EthAergoWallet(WalletConfig):
         self,
         config_file_path: str,
         config_data: Dict = None,
+        root_path: str = './'
     ) -> None:
         WalletConfig.__init__(self, config_file_path, config_data)
         self.gas_price = 0
         self.fee_price = 20  # gWei
-        # root_path is the path/to/eth-merkle-bridge from which files are
-        # tracked
-        file_path = os.path.dirname(os.path.realpath(__file__))
-        self.root_path = os.path.dirname(file_path) + '/'
+        # root_path is the path from which files are tracked
+        # this way if users use the same eth-merkle-bridge file structure,
+        # config files can be shared
+        self.root_path = root_path
 
     def eth_to_aergo_sidechain(
         self,
