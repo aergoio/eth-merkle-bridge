@@ -1,0 +1,54 @@
+language: python
+
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial
+
+services:
+  - docker
+
+install:
+  - pip install -r requirements.txt
+  - pip install -r dev-dependencies.txt
+
+before_script:
+  - docker build --build-arg GIT_TAG=5a16373a3c535f77304709f725e10284dccfbea1 -t aergo/node ./docker_test_nodes/aergo
+  - docker-compose -f ./docker/docker-compose.yml up&
+  - docker-compose -f ./docker_test_nodes/aergo/docker-compose.yml up&
+  - aergo_docker_pid=$!
+
+  - docker run --rm --name ethereum-node \
+    -v $(pwd)/docker_test_nodes/ethereum:/root \
+    -v $(pwd)/docker_test_nodes/ethereum/local-eth-poa.json:/root/local-eth-poa.json \
+    ethereum/client-go \
+    --datadir ./root init ./root/local-eth-poa.json
+  - docker run --rm --name ethereum-node -v $(pwd)/docker_test_nodes/ethereum:/root \
+    -v $(pwd)/docker_test_nodes/ethereum/bp_pwd.txt:/root/bp_pwd.txt \
+    -p 8545:8545 \
+    ethereum/client-go \
+    --nodiscover --datadir ./root \
+    --unlock "0x035d4303f9508ddcab6d074cbc5ed82cd0b436ad" --password ./root/bp_pwd.txt \
+    --mine --rpcapi web3,eth,net --rpcaddr 0.0.0.0 --rpcport 8545 --rpc --allow-insecure-unlock\
+    --verbosity 5 --rpccorsdomain="*"&
+  - eth_docker_pid=$!
+
+  - sleep 10
+
+  - make deploy_test_bridge
+
+  - make validator&
+  - validator_pid=$!
+
+  - make proposer&
+  - proposer_pid=$!
+
+script:
+  - make tests
+
+after_script: 
+  - kill $proposer_pid
+  - kill $validator_pid
+  - kill $aergo_docker_pid
+  - kill $eth_docker_pid
+  - make clean

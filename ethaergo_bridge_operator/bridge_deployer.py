@@ -180,6 +180,10 @@ if __name__ == '__main__':
     parser.add_argument(
         '--privkey_name', type=str, help='Name of account in config file '
         'to sign anchors', required=False)
+    parser.add_argument(
+        '--local_test', dest='local_test', action='store_true',
+        help='Start proposer with password for testing')
+    parser.set_defaults(local_test=False)
 
     args = parser.parse_args()
 
@@ -191,9 +195,18 @@ if __name__ == '__main__':
     # NOTE t_final is the minimum time to get lib : only informative (not
     # actually used in code except for Eth bridge because Eth doesn't have LIB)
 
-    deploy_bridge(
-        args.config_file_path, lua_bytecode_path, sol_bytecode_path,
-        bridge_abi_path, minted_erc20_abi_path, args.t_anchor_eth,
-        args.t_final_eth, args.t_anchor_aergo, args.t_final_aergo, args.eth,
-        args.aergo, 'aergo_erc20', privkey_name=args.privkey_name
-    )
+    if args.local_test:
+        deploy_bridge(
+            args.config_file_path, lua_bytecode_path, sol_bytecode_path,
+            bridge_abi_path, minted_erc20_abi_path, args.t_anchor_eth,
+            args.t_final_eth, args.t_anchor_aergo, args.t_final_aergo,
+            args.eth, args.aergo, 'aergo_erc20',
+            privkey_name=args.privkey_name, privkey_pwd='1234'
+        )
+    else:
+        deploy_bridge(
+            args.config_file_path, lua_bytecode_path, sol_bytecode_path,
+            bridge_abi_path, minted_erc20_abi_path, args.t_anchor_eth,
+            args.t_final_eth, args.t_anchor_aergo, args.t_final_aergo,
+            args.eth, args.aergo, 'aergo_erc20', privkey_name=args.privkey_name
+        )
