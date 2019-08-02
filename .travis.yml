@@ -17,19 +17,8 @@ before_script:
   - docker-compose -f ./docker_test_nodes/aergo/docker-compose.yml up&
   - aergo_docker_pid=$!
 
-  - docker run --rm --name ethereum-node \
-    -v $(pwd)/docker_test_nodes/ethereum:/root \
-    -v $(pwd)/docker_test_nodes/ethereum/local-eth-poa.json:/root/local-eth-poa.json \
-    ethereum/client-go \
-    --datadir ./root init ./root/local-eth-poa.json
-  - docker run --rm --name ethereum-node -v $(pwd)/docker_test_nodes/ethereum:/root \
-    -v $(pwd)/docker_test_nodes/ethereum/bp_pwd.txt:/root/bp_pwd.txt \
-    -p 8545:8545 \
-    ethereum/client-go \
-    --nodiscover --datadir ./root \
-    --unlock "0x035d4303f9508ddcab6d074cbc5ed82cd0b436ad" --password ./root/bp_pwd.txt \
-    --mine --rpcapi web3,eth,net --rpcaddr 0.0.0.0 --rpcport 8545 --rpc --allow-insecure-unlock\
-    --verbosity 5 --rpccorsdomain="*"&
+  - docker run --rm --name ethereum-node -v $(pwd)/docker_test_nodes/ethereum:/root -v $(pwd)/docker_test_nodes/ethereum/local-eth-poa.json:/root/local-eth-poa.json ethereum/client-go --datadir ./root init ./root/local-eth-poa.json
+  - docker run --rm --name ethereum-node -v $(pwd)/docker_test_nodes/ethereum:/root -v $(pwd)/docker_test_nodes/ethereum/bp_pwd.txt:/root/bp_pwd.txt -p 8545:8545 ethereum/client-go --nodiscover --datadir ./root --unlock "0x035d4303f9508ddcab6d074cbc5ed82cd0b436ad" --password ./root/bp_pwd.txt --mine --rpcapi web3,eth,net --rpcaddr 0.0.0.0 --rpcport 8545 --rpc --allow-insecure-unlock --verbosity 5 --rpccorsdomain="*"&
   - eth_docker_pid=$!
 
   - sleep 10
