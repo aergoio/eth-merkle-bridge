@@ -5,114 +5,109 @@ import "./minted_erc20.sol";
 contract EthMerkleBridge {
     // Trie root of the opposit side bridge contract. Mints and Unlocks require a merkle proof
     // of state inclusion in this last Root.
-    bytes32 public Root;
+    bytes32 public _anchorRoot;
     // Height of the last block anchored
-    uint public Height;
+    uint public _anchorHeight;
     //  2/3 of validators must sign a root update
-    address[] public Validators;
+    address[] public _validators;
     // Registers locked balances per account reference: user provides merkle proof of locked balance
-    mapping(bytes => uint) public Locks;
+    mapping(bytes => uint) public _locks;
     // Registers unlocked balances per account reference: prevents unlocking more than was burnt
-    mapping(bytes => uint) public Unlocks;
+    mapping(bytes => uint) public _unlocks;
     // Registers burnt balances per account reference : user provides merkle proof of burnt balance
-    mapping(bytes => uint) public Burns;
+    mapping(bytes => uint) public _burns;
     // Registers minted balances per account reference : prevents minting more than what was locked
-    mapping(bytes => uint) public Mints;
-    // BridgeTokens keeps track of tokens that were received through the bridge
-    mapping(string => MintedERC20) public BridgeTokens;
-    // MintedTokens is the same as BridgeTokens but keys and values are swapped
-    mapping(address => string) public MintedTokens;
-    // MintedTokens is used for preventing a minted token from being locked instead of burnt.
-    // T_anchor is the anchoring periode of the bridge
-    uint public T_anchor;
-    // T_final is the time after which the bridge operator consideres a block finalised
+    mapping(bytes => uint) public _mints;
+    // _bridgeTokens keeps track of tokens that were received through the bridge
+    mapping(string => MintedERC20) public _bridgeTokens;
+    // _mintedTokens is the same as _bridgeTokens but keys and values are swapped
+    // _mintedTokens is used for preventing a minted token from being locked instead of burnt.
+    mapping(address => string) public _mintedTokens;
+    // _tAnchor is the anchoring periode of the bridge
+    uint public _tAnchor;
+    // _tFinal is the time after which the bridge operator consideres a block finalised
     // this value is only useful if the anchored chain doesn't have LIB
     // Since Aergo has LIB it is a simple indicator for wallets.
-    uint public T_final;
+    uint public _tFinal;
 
-    // Nonce is a replay protection for validator and root updates.
-    uint public Nonce;
-    // ContractID is a replay protection between sidechains as the same addresses can be validators
+    // _nonce is a replay protection for validator and root updates.
+    uint public _nonce;
+    // _contractId is a replay protection between sidechains as the same addresses can be validators
     // on multiple chains.
-    bytes32 public ContractID;
+    bytes32 public _contractId;
 
     event newMintedERC20(string indexed origin, MintedERC20 indexed addr);
-    event lockEvent(IERC20 indexed token_address, string indexed receiver, uint amount);
-    event unlockEvent(IERC20 indexed token_address, address indexed receiver, uint amount);
-    event mintEvent(MintedERC20 indexed token_address, address indexed receiver, uint amount);
-    event burnEvent(MintedERC20 indexed token_address, string indexed receiver, uint amount);
+    event lockEvent(IERC20 indexed tokenAddress, string indexed receiver, uint amount);
+    event unlockEvent(IERC20 indexed tokenAddress, address indexed receiver, uint amount);
+    event mintEvent(MintedERC20 indexed tokenAddress, address indexed receiver, uint amount);
+    event burnEvent(MintedERC20 indexed tokenAddress, string indexed receiver, uint amount);
     event anchorEvent(bytes32 root, uint height);
-    event newValidatorsEvent(address[] new_validators);
-    event newTAnchorEvent(uint t_anchor);
-    event newTFinalEvent(uint t_final);
-
-
+    event newValidatorsEvent(address[] newValidators);
+    event newTAnchorEvent(uint tAnchor);
+    event newTFinalEvent(uint tFinal);
 
     constructor(
         address[] memory validators,
-        uint t_anchor,
-        uint t_final
+        uint tAnchor,
+        uint tFinal
 
     ) public {
-        T_anchor = t_anchor;
-        T_final = t_final;
-        Height = 0;
-        Nonce = 0;
-        Validators = validators;
-        ContractID = blockhash(block.number - 1);
-        Root = 0x28c5e719dc355014473f8796511132f0abdcde3fdc9114f2e7291e0752717c37;
+        _tAnchor = tAnchor;
+        _tFinal = tFinal;
+        _validators = validators;
+        _contractId = keccak256(abi.encodePacked(blockhash(block.number - 1), this));
     }
 
-    function get_validators() public view returns (address[] memory) {
-        return Validators;
+    function getValidators() public view returns (address[] memory) {
+        return _validators;
     }
 
-    function update_validators(
-        address[] memory new_validators,
+    function validatorsUpdate(
+        address[] memory newValidators,
         uint[] memory signers,
         uint8[] memory vs,
         bytes32[] memory rs,
         bytes32[] memory ss
     ) public {
         // validators should not sign a set that is equal to the current one to prevent spamming
-        bytes32 message = keccak256(abi.encodePacked(new_validators, Nonce, ContractID, "V"));
-        validate_signatures(message, signers, vs, rs, ss);
-        Validators = new_validators;
-        Nonce += 1;
-        emit newValidatorsEvent(new_validators);
+        bytes32 message = keccak256(abi.encodePacked(newValidators, _nonce, _contractId, "V"));
+        validateSignatures(message, signers, vs, rs, ss);
+        _validators = newValidators;
+        _nonce += 1;
+        emit newValidatorsEvent(newValidators);
     }
 
-    function update_t_anchor(
-        uint new_t_anchor,
+    function tAnchorUpdate(
+        uint tAnchor,
         uint[] memory signers,
         uint8[] memory vs,
         bytes32[] memory rs,
         bytes32[] memory ss
     ) public {
         // validators should not sign a number that is equal to the current one to prevent spamming
-        bytes32 message = keccak256(abi.encodePacked(new_t_anchor, Nonce, ContractID, "A"));
-        validate_signatures(message, signers, vs, rs, ss);
-        T_anchor = new_t_anchor;
-        Nonce += 1;
-        emit newTAnchorEvent(new_t_anchor);
+        bytes32 message = keccak256(abi.encodePacked(tAnchor, _nonce, _contractId, "A"));
+        validateSignatures(message, signers, vs, rs, ss);
+        _tAnchor = tAnchor;
+        _nonce += 1;
+        emit newTAnchorEvent(tAnchor);
     }
 
-    function update_t_final(
-        uint new_t_final,
+    function tFinalUpdate(
+        uint tFinal,
         uint[] memory signers,
         uint8[] memory vs,
         bytes32[] memory rs,
         bytes32[] memory ss
     ) public {
         // validators should not sign a number that is equal to the current one to prevent spamming
-        bytes32 message = keccak256(abi.encodePacked(new_t_final, Nonce, ContractID, "F"));
-        validate_signatures(message, signers, vs, rs, ss);
-        T_final = new_t_final;
-        Nonce += 1;
-        emit newTFinalEvent(new_t_final);
+        bytes32 message = keccak256(abi.encodePacked(tFinal, _nonce, _contractId, "F"));
+        validateSignatures(message, signers, vs, rs, ss);
+        _tFinal = tFinal;
+        _nonce += 1;
+        emit newTFinalEvent(tFinal);
     }
 
-    function set_root(
+    function newAnchor(
         bytes32 root,
         uint height,
         uint[] memory signers,
@@ -120,29 +115,29 @@ contract EthMerkleBridge {
         bytes32[] memory rs,
         bytes32[] memory ss
     ) public {
-        require(height > Height + T_anchor, "Next anchor height not reached");
-        bytes32 message = keccak256(abi.encodePacked(root, height, Nonce, ContractID, "R"));
-        validate_signatures(message, signers, vs, rs, ss);
-        Root = root;
-        Height = height;
-        Nonce += 1;
+        require(height > _anchorHeight + _tAnchor, "Next anchor height not reached");
+        bytes32 message = keccak256(abi.encodePacked(root, height, _nonce, _contractId, "R"));
+        validateSignatures(message, signers, vs, rs, ss);
+        _anchorRoot = root;
+        _anchorHeight = height;
+        _nonce += 1;
         emit anchorEvent(root, height);
     }
 
-    function validate_signatures(
+    function validateSignatures(
         bytes32 message,
         uint[] memory signers,
         uint8[] memory vs,
         bytes32[] memory rs,
         bytes32[] memory ss
     ) public view returns (bool) {
-        require(Validators.length*2 <= signers.length*3, "2/3 validators must sign");
+        require(_validators.length*2 <= signers.length*3, "2/3 validators must sign");
         for (uint i = 0; i < signers.length; i++) {
         if (i > 0) {
           require(signers[i] > signers[i-1], "Provide ordered signers");
         }
         address signer = ecrecover(message, vs[i], rs[i], ss[i]);
-        require(signer == Validators[signers[i]], "Signature doesn't match validator");
+        require(signer == _validators[signers[i]], "Signature doesn't match validator");
       }
         return true;
     }
@@ -153,8 +148,8 @@ contract EthMerkleBridge {
         IERC20 token
     ) public returns (bool) {
         // Add locked amount to total
-        bytes memory account_ref = abi.encodePacked(receiver, token);
-        Locks[account_ref] += amount;
+        bytes memory accountRef = abi.encodePacked(receiver, token);
+        _locks[accountRef] += amount;
         // Pull token from owner to bridge contract (owner must set approval before calling lock)
         // using msg.sender, the owner must call lock, but we can make delegated transfers with sender
         // address as parameter.
@@ -169,100 +164,100 @@ contract EthMerkleBridge {
         IERC20 token,
         bytes32[] memory mp, // bytes[] is not yet supported so we use a bitmap of proof elements
         bytes32 bitmap,
-        uint8 leaf_height
+        uint8 leafHeight
     ) public returns(bool) {
         require(balance>0, "Balance must be positive");
-        bytes memory account_ref = abi.encodePacked(receiver, address(token));
-        require(verify_mp("_sv_Burns-", account_ref, balance, mp, bitmap, leaf_height), "Failed to verify lock proof");
-        uint unlocked_so_far = Unlocks[account_ref];
-        uint to_transfer = balance - unlocked_so_far;
-        require(to_transfer>0, "Burn tokens before unlocking");
-        Unlocks[account_ref] = balance;
-        require(token.transfer(receiver, to_transfer), "Failed to transfer unlock");
-        emit unlockEvent(token, receiver, to_transfer);
+        bytes memory accountRef = abi.encodePacked(receiver, address(token));
+        require(verifyMp("_sv__burns-", accountRef, balance, mp, bitmap, leafHeight), "Failed to verify lock proof");
+        uint unlockedSoFar = _unlocks[accountRef];
+        uint amountToTransfer = balance - unlockedSoFar;
+        require(amountToTransfer>0, "Burn tokens before unlocking");
+        _unlocks[accountRef] = balance;
+        require(token.transfer(receiver, amountToTransfer), "Failed to transfer unlock");
+        emit unlockEvent(token, receiver, amountToTransfer);
         return true;
     }
 
     function mint(
         address receiver,
         uint balance,
-        string memory token_origin,
+        string memory tokenOrigin,
         bytes32[] memory mp, // bytes[] is not yet supported so we use a bitmap of proof elements
         bytes32 bitmap,
-        uint8 leaf_height
+        uint8 leafHeight
     ) public returns(bool) {
         require(balance>0, "Balance must be positive");
-        bytes memory account_ref = abi.encodePacked(receiver, token_origin);
-        require(verify_mp("_sv_Locks-", account_ref, balance, mp, bitmap, leaf_height), "Failed to verify lock proof");
-        uint minted_so_far = Mints[account_ref];
-        uint to_transfer = balance - minted_so_far;
-        require(to_transfer>0, "Lock tokens before minting");
-        MintedERC20 mint_address = BridgeTokens[token_origin];
-        if (mint_address == MintedERC20(0)) {
+        bytes memory accountRef = abi.encodePacked(receiver, tokenOrigin);
+        require(verifyMp("_sv__locks-", accountRef, balance, mp, bitmap, leafHeight), "Failed to verify lock proof");
+        uint mintedSoFar = _mints[accountRef];
+        uint amountToTransfer = balance - mintedSoFar;
+        require(amountToTransfer>0, "Lock tokens before minting");
+        MintedERC20 mintAddress = _bridgeTokens[tokenOrigin];
+        if (mintAddress == MintedERC20(0)) {
             // first time bridging this token
-            mint_address = new MintedERC20();
-            BridgeTokens[token_origin] = mint_address;
-            MintedTokens[address(mint_address)] = token_origin;
-            emit newMintedERC20(token_origin, mint_address);
+            mintAddress = new MintedERC20();
+            _bridgeTokens[tokenOrigin] = mintAddress;
+            _mintedTokens[address(mintAddress)] = tokenOrigin;
+            emit newMintedERC20(tokenOrigin, mintAddress);
         }
-        Mints[account_ref] = balance;
-        require(mint_address.mint(receiver, to_transfer), "Failed to mint");
-        emit mintEvent(mint_address, receiver, to_transfer);
+        _mints[accountRef] = balance;
+        require(mintAddress.mint(receiver, amountToTransfer), "Failed to mint");
+        emit mintEvent(mintAddress, receiver, amountToTransfer);
         return true;
     }
 
     function burn(
         string memory receiver,
         uint amount,
-        MintedERC20 mint_address
+        MintedERC20 mintAddress
     ) public returns (bool) {
-        string memory origin_address = MintedTokens[address(mint_address)];
-        require(bytes(origin_address).length != 0, "cannot burn token : must have been minted by bridge");
+        string memory originAddress = _mintedTokens[address(mintAddress)];
+        require(bytes(originAddress).length != 0, "cannot burn token : must have been minted by bridge");
         // Add burnt amount to total
-        bytes memory account_ref = abi.encodePacked(receiver, origin_address);
-        Burns[account_ref] += amount;
+        bytes memory accountRef = abi.encodePacked(receiver, originAddress);
+        _burns[accountRef] += amount;
         // Burn token
-        require(mint_address.burn(msg.sender, amount), "Failed to burn");
-        emit burnEvent(mint_address, receiver, amount);
+        require(mintAddress.burn(msg.sender, amount), "Failed to burn");
+        emit burnEvent(mintAddress, receiver, amount);
         return true;
     }
 
-    function verify_mp(
-        string memory map_name,
-        bytes memory account_ref,
+    function verifyMp(
+        string memory mapName,
+        bytes memory accountRef,
         uint balance,
         bytes32[] memory mp, // bytes[] is not yet supported so we use a bitmap of proof elements
         bytes32 bitmap,
-        uint8 leaf_height
+        uint8 leafHeight
     ) public view returns(bool) {
-        bytes32 trie_key = sha256(abi.encodePacked(map_name, account_ref));
-        bytes32 trie_value = sha256(abi.encodePacked("\"", uint_to_str(balance), "\""));
-        bytes32 node_hash = sha256(abi.encodePacked(trie_key, trie_value, uint8(256-leaf_height)));
-        uint proof_index = 0;
-        for (uint8 i = leaf_height; i>0; i--){
-            if (bit_is_set(bitmap, leaf_height-i)) {
-                if (bit_is_set(trie_key, i-1)) {
-                    node_hash = sha256(abi.encodePacked(mp[proof_index], node_hash));
+        bytes32 trieKey = sha256(abi.encodePacked(mapName, accountRef));
+        bytes32 trieValue = sha256(abi.encodePacked("\"", uintToString(balance), "\""));
+        bytes32 nodeHash = sha256(abi.encodePacked(trieKey, trieValue, uint8(256-leafHeight)));
+        uint proofIndex = 0;
+        for (uint8 i = leafHeight; i>0; i--){
+            if (bitIsSet(bitmap, leafHeight-i)) {
+                if (bitIsSet(trieKey, i-1)) {
+                    nodeHash = sha256(abi.encodePacked(mp[proofIndex], nodeHash));
                 } else {
-                    node_hash = sha256(abi.encodePacked(node_hash, mp[proof_index]));
+                    nodeHash = sha256(abi.encodePacked(nodeHash, mp[proofIndex]));
                 }
-                proof_index++;
+                proofIndex++;
             } else {
-                if (bit_is_set(trie_key, i-1)) {
-                    node_hash = sha256(abi.encodePacked(byte(0x00), node_hash));
+                if (bitIsSet(trieKey, i-1)) {
+                    nodeHash = sha256(abi.encodePacked(byte(0x00), nodeHash));
                 } else {
-                    node_hash = sha256(abi.encodePacked(node_hash, byte(0x00)));
+                    nodeHash = sha256(abi.encodePacked(nodeHash, byte(0x00)));
                 }
             }
         }
-        return Root == node_hash;
+        return _anchorRoot == nodeHash;
     }
 
-    function bit_is_set(bytes32 bits, uint8 i) public pure returns (bool) {
+    function bitIsSet(bytes32 bits, uint8 i) public pure returns (bool) {
         return bits[i/8]&bytes1(uint8(1)<<uint8(7-i%8)) != 0;
     }
 
-    function uint_to_str(uint num) public pure returns(string memory) {
+    function uintToString(uint num) public pure returns(string memory) {
         // https://github.com/oraclize/ethereum-api/blob/6fb6e887e7b95c496fd723a7c62ce40551f8028a/oraclizeAPI_0.5.sol#L1041
         if (num == 0) {
             return "0";

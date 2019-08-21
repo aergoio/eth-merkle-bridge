@@ -120,17 +120,16 @@ def mint(
         )
     ap = format_proof_for_lua(lock_proof.storageProof[0].proof)
     balance = int.from_bytes(lock_proof.storageProof[0].value, "big")
+    ubig_balance = {'_bignum': str(balance)}
     # call unlock on aergo_to with the burn proof from aergo_from
     tx, result = aergo_to.call_sc(bridge_to, "mint",
-                                  args=[receiver, balance,
+                                  args=[receiver, ubig_balance,
                                         token_origin[2:].lower(), ap])
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Mint asset Tx commit failed : {}".format(result))
-    time.sleep(3)
 
-    result = aergo_to.get_tx_result(tx.tx_hash)
+    result = aergo_to.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
-        print(lock_proof, result)
         raise TxError("Mint asset Tx execution failed : {}".format(result))
     token_pegged = json.loads(result.detail)[0]
     return token_pegged, str(tx.tx_hash)
@@ -230,17 +229,16 @@ def unlock(
         )
     ap = format_proof_for_lua(burn_proof.storageProof[0].proof)
     balance = int.from_bytes(burn_proof.storageProof[0].value, "big")
+    ubig_balance = {'_bignum': str(balance)}
     # call unlock on aergo_to with the burn proof from aergo_from
     tx, result = aergo_to.call_sc(bridge_to, "unlock",
-                                  args=[receiver, balance,
+                                  args=[receiver, ubig_balance,
                                         token_origin, ap])
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Unlock asset Tx commit failed : {}".format(result))
-    time.sleep(3)
 
-    result = aergo_to.get_tx_result(tx.tx_hash)
+    result = aergo_to.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
-        print(burn_proof, result)
         raise TxError("Unlock asset Tx execution failed : {}".format(result))
     return str(tx.tx_hash)
 
@@ -260,14 +258,14 @@ def unfreeze(
         )
     ap = format_proof_for_lua(lock_proof.storageProof[0].proof)
     balance = int.from_bytes(lock_proof.storageProof[0].value, "big")
+    ubig_balance = {'_bignum': str(balance)}
     # call unlock on aergo_to with the burn proof from aergo_from
     tx, result = aergo_to.call_sc(bridge_to, "unfreeze",
-                                  args=[receiver, balance, ap])
+                                  args=[receiver, ubig_balance, ap])
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Mint asset Tx commit failed : {}".format(result))
-    time.sleep(3)
 
-    result = aergo_to.get_tx_result(tx.tx_hash)
+    result = aergo_to.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Mint asset Tx execution failed : {}".format(result))
     return str(tx.tx_hash)
@@ -287,7 +285,7 @@ def _build_deposit_proof(
     bridge_from = Web3.toChecksumAddress(bridge_from)
     # check last merged height
     _, aergo_current_height = aergo_to.get_blockchain_status()
-    anchor_info = aergo_to.query_sc_state(bridge_to, ["_sv_Height"])
+    anchor_info = aergo_to.query_sc_state(bridge_to, ["_sv__anchorHeight"])
     if not anchor_info.account.state_proof.inclusion:
         raise InvalidArgumentsError(
             "Contract doesnt exist in state, check contract deployed and "
@@ -298,7 +296,7 @@ def _build_deposit_proof(
     last_merged_height_to = int(anchor_info.var_proofs[0].value)
     # waite for anchor containing our transfer
     stream = aergo_to.receive_event_stream(
-        bridge_to, "set_root", start_block_no=aergo_current_height
+        bridge_to, "newAnchor", start_block_no=aergo_current_height
     )
     while last_merged_height_to < deposit_height:
         print("\u23F0 deposit not recorded in current anchor, waiting new "
@@ -307,8 +305,8 @@ def _build_deposit_proof(
               "last anchor height : {} "
               .format(deposit_height, last_merged_height_to)
               )
-        set_root_event = next(stream)
-        last_merged_height_to = set_root_event.arguments[0]
+        new_anchor_event = next(stream)
+        last_merged_height_to = new_anchor_event.arguments[1]
     stream.stop()
     # get inclusion proof of lock in last merged block
     block = w3.eth.getBlock(last_merged_height_to)
@@ -342,7 +340,7 @@ def withdrawable(
 
     # get total withdrawn and last anchor height
     withdraw_proof = hera.query_sc_state(
-        bridge_to, ["_sv_Height", aergo_storage_key],
+        bridge_to, ["_sv__anchorHeight", aergo_storage_key],
         compressed=False
     )
     if not withdraw_proof.account.state_proof.inclusion:

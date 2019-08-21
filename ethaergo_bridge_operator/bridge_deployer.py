@@ -116,7 +116,7 @@ def deploy_bridge(
 
     print("------ Deploy Ethereum SC -----------")
     receipt = deploy_contract(
-        sol_bytecode, bridge_abi, w3, 6700000, 20, privkey,
+        sol_bytecode, bridge_abi, w3, 8000000, 20, privkey,
         eth_validators,
         t_anchor_eth, t_final_eth
     )

@@ -248,7 +248,7 @@ class AergoProposerClient(threading.Thread):
             wait = (merged_height + self.t_anchor) - lib + 1
         return lib
 
-    def set_root(
+    def new_anchor(
         self,
         root: str,
         next_anchor_height: int,
@@ -257,7 +257,7 @@ class AergoProposerClient(threading.Thread):
     ) -> None:
         """Anchor a new root on chain"""
         tx, result = self.hera.call_sc(
-            self.aergo_bridge, "set_root",
+            self.aergo_bridge, "newAnchor",
             args=[root, next_anchor_height, validator_indexes, sigs]
         )
         if result.status != herapy.CommitStatus.TX_OK:
@@ -284,11 +284,11 @@ class AergoProposerClient(threading.Thread):
         while True:  # anchor a new root
             # Get last merge information
             status = self.hera.query_sc_state(self.aergo_bridge,
-                                              ["_sv_Height",
-                                               "_sv_Root",
-                                               "_sv_Nonce",
-                                               "_sv_T_anchor",
-                                               "_sv_T_final"
+                                              ["_sv__anchorHeight",
+                                               "_sv__anchorRoot",
+                                               "_sv__nonce",
+                                               "_sv__tAnchor",
+                                               "_sv__tFinal"
                                                ])
             height_from, root_from, nonce_to, t_anchor, t_final = \
                 [proof.value for proof in status.var_proofs]
@@ -323,7 +323,7 @@ class AergoProposerClient(threading.Thread):
                   .format(self.tab, u'\U0001f58b'))
 
             nonce_to = int(self.hera.query_sc_state(
-                self.aergo_bridge, ["_sv_Nonce"]
+                self.aergo_bridge, ["_sv__nonce"]
             ).var_proofs[0].value)
 
             try:
@@ -340,7 +340,7 @@ class AergoProposerClient(threading.Thread):
 
             # don't broadcast if somebody else already did
             last_merge = self.hera.query_sc_state(self.aergo_bridge,
-                                                  ["_sv_Height"])
+                                                  ["_sv__anchorHeight"])
             merged_height = int(last_merge.var_proofs[0].value)
             if merged_height + self.t_anchor >= next_anchor_height:
                 print("{}Not yet anchor time "
@@ -350,7 +350,7 @@ class AergoProposerClient(threading.Thread):
                 continue
 
             # Broadcast finalised merge block
-            self.set_root(root, next_anchor_height, validator_indexes, sigs)
+            self.new_anchor(root, next_anchor_height, validator_indexes, sigs)
             self.monitor_settings_and_sleep(
                 self.t_anchor * self.eth_block_time)
 
@@ -432,7 +432,7 @@ class AergoProposerClient(threading.Thread):
     def set_validators(self, new_validators, validator_indexes, sigs):
         """Update validators on chain"""
         tx, result = self.hera.call_sc(
-            self.aergo_bridge, "update_validators",
+            self.aergo_bridge, "validatorsUpdate",
             args=[new_validators, validator_indexes, sigs]
         )
         if result.status != herapy.CommitStatus.TX_OK:
@@ -454,7 +454,7 @@ class AergoProposerClient(threading.Thread):
         """Request approvals of validators for the new validator set."""
         nonce = int(
             self.hera.query_sc_state(
-                self.aergo_bridge, ["_sv_Nonce"]).var_proofs[0].value
+                self.aergo_bridge, ["_sv__nonce"]).var_proofs[0].value
         )
         new_validators_msg = NewValidators(
             validators=validators, destination_nonce=nonce)
@@ -487,7 +487,7 @@ class AergoProposerClient(threading.Thread):
                   .format(self.tab))
             return
         # broadcast transaction
-        self.set_tempo(t_anchor, validator_indexes, sigs, "update_t_anchor")
+        self.set_tempo(t_anchor, validator_indexes, sigs, "tAnchorUpdate")
 
     def set_tempo(
         self,
@@ -529,13 +529,13 @@ class AergoProposerClient(threading.Thread):
                   .format(self.tab))
             return
         # broadcast transaction
-        self.set_tempo(t_final, validator_indexes, sigs, "update_t_final")
+        self.set_tempo(t_final, validator_indexes, sigs, "tFinalUpdate")
 
     def get_tempo_signatures(self, tempo, rpc_service, tempo_id):
         """Request approvals of validators for the new t_anchor or t_final."""
         nonce = int(
             self.hera.query_sc_state(
-                self.aergo_bridge, ["_sv_Nonce"]).var_proofs[0].value
+                self.aergo_bridge, ["_sv__nonce"]).var_proofs[0].value
         )
         new_tempo_msg = NewTempo(tempo=tempo, destination_nonce=nonce)
         msg = bytes(

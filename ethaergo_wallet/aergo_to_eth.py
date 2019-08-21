@@ -28,7 +28,6 @@ def lock(
     asset: str,
     fee_limit: int,
     fee_price: int,
-    signed_transfer: Tuple[int, str],
 ) -> Tuple[int, str]:
     """ Lock can be called to lock aer or tokens.
         it supports delegated transfers when tx broadcaster is not
@@ -42,10 +41,10 @@ def lock(
         raise InvalidArgumentsError(
             "asset {} must be an Aergo address".format(asset)
         )
-    args = (receiver[2:].lower(), str(value), asset) + signed_transfer
-    tx, result = aergo_from.call_sc(bridge_from, "lock",
-                                    args=args,
-                                    amount=0)
+    args = (bridge_from, {"_bignum": str(value)}, receiver[2:].lower())
+    tx, result = aergo_from.call_sc(
+        asset, "transfer", args=args, amount=0
+    )
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Lock asset Tx commit failed : {}".format(result))
 
@@ -80,7 +79,7 @@ def build_lock_proof(
         raise InvalidArgumentsError(
             "token_origin {} must be an Aergo address".format(token_origin)
         )
-    trie_key = "_sv_Locks-".encode('utf-8') + bytes.fromhex(receiver[2:]) \
+    trie_key = "_sv__locks-".encode('utf-8') + bytes.fromhex(receiver[2:]) \
         + token_origin.encode('utf-8')
     return _build_deposit_proof(
         aergo_from, w3, bridge_from, bridge_to, bridge_to_abi, lock_height,
@@ -136,7 +135,7 @@ def mint(
         print(lock_proof, receipt)
         raise TxError("Mint asset Tx execution failed")
     events = eth_bridge.events.mintEvent().processReceipt(receipt)
-    token_pegged = events[0]['args']['token_address']
+    token_pegged = events[0]['args']['tokenAddress']
 
     return token_pegged, tx_hash.hex()
 
@@ -159,7 +158,7 @@ def burn(
         raise InvalidArgumentsError(
             "token_pegged {} must be an Aergo address".format(token_pegged)
         )
-    args = (receiver[2:].lower(), str(value), token_pegged)
+    args = (receiver[2:].lower(), {"_bignum": str(value)}, token_pegged)
     tx, result = aergo_from.call_sc(bridge_from, "burn", args=args)
 
     if result.status != herapy.CommitStatus.TX_OK:
@@ -196,7 +195,7 @@ def build_burn_proof(
         raise InvalidArgumentsError(
             "token_origin {} must be an Ethereum address".format(token_origin)
         )
-    trie_key = "_sv_Burns-".encode('utf-8') + bytes.fromhex(receiver[2:]) \
+    trie_key = "_sv__burns-".encode('utf-8') + bytes.fromhex(receiver[2:]) \
         + bytes.fromhex(token_origin[2:])
     return _build_deposit_proof(
         aergo_from, w3, bridge_from, bridge_to, bridge_to_abi, burn_height,
@@ -267,7 +266,7 @@ def freeze(
         raise InvalidArgumentsError(
             "Receiver {} must be an Ethereum address".format(receiver)
         )
-    args = (receiver[2:].lower(), str(value))
+    args = (receiver[2:].lower(), {"_bignum": str(value)})
     tx, result = aergo_from.call_sc(
         bridge_from, "freeze", amount=value, args=args
     )
@@ -303,7 +302,7 @@ def _build_deposit_proof(
         abi=bridge_to_abi
     )
     try:
-        last_merged_height_to = eth_bridge.functions.Height().call()
+        last_merged_height_to = eth_bridge.functions._anchorHeight().call()
     except BadFunctionCallOutput as e:
         raise InvalidArgumentsError(e, bridge_to)
     # waite for anchor containing our transfer
@@ -316,7 +315,7 @@ def _build_deposit_proof(
               )
         while last_merged_height_to < deposit_height:
             time.sleep(1)
-            last_merged_height_to = eth_bridge.functions.Height().call()
+            last_merged_height_to = eth_bridge.functions._anchorHeight().call()
     # get inclusion proof of lock in last merged block
     merge_block_from = aergo_from.get_block(block_height=last_merged_height_to)
     proof = aergo_from.query_sc_state(

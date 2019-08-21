@@ -396,7 +396,7 @@ class EthAergoWallet(WalletConfig):
             receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
         position = b'\x03'  # Locks
         eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
-        aergo_storage_key = '_sv_Mints-' + receiver + token_origin[2:].lower()
+        aergo_storage_key = '_sv__mints-' + receiver + token_origin[2:].lower()
         return eth_to_aergo.withdrawable(
             bridge_from, bridge_to, w3, hera, eth_trie_key, aergo_storage_key
         )
@@ -427,7 +427,7 @@ class EthAergoWallet(WalletConfig):
         position = b'\x05'  # Burns
         eth_trie_key = keccak(account_ref.encode('utf-8')
                               + position.rjust(32, b'\0'))
-        aergo_storage_key = '_sv_Unlocks-' + account_ref
+        aergo_storage_key = '_sv__unlocks-' + account_ref
         return eth_to_aergo.withdrawable(
             bridge_from, bridge_to, w3, hera, eth_trie_key, aergo_storage_key
         )
@@ -458,7 +458,7 @@ class EthAergoWallet(WalletConfig):
         position = b'\x03'  # Locks
         eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
         aergo_storage_key = \
-            '_sv_Unfreezes-' + receiver + token_origin[2:].lower()
+            '_sv__unfreezes-' + receiver + token_origin[2:].lower()
         return eth_to_aergo.withdrawable(
             bridge_from, bridge_to, w3, hera, eth_trie_key, aergo_storage_key
         )
@@ -536,26 +536,21 @@ class EthAergoWallet(WalletConfig):
         bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
         asset_address = self.get_asset_address(asset_name, from_chain)
 
-        # sign transfer so bridge can pull tokens to lock.
         fee_limit = 0
-        signed_transfer, balance = \
-            aergo_u.get_signed_transfer(amount, bridge_from, asset_address,
-                                        aergo_from)
-        signed_transfer = signed_transfer[:2]  # only nonce, sig are needed
+        balance = aergo_u.get_balance(sender, asset_address, aergo_from)
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
+        print("\U0001f4b0 {} balance on origin before transfer: {}"
+              .format(asset_name, balance/10**18))
 
         aer_balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
         if aer_balance < fee_limit*self.fee_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
-        print("\U0001f4b0 {} balance on origin before transfer: {}"
-              .format(asset_name, balance/10**18))
-
         lock_height, tx_hash = aergo_to_eth.lock(
             aergo_from, bridge_from, receiver, amount,
-            asset_address, fee_limit, self.fee_price, signed_transfer
+            asset_address, fee_limit, self.fee_price
         )
         print('\U0001f512 Lock success: ', tx_hash)
 
@@ -781,7 +776,7 @@ class EthAergoWallet(WalletConfig):
             bytes.fromhex(receiver[2:]) + token_origin.encode('utf-8')
         position = b'\x06'  # Mints
         eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
-        aergo_storage_key = '_sv_Locks-'.encode('utf-8') \
+        aergo_storage_key = '_sv__locks-'.encode('utf-8') \
             + bytes.fromhex(receiver[2:]) + token_origin.encode('utf-8')
         return aergo_to_eth.withdrawable(
             bridge_from, bridge_to, hera, w3, aergo_storage_key, eth_trie_key
@@ -813,7 +808,7 @@ class EthAergoWallet(WalletConfig):
         position = b'\x04'  # Unlocks
         eth_trie_key = keccak(
             bytes.fromhex(account_ref) + position.rjust(32, b'\0'))
-        aergo_storage_key = '_sv_Burns-'.encode('utf-8') \
+        aergo_storage_key = '_sv__burns-'.encode('utf-8') \
             + bytes.fromhex(account_ref)
         return aergo_to_eth.withdrawable(
             bridge_from, bridge_to, hera, w3, aergo_storage_key, eth_trie_key

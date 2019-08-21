@@ -5,14 +5,20 @@ import "github.com/OpenZeppelin/openzeppelin-solidity/contracts/token/ERC20/ERC2
 
 contract MintedERC20 is ERC20 {
 
-    address creator;
+    address _creator;
+    //string public _name;
+    string public constant _symbol = 'PEG';
+    uint8 public constant _decimals = 18;
 
     constructor() public {
-        creator = msg.sender;
+        _creator = msg.sender;
+        //_name = originAddress; storing the name causes payload too large eip170.
+        // we can make a contract factory for creating MintedERC20,
+        // but nice to have a single contract if possible.
     }
 
     modifier onlyCreator() {
-        require(msg.sender == creator, "Only creator can mint");
+        require(msg.sender == _creator, "Only creator can mint");
         _;
     }
 

@@ -1,30 +1,35 @@
-local address = {}
-function address.isValidAddress(address)
-  -- check existence of invalid alphabets
-  if nil ~= string.match(address, '[^123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]') then
-    return false
-  end
-  -- check lenght is in range
-  if 52 ~= string.len(address) then
-    return false
-  end
-  -- TODO add checksum verification
-  return true
-end
-function address.isEthAddress(address)
-  -- check existence of invalid alphabets
-  if nil ~= string.match(address, '[^0123456789abcdef]') then
-    return false
-  end
-  -- check length
-  if 40 ~= string.len(address) then
-    return false
-  end
-  return true
-end
-
-
+------------------------------------------------------------------------------
 -- Merkle bridge contract
+------------------------------------------------------------------------------
+
+-- Internal type check function
+-- @type internal
+-- @param x variable to check
+-- @param t (string) expected type
+local function _typecheck(x, t)
+  if (x and t == 'address') then
+    assert(type(x) == 'string', "address must be string type")
+    -- check address length
+    assert(52 == #x, string.format("invalid address length: %s (%s)", x, #x))
+    -- check character
+    local invalidChar = string.match(x, '[^123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]')
+    assert(nil == invalidChar, string.format("invalid address format: %s contains invalid char %s", x, invalidChar or 'nil'))
+  elseif (x and t == 'ethaddress') then
+    assert(type(x) == 'string', "eth address must be string type")
+    -- check address length
+    assert(40 == #x, string.format("invalid eth address length: %s (%s)", x, #x))
+    -- check character
+    local invalidChar = string.match(x, '[^0123456789abcdef]')
+    assert(nil == invalidChar, string.format("invalid eth address format: %s contains invalid char %s", x, invalidChar or 'nil'))
+  elseif (x and t == 'ubig') then
+    -- check unsigned bignum
+    assert(bignum.isbignum(x), string.format("invalid type: %s != %s", type(x), t))
+    assert(x >= bignum.number(0), string.format("%s must be positive number", bignum.tostring(x)))
+  else
+    -- check default lua types
+    assert(type(x) == t, string.format("invalid type: %s != %s", type(x), t or 'nil'))
+  end
+end
 
 -- Stores latest finalised bridge contract state root of ethereum blockchain at regular intervals.
 -- Enables Users to verify state information of the connected chain 
@@ -32,138 +37,88 @@ end
 state.var {
     -- Trie root of the opposit side bridge contract. Mints and Unlocks require a merkle proof
     -- of state inclusion in this last Root.
-    Root = state.value(),
+    -- (hex string without 0x prefix)
+    _anchorRoot = state.value(),
     -- Height of the last block anchored
-    Height = state.value(),
+    -- (uint)
+    _anchorHeight = state.value(),
     -- Validators contains the addresses and 2/3 of them must sign a root update
     -- The index of validators starts at 1.
-    Validators = state.map(),
+    -- (uint) -> (address) 
+    _validators = state.map(),
     -- Number of validators registered in the Validators map
-    Nb_Validators= state.value(),
+    -- (uint)
+    _validatorsCount = state.value(),
     -- Registers locked balances per account reference: user provides merkle proof of locked balance
-    Locks = state.map(),
+    -- (account ref string) -> (string uint)
+    _locks = state.map(),
     -- Registers unlocked balances per account reference: prevents unlocking more than was burnt
-    Unlocks = state.map(),
+    -- (account ref string) -> (string uint)
+    _unlocks = state.map(),
     -- Registers burnt balances per account reference : user provides merkle proof of burnt balance
-    Burns = state.map(),
+    -- (account ref string) -> (string uint)
+    _burns = state.map(),
     -- Registers minted balances per account reference : prevents minting more than what was locked
-    Mints = state.map(),
+    -- (account ref string) -> (string uint)
+    _mints = state.map(),
     -- Registers unfreezed balances per account reference : prevents unfreezing more than was locked
-    Unfreezes = state.map(),
-    -- BridgeTokens keeps track of tokens that were received through the bridge
-    BridgeTokens = state.map(),
-    -- MintedTokens is the same as BridgeTokens but keys and values are swapped
-    -- MintedTokens is used for preventing a minted token from being locked instead of burnt.
-    MintedTokens = state.map(),
-    -- T_anchor is the anchoring periode of the bridge
-    T_anchor = state.value(),
-    -- T_final is the time after which the bridge operator consideres a block finalised
+    -- (account ref string) -> (string uint)
+    _unfreezes = state.map(),
+    -- _bridgeTokens keeps track of tokens that were received through the bridge
+    -- (Ethereum address) -> (Aergo address)
+    _bridgeTokens = state.map(),
+    -- _mintedTokens is the same as BridgeTokens but keys and values are swapped
+    -- _mintedTokens is used for preventing a minted token from being locked instead of burnt.
+    -- (Aergo address) -> (Ethereum address)
+    _mintedTokens = state.map(),
+    -- _tAnchor is the anchoring periode of the bridge
+    -- (uint)
+    _tAnchor = state.value(),
+    -- _tFinal is the time after which the bridge operator consideres a block finalised
     -- this value is only useful if the anchored chain doesn't have LIB
-    T_final = state.value(),
-    -- Nonce is a replay protection for validator and root updates.
-    Nonce = state.value(),
-    -- ContractID is a replay protection between sidechains as the same addresses can be validators
+    -- (uint)
+    _tFinal = state.value(),
+    -- _nonce is a replay protection for validator and root updates.
+    -- (uint)
+    _nonce = state.value(),
+    -- _contractId is a replay protection between sidechains as the same addresses can be validators
     -- on multiple chains.
-    ContractID = state.value(),
-    -- AergoERC20 is the Aergo token contract address bytes on ethereum
-    AergoERC20 = state.value(),
+    -- (string)
+    _contractId = state.value(),
+    -- _aergoErc20Bytes is the Aergo token contract address bytes on Ethereum
+    -- (Ethereum address)
+    _aergoErc20Bytes = state.value(),
+    -- unfreezeFee gives a fee to the tx sender to enable free unfreezing of aergo on mainnet
+    _unfreezeFee = state.value(),
 }
 
-function constructor(aergo_erc20, addresses, t_anchor, t_final)
-    AergoERC20:set(abi_encode(aergo_erc20))
-    T_anchor:set(t_anchor)
-    T_final:set(t_final)
-    Root:set("constructor")
-    Height:set(0)
-    Nonce:set(0)
-    Nb_Validators:set(#addresses)
-    for i, addr in ipairs(addresses) do
-        assert(address.isValidAddress(addr), "invalid address format: " .. addr)
-        Validators[i] = addr
-    end
-    local id = crypto.sha256(system.getContractID()..system.getPrevBlockHash())
-    -- contractID is the hash of system.getContractID (prevent replay between contracts on the same chain) and system.getPrevBlockHash (prevent replay between sidechains).
-    -- take the first 16 bytes to save size of signed message
-    id = string.sub(id, 3, 34)
-    ContractID:set(id)
-    return id
-end
 
-function default()
-    -- emit event
-    -- needed to send the vault funds when starting the bridge
-    -- consider disabling after 1st transfer so users don't send 
-    -- funds by mistake
-end
-
--- signers is the index of signers in Validators
-function set_root(root, height, signers, signatures)
-    -- check Height so validator is not tricked by signing multiple anchors
-    -- users have t_anchor to finalize their transfer
-    -- (a malicious BP could commit a user's mint tx after set_root on purpose for user to lose tx fee.)
-    assert(height > Height:get() + T_anchor:get(), "Next anchor height not reached")
-    old_nonce = Nonce:get()
-    message = crypto.sha256(root..','..tostring(height)..tostring(old_nonce)..ContractID:get().."R")
-    assert(validate_signatures(message, signers, signatures), "Failed signature validation")
-    Root:set(root)
-    Height:set(height)
-    Nonce:set(old_nonce + 1)
-    contract.event("set_root", height, root)
-end
-
-function validate_signatures(message, signers, signatures)
-    -- 2/3 of Validators must sign for the message to be valid
-    nb = Nb_Validators:get()
+--------------------- Utility Functions -------------------------
+-- Check 2/3 validators signed message hash
+-- @type    internal
+-- @param   hash (0x hex string) 0x hex string 
+-- @param   signers ([]uint) array of signer indexes
+-- @param   signatures ([]0x hex string) array of signatures matching signers indexes
+-- @return  (bool) 2/3 signarures are valid
+local function _validateSignatures(hash, signers, signatures)
+    -- 2/3 of Validators must sign for the hash to be valid
+    nb = _validatorsCount:get()
     assert(nb*2 <= #signers*3, "2/3 validators must sign")
     for i,signer in ipairs(signers) do
         if i > 1 then
             assert(signer > signers[i-1], "All signers must be different")
         end
-        assert(Validators[signer], "Signer index not registered")
-        assert(crypto.ecverify(message, signatures[i], Validators[signer]), "Invalid signature")
+        assert(_validators[signer], "Signer index not registered")
+        assert(crypto.ecverify(hash, signatures[i], _validators[signer]), "Invalid signature")
     end
     return true
 end
 
--- new_validators replaces the list of validators
--- signers is the index of signers in Validators
-function update_validators(addresses, signers, signatures)
-    old_nonce = Nonce:get()
-    message = crypto.sha256(join(addresses)..tostring(old_nonce)..ContractID:get().."V")
-    assert(validate_signatures(message, signers, signatures), "Failed signature validation")
-    old_size = Nb_Validators:get()
-    if #addresses < old_size then
-        diff = old_size - #addresses
-        for i = 1, diff+1, 1 do
-            -- delete validator slot
-            Validators:delete(old_size + i)
-        end
-    end
-    Nb_Validators:set(#addresses)
-    for i, addr in ipairs(addresses) do
-        assert(address.isValidAddress(addr), "invalid address format: " .. addr)
-        Validators[i] = addr
-    end
-    Nonce:set(old_nonce + 1)
-end
-
-function update_t_anchor(t_anchor, signers, signatures)
-    old_nonce = Nonce:get()
-    message = crypto.sha256(tostring(t_anchor)..tostring(old_nonce)..ContractID:get().."A")
-    assert(validate_signatures(message, signers, signatures), "Failed signature validation")
-    T_anchor:set(t_anchor)
-    Nonce:set(old_nonce + 1)
-end
-
-function update_t_final(t_final, signers, signatures)
-    old_nonce = Nonce:get()
-    message = crypto.sha256(tostring(t_final)..tostring(old_nonce)..ContractID:get().."F")
-    assert(validate_signatures(message, signers, signatures), "Failed signature validation")
-    T_final:set(t_final)
-    Nonce:set(old_nonce + 1)
-end
-
-function join(array)
+-- Concatenate strings in array
+-- @type    internal
+-- @param   array ([]string)
+-- @return  (string)
+local function _join(array)
     -- not using a separator is safe for signing if the length of items is checked with isValidAddress for example
     str = ""
     for i, data in ipairs(array) do
@@ -172,424 +127,607 @@ function join(array)
     return str
 end
 
-function abi_encode(hex_address)
-    return (hex_address:gsub('..', function (cc)
+-- Convert hex string to lua bytes
+-- @type    internal
+-- @param   hexString (hex string) hex string without 0x
+-- @return  (string bytes) bytes of hex string
+local function _abiEncode(hexString)
+    return (hexString:gsub('..', function (cc)
         return string.char(tonumber(cc, 16))
     end))
 end
 
--- lock and burn must be distinct because tokens on both sides could have the same address. Also adds clarity because burning is only applicable to minted tokens.
--- nonce and signature are used when making a token lockup
--- delegated transfers to ethereum not supported
-function lock(receiver, amount, token_address, nonce, signature)
-    -- not payable assert(system.getAmount() == "0", "Aer cannot be locked, must be freezed")
-    local bamount = bignum.number(amount)
-    local b0 = bignum.number(0)
-    assert(address.isEthAddress(receiver), "invalid address format: " .. receiver)
-    assert(MintedTokens[token_address] == nil, "this token was minted by the bridge so it should be burnt to transfer back to origin, not locked")
-    assert(bamount > b0, "amount must be positive")
+-- Ethereum Patricia State Trie Merkle proof verification
+-- @type    internal
+-- @param   mapKey (string bytes) key in solidity map
+-- @param   mapPosition (uint) position of mapping state var in solidity contract
+-- @param   value (string bytes) value of mapKey in solidity map at mapPosition
+-- @param   merkleProof ([]0x hex string) merkle proof of inclusion of mapKey, value in _anchorRoot
+-- @return  (bool) merkle proof of inclusion is valid
+local function _verifyDepositProof(mapKey, mapPosition, value, merkleProof)
+    -- map key is always >= 32 bytes so no padding needed
+    paddedPosition = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" .. string.char(mapPosition)
+    key = crypto.keccak256(mapKey..paddedPosition)
+    return crypto.verifyProof(key, value, "0x" .. _anchorRoot:get(), unpack(merkleProof))
+end
+
+-- lock tokens in the bridge contract
+-- @type    internal
+-- @param   tokenAddress (string) Aergo address of token locked
+-- @param   amount (ubig) amount of tokens to send
+-- @param   receiver (hex string) Ethereum address without 0x of receiver accross the bridge
+-- @event   lock(receiver, amount, tokenAddress)
+local function _lock(tokenAddress, amount, receiver)
+    _typecheck(receiver, 'ethaddress')
+    _typecheck(amount, 'ubig')
+    assert(_mintedTokens[tokenAddress] == nil, "this token was minted by the bridge so it should be burnt to transfer back to origin, not locked")
+    assert(amount > bignum.number(0), "amount must be positive")
 
     -- Add locked amount to total
-    -- left pad address to 32 bytes to match abi.encodePacked(address)
-    local account_ref =  abi_encode(receiver) .. token_address
-    local old = Locks[account_ref]
-    local locked_balance
+    local accountRef =  _abiEncode(receiver) .. tokenAddress
+    local old = _locks[accountRef]
+    local lockedBalance
     if old == nil then
-        locked_balance = bamount
+        lockedBalance = amount
     else
-        locked_balance = bignum.number(old) + bamount
+        lockedBalance = bignum.number(old) + amount
     end
-    Locks[account_ref] = bignum.tostring(locked_balance)
-
-    -- Lock assets in the bridge
-    this_contract = system.getContractID()
-    if not contract.call(token_address, "signed_transfer", system.getSender(), this_contract, bignum.tostring(bamount), nonce, signature, "0", 0) then
-        error("failed to receive token to lock")
-    end
-    contract.event("lock", system.getSender(), receiver, amount, token_address)
-    return token_address, bamount
+    _locks[accountRef] = bignum.tostring(lockedBalance)
+    contract.event("lock", receiver, amount, tokenAddress)
 end
 
--- mint a foreign token. token_origin is the token address where it is transfered from.
--- anybody can mint, the receiver is the account who's locked balance is recorded
+-- deploy new contract
+-- @type    internal
+-- @param   tokenOrigin (hex string) Ethereum address without 0x of token locked used as pegged token name
+local function _deployMinteableToken(tokenOrigin)
+    addr, success = contract.deploy(mintedToken, tokenOrigin)
+    assert(success, "failed to create token contract")
+    return addr
+end
+
+-- Create a new bridge contract
+-- @type    __init__
+-- @param   aergoErc20 (hex string) Ethereum address of aergoErc20
+-- @param   validators ([]string) array of Aergo addresses
+-- @param   tAnchor (uint) anchoring periode
+-- @param   tFinal (uint) finality of anchored chain
+-- @return  (string) id of contract to prevent anchor replay on other contracts
+function constructor(aergoErc20, validators, tAnchor, tFinal)
+    _aergoErc20Bytes:set(_abiEncode(aergoErc20))
+    _tAnchor:set(tAnchor)
+    _tFinal:set(tFinal)
+    _anchorRoot:set("constructor")
+    _anchorHeight:set(0)
+    _nonce:set(0)
+    _validatorsCount:set(#validators)
+    for i, addr in ipairs(validators) do
+        _typecheck(addr, 'address')
+        _validators[i] = addr
+    end
+    -- contractID is the hash of system.getContractID (prevent replay between contracts on the same chain) and system.getPrevBlockHash (prevent replay between sidechains).
+    -- take the first 16 bytes
+    local id = crypto.sha256(system.getContractID()..system.getPrevBlockHash())
+    id = string.sub(id, 3, 34)
+    _contractId:set(id)
+    _unfreezeFee:set(bignum.number(1000))
+    -- TODO unfreezeFeeUpdate
+    return id
+end
+
+--------------------- Bridge Operator Functions -------------------------
+
+function default()
+    contract.event("initializeVault", system.getSender(), system.getAmount())
+    -- needed to send the vault funds when starting the bridge
+    -- consider disabling after 1st transfer so users don't send 
+    -- funds by mistake
+end
+
+-- Register a new anchor
+-- @type    call
+-- @param   root (hex string) Ethereum storage root
+-- @param   height (uint) block height of root
+-- @param   signers ([]uint) array of signer indexes
+-- @param   signatures ([]0x hex string) array of signatures matching signers indexes
+-- @event   newAnchor(proposer, height, root)
+function newAnchor(root, height, signers, signatures)
+    -- check Height to prevent spamming and leave minimum time for users to make transfers.
+    assert(height > _anchorHeight:get() + _tAnchor:get(), "Next anchor height not reached")
+    oldNonce = _nonce:get()
+    message = crypto.sha256(root..','..tostring(height)..tostring(oldNonce).._contractId:get().."R")
+    assert(_validateSignatures(message, signers, signatures), "Failed signature validation")
+    _anchorRoot:set(root)
+    _anchorHeight:set(height)
+    _nonce:set(oldNonce + 1)
+    contract.event("newAnchor", system.getSender(), height, root)
+end
+
+-- Register a new set of validators
+-- @type    call
+-- @param   newValidators ([]string) array of Aergo addresses
+-- @param   signers ([]uint) array of signer indexes
+-- @param   signatures ([]0x hex string) array of signatures matching signers indexes
+-- @event   validatorsUpdate(proposer)
+function validatorsUpdate(newValidators, signers, signatures)
+    oldNonce = _nonce:get()
+    -- it is safe to join newValidators without a ',' because the validators length is checked in _typecheck
+    message = crypto.sha256(_join(newValidators)..tostring(oldNonce).._contractId:get().."V")
+    assert(_validateSignatures(message, signers, signatures), "Failed new validators signature validation")
+    oldCount = _validatorsCount:get()
+    if #newValidators < oldCount then
+        diff = oldCount - #newValidators
+        for i = 1, diff+1, 1 do
+            -- delete validator slot
+            _validators:delete(oldCount + i)
+        end
+    end
+    _validatorsCount:set(#newValidators)
+    for i, addr in ipairs(newValidators) do
+        _typecheck(addr, 'address')
+        _validators[i] = addr
+    end
+    _nonce:set(oldNonce + 1)
+    contract.event("validatorsUpdate", system.getSender())
+end
+
+-- Register new anchoring periode
+-- @type    call
+-- @param   tAnchor (uint) new anchoring periode
+-- @param   signers ([]uint) array of signer indexes
+-- @param   signatures ([]0x hex string) array of signatures matching signers indexes
+-- @event   tAnchorUpdate(proposer, tAnchor)
+function tAnchorUpdate(tAnchor, signers, signatures)
+    oldNonce = _nonce:get()
+    message = crypto.sha256(tostring(tAnchor)..tostring(oldNonce).._contractId:get().."A")
+    assert(_validateSignatures(message, signers, signatures), "Failed tAnchor signature validation")
+    _tAnchor:set(tAnchor)
+    _nonce:set(oldNonce + 1)
+    contract.event("tAnchorUpdate", system.getSender(), tAnchor)
+end
+
+-- Register new finality of anchored chain
+-- @type    call
+-- @param   tFinal (uint) new finality of anchored chain
+-- @param   signers ([]uint) array of signer indexes
+-- @param   signatures ([]0x hex string) array of signatures matching signers indexes
+-- @event   tFinalUpdate(proposer, tFinal)
+function tFinalUpdate(tFinal, signers, signatures)
+    oldNonce = _nonce:get()
+    message = crypto.sha256(tostring(tFinal)..tostring(oldNonce).._contractId:get().."F")
+    assert(_validateSignatures(message, signers, signatures), "Failed tFinal signature validation")
+    _tFinal:set(tFinal)
+    _nonce:set(oldNonce + 1)
+    contract.event("tFinalUpdate", system.getSender(), tFinal)
+end
+
+--------------------- User Transfer Functions -------------------------
+
+-- The ARC1 smart contract calls this function on the recipient after a 'transfer'
+-- @type    call
+-- @param   operator    (address) the address which called token 'transfer' function
+-- @param   from        (address) the sender's address
+-- @param   value       (ubig) an amount of token to send
+-- @param   receiver    (hex string) Ethereum address without 0x of receiver accross the bridge
+function tokensReceived(operator, from, value, receiver)
+    return _lock(system.getSender(), value, receiver)
+end
+
+
+-- mint a token locked on Ethereum
 -- AergoERC20 is locked on ethereum like any other tokens, but it is not minted, it is unfreezed.
-function mint(receiver, balance, token_origin, merkle_proof)
-    local bbalance = bignum.number(balance)
-    local b0 = bignum.number(0)
-    assert(address.isValidAddress(receiver), "invalid address format: " .. receiver)
-    assert(bbalance > b0, "minteable balance must be positive")
-    token_origin_bytes = abi_encode(token_origin)
-    assert(token_origin_bytes ~= AergoERC20:get(), "Aergo cannot be minted, must be unfreezed")
+-- anybody can mint, the receiver is the account who's locked balance is recorded
+-- @type    call
+-- @param   receiver (string) Aergo address of receiver
+-- @param   balance (ubig) total balance of tokens locked on Ethereum
+-- @param   tokenOrigin (hex string) Ethereum address without 0x of ERC20 token locked
+-- @param   merkleProof ([]0x hex string) merkle proof of inclusion of locked balance on Ethereum
+-- @return  (string, uint) pegged token Aergo address, minted amount
+-- @event   mint(minter, receiver, amount, tokenOrigin)
+function mint(receiver, balance, tokenOrigin, merkleProof)
+    _typecheck(receiver, 'address')
+    _typecheck(balance, 'ubig')
+    _typecheck(tokenOrigin, 'ethaddress')
+    assert(balance > bignum.number(0), "minteable balance must be positive")
+    tokenOriginBytes = _abiEncode(tokenOrigin)
+    assert(tokenOriginBytes ~= _aergoErc20Bytes:get(), "Aergo cannot be minted, must be unfreezed")
 
     -- Verify merkle proof of locked balance
-    local account_ref = receiver .. token_origin_bytes
-    -- Locks is the 4th variable of eth_merkle_bridge.col so map_position = 3
-    if not verify_deposit_proof(account_ref, 3, bignum.tobyte(bbalance), merkle_proof) then
+    local accountRef = receiver .. tokenOriginBytes
+    -- Locks is the 4th variable of eth_merkle_bridge.col so mapPosition = 3
+    if not _verifyDepositProof(accountRef, 3, bignum.tobyte(balance), merkleProof) then
         error("failed to verify deposit balance merkle proof")
     end
-
     -- Calculate amount to mint
-    local to_transfer
-    minted_so_far = Mints[account_ref]
+    local amountToTransfer
+    minted_so_far = _mints[accountRef]
     if minted_so_far == nil then
-        to_transfer = bbalance
+        amountToTransfer = balance
     else
-        to_transfer  = bbalance - bignum.number(minted_so_far)
+        amountToTransfer  = balance - bignum.number(minted_so_far)
     end
-    assert(to_transfer > bignum.number(0), "make a deposit before minting")
-
+    assert(amountToTransfer > bignum.number(0), "make a deposit before minting")
     -- Deploy or get the minted token
-    local mint_address
-    if BridgeTokens[token_origin] == nil then
+    local mintAddress
+    if _bridgeTokens[tokenOrigin] == nil then
         -- Deploy new minteable token controlled by bridge
-        mint_address, success = _deploy_minteable_token()
-        if not success then error("failed to create token contract") end
-        BridgeTokens[token_origin] = mint_address
-        MintedTokens[mint_address] = token_origin
+        mintAddress = _deployMinteableToken(tokenOrigin)
+        _bridgeTokens[tokenOrigin] = mintAddress
+        _mintedTokens[mintAddress] = tokenOrigin
     else
-        mint_address = BridgeTokens[token_origin]
+        mintAddress = _bridgeTokens[tokenOrigin]
     end
-
     -- Record total amount minted
-    Mints[account_ref] = bignum.tostring(bbalance)
-
+    _mints[accountRef] = bignum.tostring(balance)
     -- Mint tokens
-    if not contract.call(mint_address, "mint", receiver, bignum.tostring(to_transfer)) then
-        error("failed to mint token")
-    end
-    contract.event("mint", system.getSender(), receiver, to_transfer, token_origin)
-    return mint_address, to_transfer
+    contract.call(mintAddress, "mint", receiver, amountToTransfer)
+    contract.event("mint", system.getSender(), receiver, amountToTransfer, tokenOrigin)
+    return mintAddress, amountToTransfer
 end
 
--- burn a sidechain token
--- mint_address is the token address on the sidechain
-function burn(receiver, amount, mint_address)
-    -- not payable assert(system.getAmount() == "0", "burn function not payable, only tokens can be burned")
-    local bamount = bignum.number(amount)
-    assert(address.isEthAddress(receiver), "invalid address format: " .. receiver)
-    assert(bamount > bignum.number(0), "amount must be positive")
-    local origin_address = MintedTokens[mint_address]
-    assert(origin_address ~= nil, "cannot burn token : must have been minted by bridge")
+-- burn a pegged token
+-- @type    call
+-- @param   receiver (hex string) Ethereum address without 0x of receiver
+-- @param   amount (ubig) number of tokens to burn
+-- @param   mintAddress (string) Aergo address of pegged token to burn
+-- @return  (hex string) Ethereum address without 0x of origin token
+-- @event   brun(owner, receiver, amount, mintAddress)
+function burn(receiver, amount, mintAddress)
+    _typecheck(receiver, 'ethaddress')
+    _typecheck(amount, 'ubig')
+    assert(amount > bignum.number(0), "amount must be positive")
+    local originAddress = _mintedTokens[mintAddress]
+    assert(originAddress ~= nil, "cannot burn token : must have been minted by bridge")
     -- Add burnt amount to total
-    local account_ref = abi_encode(receiver .. origin_address)
-    local old = Burns[account_ref]
+    local accountRef = _abiEncode(receiver .. originAddress)
+    local old = _burns[accountRef]
     local burnt_balance
     if old == nil then
-        burnt_balance = bamount
+        burnt_balance = amount
     else
-        burnt_balance = bignum.number(old) + bamount
+        burnt_balance = bignum.number(old) + amount
     end
-    Burns[account_ref] = bignum.tostring(burnt_balance)
+    _burns[accountRef] = bignum.tostring(burnt_balance)
+
     -- Burn token
-    if not contract.call(mint_address, "burn", system.getSender(), bignum.tostring(bamount)) then
-        error("failed to burn token")
-    end
-    contract.event("burn", system.getSender(), receiver, amount, mint_address)
-    return origin_address, bamount
+    contract.call(mintAddress, "burn", system.getSender(), amount)
+
+    contract.event("burn", system.getSender(), receiver, amount, mintAddress)
+    return originAddress
 end
 
--- unlock tokens returning from sidechain
+-- unlock tokens
 -- anybody can unlock, the receiver is the account who's burnt balance is recorded
-function unlock(receiver, balance, token_address, merkle_proof)
-    local bbalance = bignum.number(balance)
-    assert(address.isValidAddress(receiver), "invalid address format: " .. receiver)
-    assert(bbalance > bignum.number(0), "unlockeable balance must be positive")
+-- @type    call
+-- @param   receiver (string) Aergo address of receiver
+-- @param   balance (ubig) total balance of tokens burnt on Ethereum
+-- @param   tokenAddress (string) Aergo address of token to unlock
+-- @param   merkleProof ([]0x hex string) merkle proof of inclusion of burnt balance on Ethereum
+-- @return  (uint) unlocked amount
+-- @event   unlock(unlocker, receiver, amount, tokenAddress)
+function unlock(receiver, balance, tokenAddress, merkleProof)
+    _typecheck(receiver, 'address')
+    _typecheck(tokenAddress, 'address')
+    _typecheck(balance, 'ubig')
+    assert(balance > bignum.number(0), "unlockeable balance must be positive")
 
     -- Verify merkle proof of burnt balance
-    local account_ref = receiver .. token_address
-    -- Burns is the 6th variable of eth_merkle_bridge.col so map_position = 5
-    if not verify_deposit_proof(account_ref, 5, bignum.tobyte(bbalance), merkle_proof) then
+    local accountRef = receiver .. tokenAddress
+    -- Burns is the 6th variable of eth_merkle_bridge.col so mapPosition = 5
+    if not _verifyDepositProof(accountRef, 5, bignum.tobyte(balance), merkleProof) then
         error("failed to verify burnt balance merkle proof")
     end
-
     -- Calculate amount to unlock
-    local unlocked_so_far = Unlocks[account_ref]
-    local to_transfer
-    if unlocked_so_far == nil then
-        to_transfer = bbalance
+    local unlockedSoFar = _unlocks[accountRef]
+    local amountToTransfer
+    if unlockedSoFar == nil then
+        amountToTransfer = balance
     else
-        to_transfer = bbalance - bignum.number(unlocked_so_far)
+        amountToTransfer = balance - bignum.number(unlockedSoFar)
     end
-    assert(to_transfer > bignum.number(0), "burn minted tokens before unlocking")
-
+    assert(amountToTransfer > bignum.number(0), "burn minted tokens before unlocking")
     -- Record total amount unlocked so far
-    Unlocks[account_ref] = bignum.tostring(bbalance)
-
+    _unlocks[accountRef] = bignum.tostring(balance)
     -- Unlock tokens
-    if not contract.call(token_address, "transfer", receiver, bignum.tostring(to_transfer)) then
-        error("failed to unlock token")
-    end
-    contract.event("unlock", system.getSender(), receiver, to_transfer, token_address)
-    return token_address, to_transfer
+    contract.call(tokenAddress, "transfer", receiver, amountToTransfer)
+    contract.event("unlock", system.getSender(), receiver, amountToTransfer, tokenAddress)
+    return amountToTransfer
 end
 
 
--- freeze mainnet aergo for transfering to ethereum
--- mint_address is the token address on the sidechain
+-- freeze mainnet aergo
+-- @type    call
+-- @param   receiver (hex string) Ethereum address without 0x of receiver
+-- @param   amount (ubig) number of tokens to freeze
+-- @event   freeze(owner, receiver, amount)
 function freeze(receiver, amount)
-    local bamount = bignum.number(amount)
-    assert(address.isEthAddress(receiver), "invalid address format: " .. receiver)
-    assert(bamount > bignum.number(0), "amount must be positive")
-    assert(system.getAmount() == bignum.tostring(bamount), "for safety and clarity, amount must match the amount sent in the tx")
+    _typecheck(receiver, 'ethaddress')
+    _typecheck(amount, 'ubig')
+    -- passing amount is not necessary but system.getAmount() would have to be converted to bignum anyway.
+    assert(amount > bignum.number(0), "amount must be positive")
+    assert(system.getAmount() == bignum.tostring(amount), "for safety and clarity, amount must match the amount sent in the tx")
 
     -- Add freezed amount to total
-    local account_ref = abi_encode(receiver) .. AergoERC20:get()
-    -- NOTE : it seems ok to store freezed balances in Burns so that Unlock can be same for all ERC20 tokens
-    local old = Burns[account_ref]
-    local freezed_balance
+    local accountRef = _abiEncode(receiver) .. _aergoErc20Bytes:get()
+    local old = _burns[accountRef]
+    local freezedBalance
     if old == nil then
-        freezed_balance = bamount
+        freezedBalance = amount
     else
-        freezed_balance = bignum.number(old) + bamount
+        freezedBalance = bignum.number(old) + amount
     end
-    Burns[account_ref] = bignum.tostring(freezed_balance)
+    _burns[accountRef] = bignum.tostring(freezedBalance)
     contract.event("freeze", system.getSender(), receiver, amount)
-    return bamount
 end
 
 
--- unfreeze Aer on mainnet after it was locked in ethereum bridge
+-- unfreeze mainnet aergo
 -- anybody can unfreeze, the receiver is the account who's burnt balance is recorded
-function unfreeze(receiver, balance, merkle_proof)
-    local bbalance = bignum.number(balance)
-    assert(address.isValidAddress(receiver), "invalid address format: " .. receiver)
-    assert(bbalance > bignum.number(0), "unlockeable balance must be positive")
+-- @type    call
+-- @param   receiver (string) Aergo address of receiver
+-- @param   balance (ubig) total balance of tokens locked on Ethereum
+-- @param   merkleProof ([]0x hex string) merkle proof of inclusion of locked balance on Ethereum
+-- @return  (uint) unfreezed amount
+-- @event   unfreeze(unfreezer, receiver, amount)
+function unfreeze(receiver, balance, merkleProof)
+    _typecheck(receiver, 'address')
+    _typecheck(balance, 'ubig')
+    assert(balance > bignum.number(0), "unlockeable balance must be positive")
 
     -- Verify merkle proof of burnt balance
-    -- TODO no need store aergoERC20 encoded from the begining
-    local account_ref = receiver .. AergoERC20:get()
-    -- Locks is the 4th variable of eth_merkle_bridge.col so map_position = 3
-    if not verify_deposit_proof(account_ref, 3, bignum.tobyte(bbalance), merkle_proof) then
+    local accountRef = receiver .. _aergoErc20Bytes:get()
+    -- Locks is the 4th variable of eth_merkle_bridge.col so mapPosition = 3
+    if not _verifyDepositProof(accountRef, 3, bignum.tobyte(balance), merkleProof) then
         error("failed to verify locked balance merkle proof")
     end
-
-    -- Calculate amount to unlock
-    local unfreezed_so_far = Unfreezes[account_ref]
-    local to_transfer
-    if unfreezed_so_far == nil then
-        to_transfer = bbalance
+    -- Calculate amount to unfreeze
+    local unfreezedSoFar = _unfreezes[accountRef]
+    local amountToTransfer
+    if unfreezedSoFar == nil then
+        amountToTransfer = balance
     else
-        to_transfer = bbalance - bignum.number(unfreezed_so_far)
+        amountToTransfer = balance - bignum.number(unfreezedSoFar)
     end
-    assert(to_transfer > bignum.number(0), "lock AergoERC20 on ethereum before unfreezing")
-
+    assert(amountToTransfer > bignum.number(0), "lock AergoERC20 on ethereum before unfreezing")
     -- Record total amount unlocked so far
-    Unfreezes[account_ref] = bignum.tostring(bbalance)
-
+    _unfreezes[accountRef] = bignum.tostring(balance)
     -- Unfreeze Aer
-    contract.send(receiver, to_transfer)
-
-    contract.event("unlock", system.getSender(), receiver, to_transfer, token_address)
-    return token_address, to_transfer
-end
-
-
--- Ethereum Patricia State Trie Merkle proof verification
-function verify_deposit_proof(map_key, map_position, value, merkle_proof)
-    -- map key is always >= 32 bytes so no padding needed
-    padded_position = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" .. string.char(map_position)
-    key = crypto.keccak256(map_key..padded_position)
-    return crypto.verifyProof(key, value, "0x" .. Root:get(), unpack(merkle_proof))
-end
-
-function _deploy_minteable_token()
-    src = [[
-local type_check = {}
-function type_check.isValidAddress(address)
-    -- check existence of invalid alphabets
-    if nil ~= string.match(address, '[^123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]') then
-        return false
+    if system.getSender() == receiver then
+        contract.send(receiver, amountToTransfer)
+    else
+        -- NOTE: the minting service should check that amount to transfer will cover the fee, to not mint for nothing
+        assert(amountToTransfer > _unfreezeFee:get(), "amount to transfer doesnt cover the fee")
+        contract.send(receiver, amountToTransfer - _unfreezeFee:get())
+        contract.send(system.getSender(), _unfreezeFee:get())
     end
-    -- check lenght is in range
-    if 52 ~= string.len(address) then
-        return false
-    end
-    -- TODO add checksum verification?
-    return true
-end
-function type_check.isValidNumber(value)
-    if nil ~= string.match(value, '[^0123456789]') then
-        return false
-    end
-    return true
+    contract.event("unfreeze", system.getSender(), receiver, amountToTransfer)
+    return amountToTransfer
 end
 
+mintedToken = [[
+------------------------------------------------------------------------------
+-- Aergo Standard Token Interface (Proposal) - 20190731
+------------------------------------------------------------------------------
 
--- The a bridge token is a mintable and burnable token controlled by
--- the bridge contract. It represents all tokens locked on the other side of the 
+-- A internal type check function
+-- @type internal
+-- @param x variable to check
+-- @param t (string) expected type
+local function _typecheck(x, t)
+  if (x and t == 'address') then
+    assert(type(x) == 'string', "address must be string type")
+    -- check address length
+    assert(52 == #x, string.format("invalid address length: %s (%s)", x, #x))
+    -- check character
+    local invalidChar = string.match(x, '[^123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]')
+    assert(nil == invalidChar, string.format("invalid address format: %s contains invalid char %s", x, invalidChar or 'nil'))
+  elseif (x and t == 'ubig') then
+    -- check unsigned bignum
+    assert(bignum.isbignum(x), string.format("invalid type: %s != %s", type(x), t))
+    assert(x >= bignum.number(0), string.format("%s must be positive number", bignum.tostring(x)))
+  else
+    -- check default lua types
+    assert(type(x) == t, string.format("invalid type: %s != %s", type(x), t or 'nil'))
+  end
+end
+
+address0 = '1111111111111111111111111111111111111111111111111111'
+
+-- The bridge token is a mintable and burnable token controlled by
+-- the bridge contract. It represents tokens pegged on the other side of the 
 -- bridge with a 1:1 ratio.
 -- This contract is depoyed by the merkle bridge when a new type of token 
 -- is transfered
 state.var {
-    Symbol = state.value(),
-    Name = state.value(),
-    Decimals = state.value(),
-    TotalSupply = state.value(),
-    Balances = state.map(),
-    Nonces = state.map(),
-    -- Contract ID is a unique id that cannot be shared by another contract, even one on a sidechain
-    -- This is neeeded for replay protection of signed transfer, because users might have the same private key
-    -- on different sidechains
-    ContractID = state.value(),
-    Owner = state.value(),
+    _balances = state.map(), -- address -> unsigned_bignum
+    _operators = state.map(), -- address/address -> bool
+
+    _totalSupply = state.value(),
+    _name = state.value(),
+    _symbol = state.value(),
+    _decimals = state.value(),
+
+    _master = state.value(),
 }
 
-function constructor() 
-    Symbol:set("TOKEN")
-    Name:set("Standard Token on Aergo")
-    Decimals:set(18)
-    TotalSupply:set(bignum.number(0))
-    Owner:set(system.getSender())
-    -- contractID is the hash of system.getContractID (prevent replay between contracts on the same chain) and system.getPrevBlockHash (prevent replay between sidechains).
-    -- take the first 16 bytes to save size of signed message
-    local id = crypto.sha256(system.getContractID()..system.getPrevBlockHash())
-    id = string.sub(id, 3, 34)
-    ContractID:set(id)
-    return true
+local function _callTokensReceived(from, to, value, ...)
+  if to ~= address0 and system.isContract(to) then
+    contract.call(to, "tokensReceived", system.getSender(), from, value, ...)
+  end
 end
 
----------------------------------------
+local function _transfer(from, to, value, ...)
+  _typecheck(from, 'address')
+  _typecheck(to, 'address')
+  _typecheck(value, 'ubig')
+
+  assert(_balances[from] and _balances[from] >= value, "not enough balance")
+
+  _balances[from] = _balances[from] - value
+  _balances[to] = (_balances[to] or bignum.number(0)) + value
+
+  _callTokensReceived(from, to, value, ...)
+
+  contract.event("transfer", from, to, value)
+end
+
+local function _mint(to, value, ...)
+  _typecheck(to, 'address')
+  _typecheck(value, 'ubig')
+
+  _totalSupply:set((_totalSupply:get() or bignum.number(0)) + value)
+  _balances[to] = (_balances[to] or bignum.number(0)) + value
+
+  _callTokensReceived(address0, to, value, ...)
+
+  contract.event("transfer", address0, to, value)
+end
+
+local function _burn(from, value)
+  _typecheck(from, 'address')
+  _typecheck(value, 'ubig')
+
+  assert(_balances[from] and _balances[from] >= value, "not enough balance")
+
+  _totalSupply:set(_totalSupply:get() - value)
+  _balances[from] = _balances[from] - value
+
+  contract.event("transfer", from, address0, value)
+end
+
+-- call this at constructor
+local function _init(name, symbol, decimals)
+  _typecheck(name, 'string')
+  _typecheck(symbol, 'string')
+  _typecheck(decimals, 'number')
+  assert(decimals > 0)
+
+  _name:set(name)
+  _symbol:set(symbol)
+  _decimals:set(decimals)
+end
+
+------------  Main Functions ------------
+
+-- Get a total token supply.
+-- @type    query
+-- @return  (ubig) total supply of this token
+function totalSupply()
+  return _totalSupply:get()
+end
+
+-- Get a token name
+-- @type    query
+-- @return  (string) name of this token
+function name()
+  return _name:get()
+end
+
+-- Get a token symbol
+-- @type    query
+-- @return  (string) symbol of this token
+function symbol()
+  return _symbol:get()
+end
+
+-- Get a token decimals
+-- @type    query
+-- @return  (number) decimals of this token
+function decimals()
+  return _decimals:get()
+end
+
+-- Get a balance of an owner.
+-- @type    query
+-- @param   owner  (address) a target address
+-- @return  (ubig) balance of owner
+function balanceOf(owner)
+  return _balances[owner] or bignum.number(0)
+end
+
 -- Transfer sender's token to target 'to'
--- @type        call
--- @param to    a target address
--- @param value string amount of tokens to send
--- @return      success
----------------------------------------
-function transfer(to, value) 
-    assert(type_check.isValidNumber(value), "invalid value format (must be string)")
-    assert(type_check.isValidAddress(to), "invalid address format: " .. to)
-    local from = system.getSender()
-    local bvalue = bignum.number(value)
-    local b0 = bignum.number(0)
-    assert(bvalue > b0, "invalid value")
-    assert(to ~= from, "same sender and receiver")
-    assert(Balances[from] and bvalue <= Balances[from], "not enough balance")
-    Balances[from] = Balances[from] - bvalue
-    Nonces[from] = (Nonces[from] or 0) + 1
-    Balances[to] = (Balances[to] or b0) + bvalue
-    if system.isContract(to) then
-        -- prevent accidentally sending tokens to contracts that don't support them
-        success, is_payable = contract.pcall(contract.call, to, "token_payable")
-        assert(success and is_payable == "true", "receiver contract must pull tokens himself, not token payable")
-    end
-    contract.event("transfer", system.getSender(), to, value)
-    return true
+-- @type    call
+-- @param   to      (address) a target address
+-- @param   value   (ubig) an amount of token to send
+-- @param   ...     addtional data, MUST be sent unaltered in call to 'tokensReceived' on 'to'
+-- @event   transfer(from, to, value)
+function transfer(to, value, ...)
+  _transfer(system.getSender(), to, value, ...)
 end
 
----------------------------------------
--- Transfer tokens according to signed data from the owner
--- @type  call
--- @param from      sender's address
--- @param to        receiver's address
--- @param value     string amount of token to send in aer
--- @param nonce     nonce of the sender to prevent replay
--- @param fee       string fee given to the tx broadcaster
--- @param deadline  block number before which the tx can be executed
--- @param signature signature proving sender's consent
--- @return          success
----------------------------------------
-function signed_transfer(from, to, value, nonce, signature, fee, deadline)
-    assert(type_check.isValidNumber(value), "invalid value format (must be string)")
-    assert(type_check.isValidNumber(fee), "invalid fee format (must be string)")
-    local bfee = bignum.number(fee)
-    local bvalue = bignum.number(value)
-    local b0 = bignum.number(0)
-    -- check addresses
-    assert(type_check.isValidAddress(to), "invalid address format: " .. to)
-    assert(type_check.isValidAddress(from), "invalid address format: " .. from)
-    assert(to ~= from, "same sender and receiver")
-    -- check amounts, fee
-    assert(bfee >= b0, "fee must be positive")
-    assert(bvalue >= b0, "value must be positive")
-    assert(Balances[from] and (bvalue+bfee) <= Balances[from], "not enough balance")
-    -- check deadline
-    assert(deadline == 0 or system.getBlockheight() < deadline, "deadline has passed")
-    -- check nonce
-    if Nonces[from] == nil then Nonces[from] = 0 end
-    assert(Nonces[from] == nonce, "nonce is invalid or already spent")
-    -- construct signed transfer and verifiy signature
-    data = crypto.sha256(to..','..bignum.tostring(bvalue)..','..tostring(nonce)..','..bignum.tostring(bfee)..','..tostring(deadline)..','..ContractID:get())
-    assert(crypto.ecverify(data, signature, from), "signature of signed transfer is invalid")
-    -- execute transfer
-    Balances[from] = Balances[from] - bvalue - bfee
-    Balances[to] = (Balances[to] or b0) + bvalue
-    Balances[system.getOrigin()] = (Balances[system.getOrigin()] or b0) + bfee
-    Nonces[from] = Nonces[from] + 1
-    if system.isContract(to) and to ~= system.getSender() then
-        -- if a signed transfer is made to a contract and that contract is not the call, 
-        -- check that that contract can support standard token transfers
-        -- this prevents a malicious broadcaster from burning tokens by executing a signed transfer
-        -- directly without passing through the contract to record that transfer.
-        success, is_payable = contract.pcall(contract.call, to, "token_payable")
-        assert(success and is_payable == "true", "receiver contract must pull tokens himself, not token payable")
-    end
-    contract.event("signed_transfer", system.getSender(), from, to, value)
-    return true
+-- Get allowance from owner to spender
+-- @type    query
+-- @param   owner       (address) owner's address
+-- @param   operator    (address) allowed address
+-- @return  (bool) true/false
+function isApprovedForAll(owner, operator)
+  return (owner == operator) or (_operators[owner.."/".. operator] == true)
 end
 
+-- Allow operator to use all sender's token
+-- @type    call
+-- @param   operator  (address) a operator's address
+-- @param   approved  (boolean) true/false
+-- @event   approve(owner, operator, approved)
+function setApprovalForAll(operator, approved)
+  _typecheck(operator, 'address')
+  _typecheck(approved, 'boolean')
+  assert(system.getSender() ~= operator, "cannot set approve self as operator")
 
----------------------------------------
--- mint, burn and signed_burn are specific to the token contract controlled by
--- the merkle bridge contract and representing transfered assets.
----------------------------------------
+  _operators[system.getSender().."/".. operator] = approved
 
----------------------------------------
+  contract.event("approve", system.getSender(), operator, approved)
+end
+
+-- Transfer 'from's token to target 'to'.
+-- Tx sender have to be approved to spend from 'from'
+-- @type    call
+-- @param   from    (address) a sender's address
+-- @param   to      (address) a receiver's address
+-- @param   value   (ubig) an amount of token to send
+-- @param   ...     addtional data, MUST be sent unaltered in call to 'tokensReceived' on 'to'
+-- @event   transfer(from, to, value)
+function transferFrom(from, to, value, ...)
+  assert(isApprovedForAll(from, system.getSender()), "caller is not approved for holder")
+
+  _transfer(from, to, value, ...)
+end
+
+-------------- Merkle Bridge functions -----------------
+--------------------------------------------------------
+
 -- Mint tokens to 'to'
 -- @type        call
 -- @param to    a target address
 -- @param value string amount of token to mint
 -- @return      success
----------------------------------------
 function mint(to, value)
-    assert(system.getSender() == Owner:get(), "Only bridge contract can mint")
-    assert(type_check.isValidNumber(value), "invalid value format (must be string)")
-    local bvalue = bignum.number(value)
-    local b0 = bignum.number(0)
-    assert(type_check.isValidAddress(to), "invalid address format: " .. to)
-    local new_total = TotalSupply:get() + bvalue
-    TotalSupply:set(new_total)
-    Balances[to] = (Balances[to] or b0) + bvalue;
-    if system.isContract(to) then
-        -- prevent accidentally sending tokens to contracts that don't support them
-        success, is_payable = contract.pcall(contract.call, to, "token_payable")
-        assert(success and is_payable == "true", "receiver contract must pull tokens himself, not token payable")
-    end
-    contract.event("mint", to, value)
-    return true
+    assert(system.getSender() == _master:get(), "Only bridge contract can mint")
+    _mint(to, value)
 end
 
----------------------------------------
 -- burn the tokens of 'from'
 -- @type        call
 -- @param from  a target address
 -- @param value an amount of token to send
 -- @return      success
----------------------------------------
 function burn(from, value)
-    assert(system.getSender() == Owner:get(), "Only bridge contract can burn")
-    assert(type_check.isValidNumber(value), "invalid value format (must be string)")
-    local bvalue = bignum.number(value)
-    local b0 = bignum.number(0)
-    assert(type_check.isValidAddress(from), "invalid address format: " ..from)
-    assert(Balances[from] and bvalue <= Balances[from], "Not enough funds to burn")
-    new_total = TotalSupply:get() - bvalue
-    TotalSupply:set(new_total)
-    Balances[from] = Balances[from] - bvalue
-    contract.event("burn", from, value)
+    assert(system.getSender() == _master:get(), "Only bridge contract can burn")
+    _burn(from, value)
+end
+
+--------------- Custom constructor ---------------------
+--------------------------------------------------------
+function constructor(originAddress) 
+    _init(originAddress, 'PEG', 18)
+    _totalSupply:set(bignum.number(0))
+    _master:set(system.getSender())
     return true
 end
+--------------------------------------------------------
 
--- register functions to abi
-abi.register(transfer, signed_transfer, mint, burn)
+abi.register(transfer, transferFrom, setApprovalForAll, mint, burn)
+abi.register_view(name, symbol, decimals, totalSupply, balanceOf, isApprovedForAll)
+]]
 
-        ]]
-    addr, success = contract.deploy(src)
-    return addr, success
-end
-
-function token_payable()
-    error("Cannot receive tokens, must use Lock or Burn to send tokens to the bridge contract")
-end
-
-abi.register(set_root, update_validators, update_t_anchor, update_t_final, lock, unlock, mint, burn, unfreeze, token_payable)
+abi.register(newAnchor, validatorsUpdate, tAnchorUpdate, tFinalUpdate, tokensReceived, unlock, mint, burn, unfreeze)
 abi.payable(freeze, default)

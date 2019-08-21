@@ -268,7 +268,7 @@ class EthProposerClient(threading.Thread):
             ss.append(self.web3.toHex(sig[32:64]))
         return vs, rs, ss
 
-    def set_root(
+    def new_anchor(
         self,
         root: bytes,
         next_anchor_height: int,
@@ -277,7 +277,7 @@ class EthProposerClient(threading.Thread):
     ) -> None:
         """Anchor a new root on Ethereum"""
         vs, rs, ss = self.prepare_rsv(sigs)
-        construct_txn = self.eth_bridge.functions.set_root(
+        construct_txn = self.eth_bridge.functions.newAnchor(
             root, next_anchor_height, validator_indexes, vs, rs, ss
         ).buildTransaction({
             'chainId': self.web3.eth.chainId,
@@ -285,7 +285,7 @@ class EthProposerClient(threading.Thread):
             'nonce': self.web3.eth.getTransactionCount(
                 self.proposer_acct.address
             ),
-            'gas': 108036,
+            'gas': 200000,
             'gasPrice': self.web3.toWei(9, 'gwei')
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
@@ -309,10 +309,10 @@ class EthProposerClient(threading.Thread):
         print("------ START BRIDGE OPERATOR -----------\n")
         while True:  # anchor a new root
             # Get last merge information
-            merged_height_from = self.eth_bridge.functions.Height().call()
-            merged_root_from = self.eth_bridge.functions.Root().call()
-            nonce_to = self.eth_bridge.functions.Nonce().call()
-            self.t_anchor = self.eth_bridge.functions.T_anchor().call()
+            merged_height_from = self.eth_bridge.functions._anchorHeight().call()
+            merged_root_from = self.eth_bridge.functions._anchorRoot().call()
+            nonce_to = self.eth_bridge.functions._nonce().call()
+            self.t_anchor = self.eth_bridge.functions._tAnchor().call()
 
             print("\n{0}| Last anchor from Aergo:\n"
                   "{0}| -----------------------\n"
@@ -343,7 +343,7 @@ class EthProposerClient(threading.Thread):
                   .format(self.tab, u'\U0001f58b'))
 
             try:
-                nonce_to = self.eth_bridge.functions.Nonce().call()
+                nonce_to = self.eth_bridge.functions._nonce().call()
                 sigs, validator_indexes = self.get_anchor_signatures(
                         root, next_anchor_height, nonce_to
                     )
@@ -355,7 +355,7 @@ class EthProposerClient(threading.Thread):
                 continue
 
             # don't broadcast if somebody else already did
-            merged_height = self.eth_bridge.functions.Height().call()
+            merged_height = self.eth_bridge.functions._anchorHeight().call()
             if merged_height + self.t_anchor >= next_anchor_height:
                 print("{}Not yet anchor time, maybe another proposer"
                       " already anchored".format(self.tab))
@@ -364,7 +364,7 @@ class EthProposerClient(threading.Thread):
                 continue
 
             # Broadcast finalised AergoAnchor on Ethereum
-            self.set_root(root, next_anchor_height, validator_indexes, sigs)
+            self.new_anchor(root, next_anchor_height, validator_indexes, sigs)
             self.monitor_settings_and_sleep(self.t_anchor)
 
     def monitor_settings_and_sleep(self, sleeping_time):
@@ -394,7 +394,7 @@ class EthProposerClient(threading.Thread):
 
         """
         config_data = self.load_config_data()
-        validators = self.eth_bridge.functions.get_validators().call()
+        validators = self.eth_bridge.functions.getValidators().call()
         config_validators = [val['eth-addr']
                              for val in config_data['validators']]
         if validators != config_validators:
@@ -402,13 +402,13 @@ class EthProposerClient(threading.Thread):
             if self.update_validators(config_validators):
                 self.config_data = config_data
                 self.update_validator_connections()
-        t_anchor = self.eth_bridge.functions.T_anchor().call()
+        t_anchor = self.eth_bridge.functions._tAnchor().call()
         config_t_anchor = (config_data['networks'][self.eth_net]['bridges']
                            [self.aergo_net]['t_anchor'])
         if t_anchor != config_t_anchor:
             print('{}Anchoring periode update requested'.format(self.tab))
             self.update_t_anchor(config_t_anchor)
-        t_final = self.eth_bridge.functions.T_final().call()
+        t_final = self.eth_bridge.functions._tFinal().call()
         config_t_final = (config_data['networks'][self.eth_net]['bridges']
                           [self.aergo_net]['t_final'])
         if t_final != config_t_final:
@@ -446,7 +446,7 @@ class EthProposerClient(threading.Thread):
     def set_validators(self, new_validators, validator_indexes, sigs):
         """Update validators on chain"""
         vs, rs, ss = self.prepare_rsv(sigs)
-        construct_txn = self.eth_bridge.functions.update_validators(
+        construct_txn = self.eth_bridge.functions.validatorsUpdate(
             new_validators, validator_indexes, vs, rs, ss
         ).buildTransaction({
             'chainId': self.web3.eth.chainId,
@@ -472,7 +472,7 @@ class EthProposerClient(threading.Thread):
 
     def get_new_validators_signatures(self, validators):
         """Request approvals of validators for the new validator set."""
-        nonce = self.eth_bridge.functions.Nonce().call()
+        nonce = self.eth_bridge.functions._nonce().call()
         new_validators_msg = NewValidators(
             validators=validators, destination_nonce=nonce)
         concat_vals = b''
@@ -511,7 +511,7 @@ class EthProposerClient(threading.Thread):
     def set_t_anchor(self, t_anchor, validator_indexes, sigs):
         """Update t_anchor on chain"""
         vs, rs, ss = self.prepare_rsv(sigs)
-        construct_txn = self.eth_bridge.functions.update_t_anchor(
+        construct_txn = self.eth_bridge.functions.tAnchorUpdate(
             t_anchor, validator_indexes, vs, rs, ss
         ).buildTransaction({
             'chainId': self.web3.eth.chainId,
@@ -527,10 +527,10 @@ class EthProposerClient(threading.Thread):
         receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
 
         if receipt.status == 1:
-            print("{}{} update_t_anchor success".format(self.tab, u'\u231B'))
+            print("{}{} tAnchorUpdate success".format(self.tab, u'\u231B'))
             return True
         else:
-            print("{}update_t_anchor failed: nonce already used, or "
+            print("{}tAnchorUpdate failed: nonce already used, or "
                   "invalid signature: {}".format(self.tab, receipt))
             return False
 
@@ -552,7 +552,7 @@ class EthProposerClient(threading.Thread):
     def set_t_final(self, t_final, validator_indexes, sigs):
         """Update t_final on chain"""
         vs, rs, ss = self.prepare_rsv(sigs)
-        construct_txn = self.eth_bridge.functions.update_t_final(
+        construct_txn = self.eth_bridge.functions.tFinalUpdate(
             t_final, validator_indexes, vs, rs, ss
         ).buildTransaction({
             'chainId': self.web3.eth.chainId,
@@ -568,16 +568,16 @@ class EthProposerClient(threading.Thread):
         receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
 
         if receipt.status == 1:
-            print("{}{} update_t_final success".format(self.tab, u'\u231B'))
+            print("{}{} tFinalUpdate success".format(self.tab, u'\u231B'))
             return True
         else:
-            print("{}update_t_final failed: nonce already used, or "
+            print("{}tFinalUpdate failed: nonce already used, or "
                   "invalid signature: {}".format(self.tab, receipt))
             return False
 
     def get_tempo_signatures(self, tempo, rpc_service, tempo_id):
         """Request approvals of validators for the new t_anchor or t_final."""
-        nonce = self.eth_bridge.functions.Nonce().call()
+        nonce = self.eth_bridge.functions._nonce().call()
         new_tempo_msg = NewTempo(
             tempo=tempo, destination_nonce=nonce)
         msg_bytes = tempo.to_bytes(32, byteorder='big') \
