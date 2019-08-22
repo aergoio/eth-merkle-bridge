@@ -35,14 +35,14 @@ end
 -- Enables Users to verify state information of the connected chain 
 -- using merkle proofs for the finalised state root.
 state.var {
-    -- Trie root of the opposit side bridge contract. Mints and Unlocks require a merkle proof
+    -- Trie root of the opposit side bridge contract. _mints and _unlocks require a merkle proof
     -- of state inclusion in this last Root.
     -- (hex string without 0x prefix)
     _anchorRoot = state.value(),
     -- Height of the last block anchored
     -- (uint)
     _anchorHeight = state.value(),
-    -- Validators contains the addresses and 2/3 of them must sign a root update
+    -- _validators contains the addresses and 2/3 of them must sign a root update
     -- The index of validators starts at 1.
     -- (uint) -> (address) 
     _validators = state.map(),
@@ -96,7 +96,7 @@ state.var {
 --------------------- Utility Functions -------------------------
 -- Check 2/3 validators signed message hash
 -- @type    internal
--- @param   hash (0x hex string) 0x hex string 
+-- @param   hash (0x hex string)
 -- @param   signers ([]uint) array of signer indexes
 -- @param   signatures ([]0x hex string) array of signatures matching signers indexes
 -- @return  (bool) 2/3 signarures are valid
@@ -151,11 +151,20 @@ local function _verifyDepositProof(mapKey, mapPosition, value, merkleProof)
     return crypto.verifyProof(key, value, "0x" .. _anchorRoot:get(), unpack(merkleProof))
 end
 
+-- deploy new contract
+-- @type    internal
+-- @param   tokenOrigin (ethaddress) Ethereum address without 0x of token locked used as pegged token name
+local function _deployMinteableToken(tokenOrigin)
+    addr, success = contract.deploy(mintedToken, tokenOrigin)
+    assert(success, "failed to create peg token contract")
+    return addr
+end
+
 -- lock tokens in the bridge contract
 -- @type    internal
--- @param   tokenAddress (string) Aergo address of token locked
+-- @param   tokenAddress (address) Aergo address of token locked
 -- @param   amount (ubig) amount of tokens to send
--- @param   receiver (hex string) Ethereum address without 0x of receiver accross the bridge
+-- @param   receiver (ethaddress) Ethereum address without 0x of receiver accross the bridge
 -- @event   lock(receiver, amount, tokenAddress)
 local function _lock(tokenAddress, amount, receiver)
     _typecheck(receiver, 'ethaddress')
@@ -176,19 +185,10 @@ local function _lock(tokenAddress, amount, receiver)
     contract.event("lock", receiver, amount, tokenAddress)
 end
 
--- deploy new contract
--- @type    internal
--- @param   tokenOrigin (hex string) Ethereum address without 0x of token locked used as pegged token name
-local function _deployMinteableToken(tokenOrigin)
-    addr, success = contract.deploy(mintedToken, tokenOrigin)
-    assert(success, "failed to create token contract")
-    return addr
-end
-
 -- Create a new bridge contract
 -- @type    __init__
--- @param   aergoErc20 (hex string) Ethereum address of aergoErc20
--- @param   validators ([]string) array of Aergo addresses
+-- @param   aergoErc20 (ethaddress) Ethereum address of aergoErc20
+-- @param   validators ([]address) array of Aergo addresses
 -- @param   tAnchor (uint) anchoring periode
 -- @param   tFinal (uint) finality of anchored chain
 -- @return  (string) id of contract to prevent anchor replay on other contracts
@@ -225,7 +225,7 @@ end
 
 -- Register a new anchor
 -- @type    call
--- @param   root (hex string) Ethereum storage root
+-- @param   root (ethaddress) Ethereum storage root
 -- @param   height (uint) block height of root
 -- @param   signers ([]uint) array of signer indexes
 -- @param   signatures ([]0x hex string) array of signatures matching signers indexes
@@ -244,25 +244,26 @@ end
 
 -- Register a new set of validators
 -- @type    call
--- @param   newValidators ([]string) array of Aergo addresses
+-- @param   validators ([]address) array of Aergo addresses
 -- @param   signers ([]uint) array of signer indexes
 -- @param   signatures ([]0x hex string) array of signatures matching signers indexes
 -- @event   validatorsUpdate(proposer)
-function validatorsUpdate(newValidators, signers, signatures)
+function validatorsUpdate(validators, signers, signatures)
     oldNonce = _nonce:get()
-    -- it is safe to join newValidators without a ',' because the validators length is checked in _typecheck
-    message = crypto.sha256(_join(newValidators)..tostring(oldNonce).._contractId:get().."V")
+    -- it is safe to join validators without a ',' because the validators length is checked in _typecheck
+    message = crypto.sha256(_join(validators)..tostring(oldNonce).._contractId:get().."V")
     assert(_validateSignatures(message, signers, signatures), "Failed new validators signature validation")
     oldCount = _validatorsCount:get()
-    if #newValidators < oldCount then
-        diff = oldCount - #newValidators
+    if #validators < oldCount then
+        diff = oldCount - #validators
         for i = 1, diff+1, 1 do
             -- delete validator slot
             _validators:delete(oldCount + i)
         end
     end
-    _validatorsCount:set(#newValidators)
-    for i, addr in ipairs(newValidators) do
+    _validatorsCount:set(#validators)
+    for i, addr in ipairs(validators) do
+        -- NOTE if length of addresses is not checked with _typecheck, then array items must be separated by a separator
         _typecheck(addr, 'address')
         _validators[i] = addr
     end
@@ -307,7 +308,7 @@ end
 -- @param   operator    (address) the address which called token 'transfer' function
 -- @param   from        (address) the sender's address
 -- @param   value       (ubig) an amount of token to send
--- @param   receiver    (hex string) Ethereum address without 0x of receiver accross the bridge
+-- @param   receiver    (ethaddress) Ethereum address without 0x of receiver accross the bridge
 function tokensReceived(operator, from, value, receiver)
     return _lock(system.getSender(), value, receiver)
 end
@@ -317,11 +318,11 @@ end
 -- AergoERC20 is locked on ethereum like any other tokens, but it is not minted, it is unfreezed.
 -- anybody can mint, the receiver is the account who's locked balance is recorded
 -- @type    call
--- @param   receiver (string) Aergo address of receiver
+-- @param   receiver (address) Aergo address of receiver
 -- @param   balance (ubig) total balance of tokens locked on Ethereum
--- @param   tokenOrigin (hex string) Ethereum address without 0x of ERC20 token locked
+-- @param   tokenOrigin (ethaddress) Ethereum address without 0x of ERC20 token locked
 -- @param   merkleProof ([]0x hex string) merkle proof of inclusion of locked balance on Ethereum
--- @return  (string, uint) pegged token Aergo address, minted amount
+-- @return  (address, uint) pegged token Aergo address, minted amount
 -- @event   mint(minter, receiver, amount, tokenOrigin)
 function mint(receiver, balance, tokenOrigin, merkleProof)
     _typecheck(receiver, 'address')
@@ -339,11 +340,11 @@ function mint(receiver, balance, tokenOrigin, merkleProof)
     end
     -- Calculate amount to mint
     local amountToTransfer
-    minted_so_far = _mints[accountRef]
-    if minted_so_far == nil then
+    mintedSoFar = _mints[accountRef]
+    if mintedSoFar == nil then
         amountToTransfer = balance
     else
-        amountToTransfer  = balance - bignum.number(minted_so_far)
+        amountToTransfer  = balance - bignum.number(mintedSoFar)
     end
     assert(amountToTransfer > bignum.number(0), "make a deposit before minting")
     -- Deploy or get the minted token
@@ -366,10 +367,10 @@ end
 
 -- burn a pegged token
 -- @type    call
--- @param   receiver (hex string) Ethereum address without 0x of receiver
+-- @param   receiver (ethaddress) Ethereum address without 0x of receiver
 -- @param   amount (ubig) number of tokens to burn
--- @param   mintAddress (string) Aergo address of pegged token to burn
--- @return  (hex string) Ethereum address without 0x of origin token
+-- @param   mintAddress (address) Aergo address of pegged token to burn
+-- @return  (ethaddress) Ethereum address without 0x of origin token
 -- @event   brun(owner, receiver, amount, mintAddress)
 function burn(receiver, amount, mintAddress)
     _typecheck(receiver, 'ethaddress')
@@ -380,17 +381,15 @@ function burn(receiver, amount, mintAddress)
     -- Add burnt amount to total
     local accountRef = _abiEncode(receiver .. originAddress)
     local old = _burns[accountRef]
-    local burnt_balance
+    local burntBalance
     if old == nil then
-        burnt_balance = amount
+        burntBalance = amount
     else
-        burnt_balance = bignum.number(old) + amount
+        burntBalance = bignum.number(old) + amount
     end
-    _burns[accountRef] = bignum.tostring(burnt_balance)
-
+    _burns[accountRef] = bignum.tostring(burntBalance)
     -- Burn token
     contract.call(mintAddress, "burn", system.getSender(), amount)
-
     contract.event("burn", system.getSender(), receiver, amount, mintAddress)
     return originAddress
 end
@@ -398,9 +397,9 @@ end
 -- unlock tokens
 -- anybody can unlock, the receiver is the account who's burnt balance is recorded
 -- @type    call
--- @param   receiver (string) Aergo address of receiver
+-- @param   receiver (address) Aergo address of receiver
 -- @param   balance (ubig) total balance of tokens burnt on Ethereum
--- @param   tokenAddress (string) Aergo address of token to unlock
+-- @param   tokenAddress (address) Aergo address of token to unlock
 -- @param   merkleProof ([]0x hex string) merkle proof of inclusion of burnt balance on Ethereum
 -- @return  (uint) unlocked amount
 -- @event   unlock(unlocker, receiver, amount, tokenAddress)
@@ -436,7 +435,7 @@ end
 
 -- freeze mainnet aergo
 -- @type    call
--- @param   receiver (hex string) Ethereum address without 0x of receiver
+-- @param   receiver (ethaddress) Ethereum address without 0x of receiver
 -- @param   amount (ubig) number of tokens to freeze
 -- @event   freeze(owner, receiver, amount)
 function freeze(receiver, amount)
@@ -463,7 +462,7 @@ end
 -- unfreeze mainnet aergo
 -- anybody can unfreeze, the receiver is the account who's burnt balance is recorded
 -- @type    call
--- @param   receiver (string) Aergo address of receiver
+-- @param   receiver (address) Aergo address of receiver
 -- @param   balance (ubig) total balance of tokens locked on Ethereum
 -- @param   merkleProof ([]0x hex string) merkle proof of inclusion of locked balance on Ethereum
 -- @return  (uint) unfreezed amount

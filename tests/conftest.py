@@ -18,7 +18,7 @@ import pytest
 def aergo_wallet():
     wallet = AergoWallet("./test_config.json")
     # deploy test token
-    total_supply = {'_bignum': str(500*10**6*10**18)}
+    total_supply = 500*10**6*10**18
     with open("./contracts/lua/std_token_bytecode.txt", "r") as f:
         payload_str = f.read()[:-1]
     wallet.deploy_token(

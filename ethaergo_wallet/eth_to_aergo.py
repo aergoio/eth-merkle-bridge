@@ -1,5 +1,4 @@
 import json
-import time
 from typing import (
     Tuple,
 )
@@ -54,7 +53,7 @@ def lock(
     if next_nonce is None:
         next_nonce = w3.eth.getTransactionCount(signer_acct.address)
     construct_txn = eth_bridge.functions.lock(
-        receiver, amount, erc20_address
+        erc20_address, amount, receiver
     ).buildTransaction({
         'chainId': w3.eth.chainId,
         'from': signer_acct.address,

@@ -1,5 +1,5 @@
 git+git://github.com/aergoio/herapy.git@dc82a3bf83daba08f2b669fd416457ebe0708ca0
-git+git://github.com/aergoio/merkle-bridge.git@c39e7748f44f1db81ca17ead6329a8951e8bb3da
+git+git://github.com/aergoio/merkle-bridge.git@50d2b315bc1dd00a5da93406476f4d8574f77a73
 git+git://github.com/ethereum/web3.py.git@11ef9df28dfbe4b83683a84fec184406165f18d5
 trie
 PyInquirer

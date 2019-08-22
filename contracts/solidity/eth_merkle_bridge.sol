@@ -29,7 +29,6 @@ contract EthMerkleBridge {
     // this value is only useful if the anchored chain doesn't have LIB
     // Since Aergo has LIB it is a simple indicator for wallets.
     uint public _tFinal;
-
     // _nonce is a replay protection for validator and root updates.
     uint public _nonce;
     // _contractId is a replay protection between sidechains as the same addresses can be validators
@@ -42,7 +41,7 @@ contract EthMerkleBridge {
     event mintEvent(MintedERC20 indexed tokenAddress, address indexed receiver, uint amount);
     event burnEvent(MintedERC20 indexed tokenAddress, string indexed receiver, uint amount);
     event anchorEvent(bytes32 root, uint height);
-    event newValidatorsEvent(address[] newValidators);
+    event newValidatorsEvent(address[] validators);
     event newTAnchorEvent(uint tAnchor);
     event newTFinalEvent(uint tFinal);
 
@@ -62,21 +61,29 @@ contract EthMerkleBridge {
         return _validators;
     }
 
+    // Register a new set of validators
+    // @param   validators - signers of state anchors
+    // @param   signers - array of signer indexes
+    // @param   vs, rs, ss - array of signatures matching signers indexes
     function validatorsUpdate(
-        address[] memory newValidators,
+        address[] memory validators,
         uint[] memory signers,
         uint8[] memory vs,
         bytes32[] memory rs,
         bytes32[] memory ss
     ) public {
         // validators should not sign a set that is equal to the current one to prevent spamming
-        bytes32 message = keccak256(abi.encodePacked(newValidators, _nonce, _contractId, "V"));
+        bytes32 message = keccak256(abi.encodePacked(validators, _nonce, _contractId, "V"));
         validateSignatures(message, signers, vs, rs, ss);
-        _validators = newValidators;
+        _validators = validators;
         _nonce += 1;
-        emit newValidatorsEvent(newValidators);
+        emit newValidatorsEvent(validators);
     }
 
+    // Register new anchoring periode
+    // @param   tAnchor - new anchoring periode
+    // @param   signers - array of signer indexes
+    // @param   vs, rs, ss - array of signatures matching signers indexes
     function tAnchorUpdate(
         uint tAnchor,
         uint[] memory signers,
@@ -92,6 +99,10 @@ contract EthMerkleBridge {
         emit newTAnchorEvent(tAnchor);
     }
 
+    // Register new finality of anchored chain
+    // @param   tFinal - new finality of anchored chain
+    // @param   signers - array of signer indexes
+    // @param   vs, rs, ss - array of signatures matching signers indexes
     function tFinalUpdate(
         uint tFinal,
         uint[] memory signers,
@@ -107,6 +118,11 @@ contract EthMerkleBridge {
         emit newTFinalEvent(tFinal);
     }
 
+    // Register a new anchor
+    // @param   root - Aergo storage root
+    // @param   height - block height of root
+    // @param   signers - array of signer indexes
+    // @param   vs, rs, ss - array of signatures matching signers indexes
     function newAnchor(
         bytes32 root,
         uint height,
@@ -124,6 +140,10 @@ contract EthMerkleBridge {
         emit anchorEvent(root, height);
     }
 
+    // Check 2/3 validators signed message hash
+    // @param   message - message signed (hash of data)
+    // @param   signers - array of signer indexes
+    // @param   vs, rs, ss - array of signatures matching signers indexes
     function validateSignatures(
         bytes32 message,
         uint[] memory signers,
@@ -142,10 +162,14 @@ contract EthMerkleBridge {
         return true;
     }
 
+    // lock tokens in the bridge contract
+    // @param   token - token locked to transfer
+    // @param   amount - amount of tokens to send
+    // @param   receiver - Aergo address receiver accross the bridge
     function lock(
-        string memory receiver,
+        IERC20 token,
         uint amount,
-        IERC20 token
+        string memory receiver
     ) public returns (bool) {
         // Add locked amount to total
         bytes memory accountRef = abi.encodePacked(receiver, token);
@@ -158,6 +182,14 @@ contract EthMerkleBridge {
         return true;
     }
 
+    // unlock tokens burnt on Aergo
+    // anybody can unlock, the receiver is the account who's burnt balance is recorded
+    // @param   receiver - address of receiver
+    // @param   balance - total balance of tokens burnt on Aergo
+    // @param   token - address of token to unlock
+    // @param   mp - merkle proof of inclusion of burnt balance on Aergo
+    // @param   bitmap - bitmap of non default nodes in the merkle proof
+    // @param   leafHeight - height of leaf containing the value in the state SMT
     function unlock(
         address receiver,
         uint balance,
@@ -178,6 +210,14 @@ contract EthMerkleBridge {
         return true;
     }
 
+    // mint a token locked on Aergo
+    // anybody can mint, the receiver is the account who's locked balance is recorded
+    // @param   receiver - address of receiver
+    // @param   balance - total balance of tokens locked on Aergo
+    // @param   tokenOrigin - Aergo address of token locked
+    // @param   mp - merkle proof of inclusion of locked balance on Aergo
+    // @param   bitmap - bitmap of non default nodes in the merkle proof
+    // @param   leafHeight - height of leaf containing the value in the state SMT
     function mint(
         address receiver,
         uint balance,
@@ -206,6 +246,10 @@ contract EthMerkleBridge {
         return true;
     }
 
+    // burn a pegged token
+    // @param   receiver - Aergo address
+    // @param   amount - number of tokens to burn
+    // @param   mintAddress - address of pegged token to burn
     function burn(
         string memory receiver,
         uint amount,
@@ -222,6 +266,13 @@ contract EthMerkleBridge {
         return true;
     }
 
+    // Aergo State Trie Merkle proof verification
+    // @param   mapName - name of Lua map variable storing locked/burnt balances
+    // @param   accountRef - key in mapName to record an account's token balance
+    // @param   balance - balance recorded in accountRef of mapName
+    // @param   mp - merkle proof of inclusion of accountRef, balance in _anchorRoot
+    // @param   bitmap - bitmap of non default nodes in the merkle proof
+    // @param   leafHeight - height of leaf containing the value in the state SMT
     function verifyMp(
         string memory mapName,
         bytes memory accountRef,
@@ -253,10 +304,15 @@ contract EthMerkleBridge {
         return _anchorRoot == nodeHash;
     }
 
+    // check if the ith bit is set in bytes
+    // @param   bits - bytesin which we check the ith bit
+    // @param   i - index of bit to check
     function bitIsSet(bytes32 bits, uint8 i) public pure returns (bool) {
         return bits[i/8]&bytes1(uint8(1)<<uint8(7-i%8)) != 0;
     }
 
+    // Lua contract don't store real bytes of uin so converting to string in necessary
+    // @param   num - convert uint to string type : 1234 -> "1234"
     function uintToString(uint num) public pure returns(string memory) {
         // https://github.com/oraclize/ethereum-api/blob/6fb6e887e7b95c496fd723a7c62ce40551f8028a/oraclizeAPI_0.5.sol#L1041
         if (num == 0) {
