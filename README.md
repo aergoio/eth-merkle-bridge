@@ -69,7 +69,3 @@ Remove test networks data
 ```sh
 $ make clean
 ```
-
-## TODO
-delegated fee minting when Aergo v2
-update with standard token
