@@ -1,3 +1,4 @@
+import json
 from typing import (
     List,
 )
@@ -32,6 +33,11 @@ def query_aergo_id(aergo: herapy.Aergo, bridge: str) -> str:
     id_q = aergo.query_sc_state(bridge, ["_sv__contractId"])
     id = id_q.var_proofs[0].value.decode('utf-8')[1:-1]
     return id
+
+
+def query_unfreeze_fee(aergo: herapy.Aergo, bridge: str) -> int:
+    unfreeze_fee_q = aergo.query_sc_state(bridge, ["_sv__unfreezeFee"])
+    return int(json.loads(unfreeze_fee_q.var_proofs[0].value)['_bignum'])
 
 
 def query_eth_validators(w3: Web3, address: str, abi: str):

@@ -45,6 +45,7 @@ from ethaergo_bridge_operator.op_utils import (
     query_eth_tempo,
     query_aergo_validators,
     query_eth_validators,
+    query_unfreeze_fee,
     query_aergo_id,
     query_eth_id,
 )
@@ -527,6 +528,45 @@ class ValidatorService(BridgeOperatorServicer):
               "{0}with nonce {4}"
               .format("\t"*5, u'\U0001f58b', self.validator_index, "Ethereum",
                       val_msg.destination_nonce))
+        return approval
+
+    def GetAergoUnfreezeFeeSignature(self, new_fee_msg, context):
+        """Get a vote(signature) from the validator to update the unfreezeFee
+        setting in the Aergo bridge contract bridging to Ethereum
+
+        """
+        current_fee = query_unfreeze_fee(self.hera, self.aergo_bridge)
+        if not self.auto_update:
+            return Approval(error="Voting not enabled")
+        # check destination nonce is correct
+        nonce = int(self.hera.query_sc_state(
+            self.aergo_bridge, ["_sv__nonce"]
+        ).var_proofs[0].value)
+        if nonce != new_fee_msg.destination_nonce:
+            return Approval(error="Incorrect Nonce")
+        config_data = self.load_config_data()
+        new_fee = (config_data['networks'][self.aergo_net]['bridges']
+                   [self.eth_net]['unfreeze_fee'])
+        # check new tempo is different from current one to prevent
+        # update spamming
+        if current_fee == new_fee:
+            return Approval(
+                error="New fee is same as current one")
+        # check tempo matches the one in config
+        if new_fee != new_fee_msg.fee:
+            return Approval(error="Refused to vote for this fee")
+        # sign anchor and return approval
+        msg = bytes(
+            str(new_fee) + str(nonce) + self.aergo_id + "UF",
+            'utf-8'
+        )
+        h = hashlib.sha256(msg).digest()
+        sig = self.hera.account.private_key.sign_msg(h)
+        approval = Approval(address=self.aergo_addr, sig=sig)
+        print("{0}{1} Validator {2} signed a new unfreeze fee for Aergo,\n"
+              "{0}with nonce {3}"
+              .format("", "\U0001f4a7", self.validator_index,
+                      new_fee_msg.destination_nonce))
         return approval
 
 

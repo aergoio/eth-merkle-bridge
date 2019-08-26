@@ -144,6 +144,8 @@ def deploy_bridge(
         ['bridge_abi']) = bridge_abi_path
     (config_data['networks'][eth_net]['bridges'][aergo_net]
         ['minted_abi']) = minted_erc20_abi_path
+    (config_data['networks'][aergo_net]['bridges'][eth_net]
+        ['unfreeze_fee']) = 1000
 
     with open(config_path, "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)

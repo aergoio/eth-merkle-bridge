@@ -599,13 +599,6 @@ class EthProposerClient(threading.Thread):
             config_data = json.load(f)
         return config_data
 
-    def shutdown(self):
-        print("\nDisconnecting AERGO")
-        self.hera.disconnect()
-        print("Closing channels")
-        for channel in self.channels:
-            channel.close()
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

@@ -210,7 +210,6 @@ function constructor(aergoErc20, validators, tAnchor, tFinal)
     id = string.sub(id, 3, 34)
     _contractId:set(id)
     _unfreezeFee:set(bignum.number(1000))
-    -- TODO unfreezeFeeUpdate
     return id
 end
 
@@ -299,6 +298,21 @@ function tFinalUpdate(tFinal, signers, signatures)
     _tFinal:set(tFinal)
     _nonce:set(oldNonce + 1)
     contract.event("tFinalUpdate", system.getSender(), tFinal)
+end
+
+-- Register new unfreezing fee for delegated unfreeze service
+-- @type    call
+-- @param   fee (ubig) new unfreeze fee
+-- @param   signers ([]uint) array of signer indexes
+-- @param   signatures ([]0x hex string) array of signatures matching signers indexes
+-- @event   unfreezeFeeUpdate(proposer, fee)
+function unfreezeFeeUpdate(fee, signers, signatures)
+    oldNonce = _nonce:get()
+    message = crypto.sha256(bignum.tostring(fee)..tostring(oldNonce).._contractId:get().."UF")
+    assert(_validateSignatures(message, signers, signatures), "Failed unfreeze fee signature validation")
+    _unfreezeFee:set(fee)
+    _nonce:set(oldNonce + 1)
+    contract.event("unfreezeFeeUpdate", system.getSender(), fee)
 end
 
 --------------------- User Transfer Functions -------------------------
@@ -728,5 +742,5 @@ abi.register(transfer, transferFrom, setApprovalForAll, mint, burn)
 abi.register_view(name, symbol, decimals, totalSupply, balanceOf, isApprovedForAll)
 ]]
 
-abi.register(newAnchor, validatorsUpdate, tAnchorUpdate, tFinalUpdate, tokensReceived, unlock, mint, burn, unfreeze)
+abi.register(newAnchor, validatorsUpdate, tAnchorUpdate, tFinalUpdate, unfreezeFeeUpdate, tokensReceived, unlock, mint, burn, unfreeze)
 abi.payable(freeze, default)

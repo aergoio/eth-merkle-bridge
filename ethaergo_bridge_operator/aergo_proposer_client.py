@@ -31,12 +31,15 @@ from ethaergo_bridge_operator.bridge_operator_pb2_grpc import (
 from ethaergo_bridge_operator.bridge_operator_pb2 import (
     Anchor,
     NewValidators,
-    NewTempo
+    NewTempo,
+    NewUnfreezeFee,
+
 )
 from ethaergo_bridge_operator.op_utils import (
     query_aergo_tempo,
     query_aergo_validators,
     query_aergo_id,
+    query_unfreeze_fee,
 )
 from ethaergo_bridge_operator.exceptions import (
     ValidatorMajorityError,
@@ -383,6 +386,7 @@ class AergoProposerClient(threading.Thread):
         config_data = self.load_config_data()
         validators = query_aergo_validators(self.hera, self.aergo_bridge)
         t_anchor, t_final = query_aergo_tempo(self.hera, self.aergo_bridge)
+        unfreeze_fee = query_unfreeze_fee(self.hera, self.aergo_bridge)
         config_validators = [val['addr']
                              for val in config_data['validators']]
         if validators != config_validators:
@@ -400,6 +404,11 @@ class AergoProposerClient(threading.Thread):
         if t_final != config_t_final:
             print('{}Finality update requested'.format(self.tab))
             self.update_t_final(config_t_final)
+        config_unfreeze_fee = (config_data['networks'][self.aergo_net]
+                               ['bridges'][self.eth_net]['unfreeze_fee'])
+        if unfreeze_fee != config_unfreeze_fee:
+            print('{}Unfreeze fee update requested'.format(self.tab))
+            self.update_unfreeze_fee(config_unfreeze_fee)
 
     def update_validator_connections(self):
         """Update connections to validators after a successful update
@@ -487,19 +496,21 @@ class AergoProposerClient(threading.Thread):
                   .format(self.tab))
             return
         # broadcast transaction
-        self.set_tempo(t_anchor, validator_indexes, sigs, "tAnchorUpdate")
+        self.set_single_param(t_anchor, validator_indexes, sigs,
+                              "tAnchorUpdate", "\u231B")
 
-    def set_tempo(
+    def set_single_param(
         self,
-        t_anchor,
+        num,
         validator_indexes,
         sigs,
-        contract_function
+        contract_function,
+        emoticon
     ) -> bool:
-        """Update t_anchor or t_final on chain"""
+        """Call contract_function with num"""
         tx, result = self.hera.call_sc(
             self.aergo_bridge, contract_function,
-            args=[t_anchor, validator_indexes, sigs]
+            args=[num, validator_indexes, sigs]
         )
         if result.status != herapy.CommitStatus.TX_OK:
             print("{}Set new validators Tx commit failed : {}"
@@ -513,7 +524,7 @@ class AergoProposerClient(threading.Thread):
             return False
         else:
             print("{}{} {} success"
-                  .format(self.tab, '\u231B', contract_function))
+                  .format(self.tab, emoticon, contract_function))
         return True
 
     def update_t_final(self, t_final):
@@ -529,7 +540,8 @@ class AergoProposerClient(threading.Thread):
                   .format(self.tab))
             return
         # broadcast transaction
-        self.set_tempo(t_final, validator_indexes, sigs, "tFinalUpdate")
+        self.set_single_param(t_final, validator_indexes, sigs, "tFinalUpdate",
+                              "\u231B")
 
     def get_tempo_signatures(self, tempo, rpc_service, tempo_id):
         """Request approvals of validators for the new t_anchor or t_final."""
@@ -552,17 +564,47 @@ class AergoProposerClient(threading.Thread):
         sigs, validator_indexes = self.extract_signatures(approvals)
         return sigs, validator_indexes
 
+    def update_unfreeze_fee(self, fee):
+        """Try to update the anchoring periode registered in the bridge
+        contract.
+
+        """
+        try:
+            sigs, validator_indexes = self.get_unfreeze_fee_signatures(
+                fee)
+        except ValidatorMajorityError:
+            print("{0}Failed to gather 2/3 validators signatures"
+                  .format(self.tab))
+            return
+        # broadcast transaction
+        self.set_single_param({'_bignum': str(fee)}, validator_indexes, sigs,
+                              "unfreezeFeeUpdate", "\U0001f4a7")
+
+    def get_unfreeze_fee_signatures(self, fee):
+        """Request approvals of validators for the new t_anchor or t_final."""
+        nonce = int(
+            self.hera.query_sc_state(
+                self.aergo_bridge, ["_sv__nonce"]).var_proofs[0].value
+        )
+        new_fee_msg = NewUnfreezeFee(fee=fee, destination_nonce=nonce)
+        msg = bytes(
+            str(fee) + str(nonce) + self.aergo_id + "UF",
+            'utf-8'
+        )
+        h = hashlib.sha256(msg).digest()
+        validator_indexes = [i for i in range(len(self.stubs))]
+        worker = partial(
+            self.get_signature_worker, "GetAergoUnfreezeFeeSignature",
+            new_fee_msg, h
+        )
+        approvals = self.pool.map(worker, validator_indexes)
+        sigs, validator_indexes = self.extract_signatures(approvals)
+        return sigs, validator_indexes
+
     def load_config_data(self) -> Dict:
         with open(self.config_file_path, "r") as f:
             config_data = json.load(f)
         return config_data
-
-    def shutdown(self):
-        print("\nDisconnecting AERGO")
-        self.hera.disconnect()
-        print("Closing channels")
-        for channel in self.channels:
-            channel.close()
 
 
 if __name__ == '__main__':

@@ -54,6 +54,11 @@ class BridgeOperatorStub(object):
         request_serializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.NewValidators.SerializeToString,
         response_deserializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
         )
+    self.GetAergoUnfreezeFeeSignature = channel.unary_unary(
+        '/BridgeOperator/GetAergoUnfreezeFeeSignature',
+        request_serializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.NewUnfreezeFee.SerializeToString,
+        response_deserializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
+        )
 
 
 class BridgeOperatorServicer(object):
@@ -116,6 +121,13 @@ class BridgeOperatorServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
+  def GetAergoUnfreezeFeeSignature(self, request, context):
+    """Get signature to update unfreezing fee service on Aergo
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
 
 def add_BridgeOperatorServicer_to_server(servicer, server):
   rpc_method_handlers = {
@@ -157,6 +169,11 @@ def add_BridgeOperatorServicer_to_server(servicer, server):
       'GetAergoValidatorsSignature': grpc.unary_unary_rpc_method_handler(
           servicer.GetAergoValidatorsSignature,
           request_deserializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.NewValidators.FromString,
+          response_serializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
+      ),
+      'GetAergoUnfreezeFeeSignature': grpc.unary_unary_rpc_method_handler(
+          servicer.GetAergoUnfreezeFeeSignature,
+          request_deserializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.NewUnfreezeFee.FromString,
           response_serializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
       ),
   }

@@ -277,6 +277,10 @@ class EthMerkleBridgeCli():
                             'name': 'Update finality',
                             'value': 'UF'
                         },
+                        {
+                            'name': 'Update unfreeze fee',
+                            'value': 'UUF'
+                        },
                         'Back',
                     ]
                 }
@@ -299,6 +303,8 @@ class EthMerkleBridgeCli():
                     self.update_t_anchor()
                 elif answers['action'] == 'UF':
                     self.update_t_final()
+                elif answers['action'] == 'UUF':
+                    self.update_unfreeze_fee()
             except (TypeError, KeyboardInterrupt, InvalidArgumentsError) as e:
                 print('Someting went wrong, check the status of you pending '
                       'transfers\nError msg: {}'.format(e))
@@ -557,6 +563,18 @@ class EthMerkleBridgeCli():
                                 .format(from_chain))
         self.wallet.config_data('networks', to_chain, 'bridges', from_chain,
                                 't_final', value=t_final)
+        self.wallet.save_config()
+
+    def update_unfreeze_fee(self):
+        from_chain, to_chain = self.prompt_transfer_networks()
+        if self.wallet.config_data('networks',
+                                   to_chain, 'type') == 'ethereum':
+            raise InvalidArgumentsError(
+                "Unfreeze only available on Aergo network")
+        fee = prompt_number("New Aergo unfreeze fee on {}"
+                            .format(to_chain))
+        self.wallet.config_data('networks', to_chain, 'bridges', from_chain,
+                                'unfreeze_fee', value=fee)
         self.wallet.save_config()
 
     def get_asset_address(self, asset_name, from_chain, to_chain):

@@ -20,6 +20,9 @@ service BridgeOperator {
     rpc GetEthValidatorsSignature(NewValidators) returns (Approval) {}
     // Get signature to update validators of anchors from Aergo
     rpc GetAergoValidatorsSignature(NewValidators) returns (Approval) {}
+
+    // Get signature to update unfreezing fee service on Aergo
+    rpc GetAergoUnfreezeFeeSignature(NewUnfreezeFee) returns (Approval) {}
 }
 
 message Anchor {
@@ -43,13 +46,20 @@ message Approval {
 message NewTempo {
     // anchoring periode or finality
     uint64 tempo = 1;
-    // eth bridge update nonce
+    // bridge update nonce
     uint64 destination_nonce = 2;
 }
 
 message NewValidators {
     // validators addresses : either '0x...' or 'A...' 
     repeated string validators = 1;
+    // eth bridge update nonce
+    uint64 destination_nonce = 2;
+}
+
+message NewUnfreezeFee {
+    // aer unfreeze fee
+    uint64 fee = 1;
     // eth bridge update nonce
     uint64 destination_nonce = 2;
 }

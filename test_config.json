@@ -5,7 +5,8 @@
                 "eth-poa-local": {
                     "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
                     "t_anchor": 6,
-                    "t_final": 4
+                    "t_final": 4,
+                    "unfreeze_fee": 1000
                 }
             },
             "ip": "localhost:7845",
@@ -15,7 +16,7 @@
                     "pegs": {}
                 },
                 "token1": {
-                    "addr": "AmgpYGMMPEnb7ukcJkhpGCGJXwqEq2MgpneN47hHrbBS7C3AjDke",
+                    "addr": "AmhqbiBkkpYGUC2y9NUsRbFeqbv4K9utZGgKPs8CRA9UuCmVNssW",
                     "pegs": {
                         "eth-poa-local": "0x65c88DF2c72a6730a9bA0642e24C545fC13e70F3"
                     }
@@ -38,7 +39,7 @@
             "tokens": {
                 "aergo_erc20": {
                     "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0x3f79E699eBb125054E425BD2cce38225CB861664",
+                    "addr": "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
                     "pegs": {
                         "aergo-local": "aergo"
                     }
@@ -49,7 +50,7 @@
                 },
                 "test_erc20": {
                     "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0x737ED67385C69E22F4423AF7645954711e390416",
+                    "addr": "0x416ac7b876436662Dcb0FB531EfDd2fa0C9F0bad",
                     "pegs": {
                         "aergo-local": "AmhoYqbizfrTLCx1QCXKoQuyuwtjyWQRwVEfVPMPLkZJEcAY2nSa"
                     }

@@ -12,6 +12,7 @@ from web3.middleware import (
 from ethaergo_bridge_operator.op_utils import (
     query_aergo_tempo,
     query_aergo_validators,
+    query_unfreeze_fee,
     query_eth_tempo,
     query_eth_validators,
 )
@@ -198,7 +199,7 @@ def test_validators_update(bridge_wallet):
     bridge_wallet.config_data('validators', value=new_validators)
 
     bridge_wallet.save_config()
-    # wait for changes to be reflacted
+    # wait for changes to be reflected
     eth_nonce_before = eth_bridge.functions._nonce().call()
     nonce = aergo_nonce_before
     while nonce <= aergo_nonce_before + 2:
@@ -225,7 +226,7 @@ def test_validators_update(bridge_wallet):
     )
     bridge_wallet.config_data('validators', value=new_validators[:-1])
     bridge_wallet.save_config()
-    # wait for changes to be reflacted
+    # wait for changes to be reflected
     eth_nonce_before = eth_bridge.functions._nonce().call()
     nonce = aergo_nonce_before
     while nonce <= aergo_nonce_before + 2:
@@ -243,3 +244,65 @@ def test_validators_update(bridge_wallet):
 
     assert aergo_validators == aergo_validators_before
     assert eth_validators == eth_validators_before
+
+
+def test_unfreeze_fee_update(bridge_wallet):
+    eth_block_time = 3
+    hera = herapy.Aergo()
+    hera.connect(bridge_wallet.config_data('networks', 'aergo-local', 'ip'))
+    t_anchor_aergo = bridge_wallet.config_data(
+        'networks', 'aergo-local', 'bridges', 'eth-poa-local', 't_anchor'
+    )
+    bridge = bridge_wallet.config_data(
+        'networks', 'aergo-local', 'bridges', 'eth-poa-local', 'addr'
+    )
+
+    unfreeze_fee_setting = bridge_wallet.config_data(
+        'networks', 'aergo-local', 'bridges', 'eth-poa-local', 'unfreeze_fee'
+    )
+    unfreeze_fee_before = query_unfreeze_fee(hera, bridge)
+    assert unfreeze_fee_setting == unfreeze_fee_before
+
+    # update fee
+    aergo_nonce_before = int(
+        hera.query_sc_state(bridge, ["_sv__nonce"]).var_proofs[0].value
+    )
+    new_fee = unfreeze_fee_before + 1000
+    bridge_wallet.config_data(
+        'networks', 'aergo-local', 'bridges', 'eth-poa-local', 'unfreeze_fee',
+        value=new_fee)
+
+    bridge_wallet.save_config()
+    # wait for changes to be reflected
+    nonce = aergo_nonce_before
+    while nonce <= aergo_nonce_before + 2:
+        time.sleep(t_anchor_aergo * eth_block_time)
+        nonce = int(
+            hera.query_sc_state(bridge, ["_sv__nonce"])
+            .var_proofs[0].value
+        )
+    unfreeze_fee_after = query_unfreeze_fee(hera, bridge)
+
+    assert unfreeze_fee_after == new_fee
+
+    # reset fee to starting value
+    aergo_nonce_before = int(
+        hera.query_sc_state(bridge, ["_sv__nonce"]).var_proofs[0].value
+    )
+    new_fee = unfreeze_fee_after - 1000
+    bridge_wallet.config_data(
+        'networks', 'aergo-local', 'bridges', 'eth-poa-local', 'unfreeze_fee',
+        value=new_fee)
+
+    bridge_wallet.save_config()
+    # wait for changes to be reflected
+    nonce = aergo_nonce_before
+    while nonce <= aergo_nonce_before + 2:
+        time.sleep(t_anchor_aergo * eth_block_time)
+        nonce = int(
+            hera.query_sc_state(bridge, ["_sv__nonce"])
+            .var_proofs[0].value
+        )
+    unfreeze_fee_after = query_unfreeze_fee(hera, bridge)
+
+    assert unfreeze_fee_after == new_fee
