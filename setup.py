@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="eth-merkle-bridge",
-    version="0.0.1",
+    version="0.0.2",
     author="Pierre-Alain Ouvrard",
     author_email="ouvrard.pierre.alain@gmail.com",
     description="POC implementation of the eth-merkle-bridge",
