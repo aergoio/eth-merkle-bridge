@@ -285,7 +285,7 @@ class EthProposerClient(threading.Thread):
             'nonce': self.web3.eth.getTransactionCount(
                 self.proposer_acct.address
             ),
-            'gas': 200000,
+            'gas': 500000,
             'gasPrice': self.web3.toWei(9, 'gwei')
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
@@ -296,6 +296,7 @@ class EthProposerClient(threading.Thread):
             print("{0}{1} Anchor success,\n{0}{2} wait until next anchor "
                   "time: {3}s...".format(self.tab, u'\u2693', u'\u23F0',
                                          self.t_anchor))
+            print("{}\u26fd Gas used: {}".format(self.tab, receipt.gasUsed))
         else:
             print("{}Anchor failed: already anchored, or invalid "
                   "signature: {}".format(self.tab, receipt))
@@ -454,7 +455,7 @@ class EthProposerClient(threading.Thread):
             'nonce': self.web3.eth.getTransactionCount(
                 self.proposer_acct.address
             ),
-            'gas': 108036,
+            'gas': 500000,
             'gasPrice': self.web3.toWei(9, 'gwei')
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)

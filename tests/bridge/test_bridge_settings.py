@@ -87,7 +87,7 @@ def test_eth_tempo_update(bridge_wallet):
 
 
 def test_aergo_tempo_update(bridge_wallet):
-    eth_block_time = 3
+    eth_block_time = 1
     hera = herapy.Aergo()
     hera.connect(bridge_wallet.config_data('networks', 'aergo-local', 'ip'))
     aergo_bridge = bridge_wallet.config_data(
@@ -154,7 +154,7 @@ def test_aergo_tempo_update(bridge_wallet):
 
 
 def test_validators_update(bridge_wallet):
-    eth_block_time = 3
+    eth_block_time = 1
     hera = herapy.Aergo()
     hera.connect(bridge_wallet.config_data('networks', 'aergo-local', 'ip'))
 
@@ -247,7 +247,7 @@ def test_validators_update(bridge_wallet):
 
 
 def test_unfreeze_fee_update(bridge_wallet):
-    eth_block_time = 3
+    eth_block_time = 1
     hera = herapy.Aergo()
     hera.connect(bridge_wallet.config_data('networks', 'aergo-local', 'ip'))
     t_anchor_aergo = bridge_wallet.config_data(

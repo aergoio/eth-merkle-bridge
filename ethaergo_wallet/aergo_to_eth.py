@@ -132,8 +132,8 @@ def mint(
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
-        print(lock_proof, receipt)
-        raise TxError("Mint asset Tx execution failed")
+        raise TxError("Mint asset Tx execution failed: {}".format(receipt))
+    print("\u26fd Gas used: ", receipt.gasUsed)
     events = eth_bridge.events.mintEvent().processReceipt(receipt)
     token_pegged = events[0]['args']['tokenAddress']
 
@@ -248,8 +248,8 @@ def unlock(
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
-        print(burn_proof, receipt)
-        raise TxError("Unlock asset Tx execution failed")
+        raise TxError("Unlock asset Tx execution failed: {}".format(receipt))
+    print("\u26fd Gas used: ", receipt.gasUsed)
     return tx_hash.hex()
 
 
@@ -272,7 +272,7 @@ def freeze(
     )
 
     if result.status != herapy.CommitStatus.TX_OK:
-        raise TxError("Burn asset Tx commit failed : {}".format(result))
+        raise TxError("Freeze asset Tx commit failed : {}".format(result))
 
     # Check freeze success
     result = aergo_from.wait_tx_result(tx.tx_hash)

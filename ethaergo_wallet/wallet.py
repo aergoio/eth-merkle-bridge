@@ -730,14 +730,14 @@ class EthAergoWallet(WalletConfig):
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
-        lock_proof = aergo_to_eth.build_burn_proof(
+        burn_proof = aergo_to_eth.build_burn_proof(
             aergo_from, w3, receiver, bridge_from, bridge_to, bridge_to_abi,
             burn_height, asset_address
         )
         print("\u2699 Built burn proof")
 
         tx_hash = aergo_to_eth.unlock(
-            w3, signer_acct, receiver, lock_proof, asset_address, bridge_to,
+            w3, signer_acct, receiver, burn_proof, asset_address, bridge_to,
             bridge_to_abi, fee_limit, self.fee_price
         )
         print('\U0001f513 Unlock success: ', tx_hash)

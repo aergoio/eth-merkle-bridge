@@ -65,8 +65,8 @@ def lock(
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
-        print(receipt)
-        raise TxError("Lock asset Tx execution failed")
+        raise TxError("Lock asset Tx execution failed: {}".format(receipt))
+    print("\u26fd Gas used: ", receipt.gasUsed)
     return receipt.blockNumber, tx_hash.hex()
 
 
@@ -174,8 +174,8 @@ def burn(
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
-        print(receipt)
-        raise TxError("Burn asset Tx execution failed")
+        raise TxError("Burn asset Tx execution failed: {}".format(receipt))
+    print("\u26fd Gas used: ", receipt.gasUsed)
     return receipt.blockNumber, tx_hash.hex()
 
 
@@ -262,11 +262,11 @@ def unfreeze(
     tx, result = aergo_to.call_sc(bridge_to, "unfreeze",
                                   args=[receiver, ubig_balance, ap])
     if result.status != herapy.CommitStatus.TX_OK:
-        raise TxError("Mint asset Tx commit failed : {}".format(result))
+        raise TxError("Unfreeze asset Tx commit failed : {}".format(result))
 
     result = aergo_to.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
-        raise TxError("Mint asset Tx execution failed : {}".format(result))
+        raise TxError("Unfreeze asset Tx execution failed : {}".format(result))
     return str(tx.tx_hash)
 
 
