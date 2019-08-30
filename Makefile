@@ -28,7 +28,7 @@ deploy_test_bridge:
 	python3 -m ethaergo_bridge_operator.freeze_aergo
 
 proposer:
-	python3 -m ethaergo_bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 3 --privkey_name "proposer" --auto_update --local_test
+	python3 -m ethaergo_bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 1 --privkey_name "proposer" --auto_update --local_test
 
 validator:
 	python3 -m ethaergo_bridge_operator.validator_server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --auto_update --local_test
