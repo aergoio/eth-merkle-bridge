@@ -58,7 +58,7 @@ def lock(
         'chainId': w3.eth.chainId,
         'from': signer_acct.address,
         'nonce': next_nonce,
-        'gas': 4108036,
+        'gas': 158036,
         'gasPrice': w3.toWei(9, 'gwei')
     })
     signed = signer_acct.sign_transaction(construct_txn)

@@ -67,15 +67,15 @@ def increase_approval(
         'chainId': w3.eth.chainId,
         'from': signer_acct.address,
         'nonce': approval_nonce,
-        'gas': 4108036,
+        'gas': 408036,
         'gasPrice': w3.toWei(9, 'gwei')
     })
     signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
-        print(receipt)
-        raise TxError("Mint asset Tx execution failed")
+        raise TxError("Increase approval Tx execution failed {}"
+                      .format(receipt))
     return approval_nonce + 1, tx_hash.hex()
 
 

@@ -43,8 +43,7 @@ class WalletConfig():
 
     def get_eth_wallet_address(
         self,
-        wallet_name: str,
-        account_name: str = 'default',
+        account_name: str
     ) -> str:
         addr = self.config_data('wallet-eth', account_name, 'addr')
         return addr
