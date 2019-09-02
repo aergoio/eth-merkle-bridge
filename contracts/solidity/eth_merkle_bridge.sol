@@ -171,13 +171,15 @@ contract EthMerkleBridge {
         uint amount,
         string memory receiver
     ) public returns (bool) {
+        string memory addr = _mintedTokens[address(token)];
+        require(bytes(addr).length == 0, "cannot lock token that was minted by bridge, must be burnt");
         // Add locked amount to total
         bytes memory accountRef = abi.encodePacked(receiver, token);
         _locks[accountRef] += amount;
         // Pull token from owner to bridge contract (owner must set approval before calling lock)
         // using msg.sender, the owner must call lock, but we can make delegated transfers with sender
         // address as parameter.
-        require(token.transferFrom(msg.sender, address(this), amount), "Failed to burn");
+        require(token.transferFrom(msg.sender, address(this), amount), "Failed to lock");
         emit lockEvent(token, receiver, amount);
         return true;
     }
