@@ -1,3 +1,4 @@
+import argparse
 import hashlib
 
 import aergo.herapy as herapy
@@ -22,7 +23,7 @@ def get_random_eth_address(i: int) -> str:
         hashlib.sha256(i.to_bytes(3, byteorder='big')).digest().hex()[:40]
 
 
-def run(start_index: int, batch_count: int):
+def run(start_index: int, batch_count: int, service_key: str):
     config_path = './test_config.json'
     abi_path = "contracts/solidity/aergo_erc20_abi.txt"
     with open(abi_path, "r") as f:
@@ -34,7 +35,7 @@ def run(start_index: int, batch_count: int):
     # are made using the lib functions.
     ethaergo_wallet = EthAergoWallet(config_path)
     w3 = ethaergo_wallet.get_web3('eth-poa-local')
-    hera = ethaergo_wallet.get_aergo('aergo-local', 'default', '1234')
+    hera = ethaergo_wallet.get_aergo('aergo-local', service_key, '1234')
     eth_bridge = ethaergo_wallet.get_bridge_contract_address(
         'eth-poa-local', 'aergo-local')
     aergo_bridge = ethaergo_wallet.get_bridge_contract_address(
@@ -51,10 +52,10 @@ def run(start_index: int, batch_count: int):
         aergo_addrs.append(receiver)
 
     print("Lock Batch")
-    # The 'default' privkey will send amount to batch_count different address
-    # across the bridge.
-    # Locks mapping will contain batch_count new entries.
-    signer_acct = ethaergo_wallet.get_signer(w3, 'default', '1234')
+    # The service_key privkey will send amount to batch_count nb of
+    # different address across the bridge.
+    # Locks mapping will contain batch_count nb of new entries.
+    signer_acct = ethaergo_wallet.get_signer(w3, service_key, '1234')
     next_nonce, _ = eth_u.increase_approval(
         eth_bridge, erc20_address, amount*batch_count, w3, erc20_abi,
         signer_acct
@@ -68,9 +69,9 @@ def run(start_index: int, batch_count: int):
         print(i)
 
     print("Unfreeze Batch")
-    # The 'default' privkey will unfreeze balances of batch_count different
-    # addresses
-    # Unfreezes mapping will contain batch_count new entries.
+    # The service_key privkey will unfreeze balances of batch_count nb of
+    # different addresses
+    # Unfreezes mapping will contain batch_count nb of new entries.
     for i, receiver in enumerate(aergo_addrs):
         while True:
             # retry because unfreeze can fail if a new anchor came right after
@@ -86,12 +87,14 @@ def run(start_index: int, batch_count: int):
                 )
             except TxError:
                 continue
+            except ValueError:
+                break
             break
 
     print("Freeze Batch")
     # Each privkey that received unfreezed aergo will freeze amount/10
-    # and send it to batch_count different addresses
-    # Burns mapping will contain batch_count new entries.
+    # and send it to batch_count nb of different addresses
+    # Burns mapping will contain batch_count nb of new entries.
     amount = 10**18
     eth_addrs = []
     for i in range(start_index, start_index + batch_count):
@@ -105,9 +108,9 @@ def run(start_index: int, batch_count: int):
         print(i)
 
     print("Unlock Batch")
-    # The 'default' privkey will unlock balances of batch_count different
-    # addresses
-    # Unlocks mapping will contain batch_count new entries.
+    # The service_key privkey will unlock balances of batch_count nb of
+    # different addresses
+    # Unlocks mapping will contain batch_count nb of new entries.
     for i, receiver in enumerate(eth_addrs):
         while True:
             # retry because unlock can fail if a new anchor came right after
@@ -124,10 +127,22 @@ def run(start_index: int, batch_count: int):
                 )
             except TxError:
                 continue
+            except ValueError:
+                break
             break
 
 
 if __name__ == '__main__':
-    privkey_start_index = 1
-    batch_count = 1000
-    run(privkey_start_index, batch_count)
+    parser = argparse.ArgumentParser(
+        description='Gas analysis with growing state storage')
+    parser.add_argument(
+        '--start_index', type=int, help='privkey start index',
+        required=True)
+    parser.add_argument(
+        '--qty', type=int, help='nb of new users',
+        required=True)
+    parser.add_argument(
+        '--service', type=str, help='privkey name of unfreezing service',
+        required=True)
+    args = parser.parse_args()
+    run(args.start_index, args.qty, args.service)
