@@ -45,7 +45,8 @@ def query_eth_validators(w3: Web3, address: str, abi: str):
         address=address,
         abi=abi
     )
-    return bridge_contract.functions.getValidators().call()
+    validators = bridge_contract.functions.getValidators().call()
+    return [val.lower() for val in validators]
 
 
 def query_eth_tempo(w3: Web3, address: str, abi: str):

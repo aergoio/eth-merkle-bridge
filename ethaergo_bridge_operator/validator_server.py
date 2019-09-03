@@ -144,10 +144,10 @@ class ValidatorService(BridgeOperatorServicer):
                 for i, validator in enumerate(config_data['validators']):
                     if validator['addr'] != aergo_vals[i]:
                         print("WARNING: This validator is voting for a new "
-                              "set of validators\n")
+                              "set of aergo validators\n")
                     if validator['eth-addr'] != eth_vals[i]:
                         print("WARNING: This validator is voting for a new "
-                              "set of validators\n")
+                              "set of eth validators\n")
                     break
             except IndexError:
                 pass
@@ -194,7 +194,7 @@ class ValidatorService(BridgeOperatorServicer):
         self.eth_privkey = self.web3.eth.account.decrypt(encrypted_key,
                                                          privkey_pwd)
         acct = self.web3.eth.account.from_key(self.eth_privkey)
-        self.eth_address = acct.address
+        self.eth_address = acct.address.lower()
         print("  > Ethereum validator Address: {}".format(self.eth_address))
 
     def load_config_data(self) -> Dict:

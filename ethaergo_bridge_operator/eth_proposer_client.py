@@ -107,20 +107,20 @@ class EthProposerClient(threading.Thread):
         bridge_abi_path = (config_data['networks'][eth_net]['bridges']
                            [aergo_net]['bridge_abi'])
         with open(bridge_abi_path, "r") as f:
-            eth_abi = f.read()
-        eth_bridge_address = (config_data['networks'][eth_net]['bridges']
+            self.eth_abi = f.read()
+        self.eth_bridge_address = (config_data['networks'][eth_net]['bridges']
                               [aergo_net]['addr'])
         self.eth_bridge = self.web3.eth.contract(
-            address=eth_bridge_address,
-            abi=eth_abi
+            address=self.eth_bridge_address,
+            abi=self.eth_abi
         )
         self.aergo_bridge = (config_data['networks'][aergo_net]['bridges']
                              [eth_net]['addr'])
-        self.eth_id = query_eth_id(self.web3, eth_bridge_address, eth_abi)
+        self.eth_id = query_eth_id(self.web3, self.eth_bridge_address, self.eth_abi)
 
         print("------ Connect to Validators -----------")
-        validators = query_eth_validators(self.web3, eth_bridge_address,
-                                          eth_abi)
+        validators = query_eth_validators(self.web3, self.eth_bridge_address,
+                                          self.eth_abi)
         print("Validators: ", validators)
         # create all channels with validators
         self.channels: List[grpc._channel.Channel] = []
@@ -144,7 +144,7 @@ class EthProposerClient(threading.Thread):
 
         # get the current t_anchor and t_final for anchoring on etherem
         self.t_anchor, self._t_final = query_eth_tempo(
-            self.web3, eth_bridge_address, eth_abi)
+            self.web3, self.eth_bridge_address, self.eth_abi)
         print("{} (t_final={}) -> {} : t_anchor={}"
               .format(aergo_net, self._t_final, eth_net, self.t_anchor))
 
@@ -214,7 +214,7 @@ class EthProposerClient(threading.Thread):
         # validate signature
         if not approval.address == self.web3.eth.account.recoverHash(
             h, signature=approval.sig
-        ):
+        ).lower():
             print("{}Invalid signature from validator {}"
                   .format(self.tab, idx))
             return None
@@ -346,8 +346,8 @@ class EthProposerClient(threading.Thread):
             try:
                 nonce_to = self.eth_bridge.functions._nonce().call()
                 sigs, validator_indexes = self.get_anchor_signatures(
-                        root, next_anchor_height, nonce_to
-                    )
+                    root, next_anchor_height, nonce_to
+                )
             except ValidatorMajorityError:
                 print("{0}Failed to gather 2/3 validators signatures,\n"
                       "{0}{1} waiting for next anchor..."
@@ -395,7 +395,8 @@ class EthProposerClient(threading.Thread):
 
         """
         config_data = self.load_config_data()
-        validators = self.eth_bridge.functions.getValidators().call()
+        validators = query_eth_validators(self.web3, self.eth_bridge_address,
+                                          self.eth_abi)
         config_validators = [val['eth-addr']
                              for val in config_data['validators']]
         if validators != config_validators:
