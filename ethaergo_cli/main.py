@@ -760,7 +760,7 @@ class EthMerkleBridgeCli():
                   .format(from_chain, bridge_from, to_chain, bridge_to,
                           asset_name, asset_addr, receiver, deposit_height)
         if self.wallet.config_data('networks',
-                                   from_chain, 'type') == 'ethereum':
+                                   to_chain, 'type') == 'aergo':
             privkey_name = self.prompt_signing_key('wallet')
             if asset_name in from_assets:
                 # if transfering a native asset mint
@@ -799,8 +799,8 @@ class EthMerkleBridgeCli():
                 print('asset not properly registered in config.json')
                 return
         elif self.wallet.config_data('networks',
-                                     from_chain, 'type') == 'aergo':
-            privkey_name = self.prompt_signing_key('wallet')
+                                     to_chain, 'type') == 'ethereum':
+            privkey_name = self.prompt_signing_key('wallet-eth')
             if asset_name == 'aergo':
                 print("Unlock transfer summary:\n{}".format(summary))
                 if not confirm_transfer():
@@ -938,6 +938,11 @@ class EthMerkleBridgeCli():
 
         """
         accounts = self.wallet.config_data(wallet_name)
+        if len(accounts) == 0:
+            raise InvalidArgumentsError(
+                "No private key available, first register a private key for "
+                "signing transactions"
+            )
         questions = [
             {
                 'type': 'list',
