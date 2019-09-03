@@ -51,7 +51,7 @@ def deploy_bridge(
     aergo.connect(config_data['networks'][aergo_net]['ip'])
     print("------ Connect Web3 -----------")
     ip = config_data['networks'][eth_net]['ip']
-    w3 = Web3(Web3.HTTPProvider("http://" + ip))
+    w3 = Web3(Web3.HTTPProvider(ip))
     eth_poa = config_data['networks'][eth_net]['isPOA']
     if eth_poa:
         w3.middleware_onion.inject(geth_poa_middleware, layer=0)

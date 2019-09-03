@@ -20,7 +20,7 @@ from ethaergo_bridge_operator.op_utils import (
 
 def test_eth_tempo_update(bridge_wallet):
     ip = bridge_wallet.config_data('networks', 'eth-poa-local', 'ip')
-    w3 = Web3(Web3.HTTPProvider("http://" + ip))
+    w3 = Web3(Web3.HTTPProvider(ip))
     eth_poa = bridge_wallet.config_data('networks', 'eth-poa-local', 'isPOA')
     if eth_poa:
         w3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -159,7 +159,7 @@ def test_validators_update(bridge_wallet):
     hera.connect(bridge_wallet.config_data('networks', 'aergo-local', 'ip'))
 
     ip = bridge_wallet.config_data('networks', 'eth-poa-local', 'ip')
-    w3 = Web3(Web3.HTTPProvider("http://" + ip))
+    w3 = Web3(Web3.HTTPProvider(ip))
     eth_poa = bridge_wallet.config_data('networks', 'eth-poa-local', 'isPOA')
     if eth_poa:
         w3.middleware_onion.inject(geth_poa_middleware, layer=0)

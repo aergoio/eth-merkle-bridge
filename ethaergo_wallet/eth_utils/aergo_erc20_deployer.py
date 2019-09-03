@@ -32,7 +32,7 @@ def deploy_aergo_erc20(
 
     print("------ Connect Web3 -----------")
     ip = config_data['networks'][network_name]['ip']
-    w3 = Web3(Web3.HTTPProvider("http://" + ip))
+    w3 = Web3(Web3.HTTPProvider(ip))
     eth_poa = config_data['networks'][network_name]['isPOA']
     if eth_poa:
         w3.middleware_onion.inject(geth_poa_middleware, layer=0)

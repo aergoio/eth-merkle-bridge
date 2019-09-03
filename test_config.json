@@ -4,8 +4,8 @@
             "bridges": {
                 "eth-poa-local": {
                     "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
-                    "t_anchor": 6,
-                    "t_final": 4,
+                    "t_anchor": 7,
+                    "t_final": 5,
                     "unfreeze_fee": 1000
                 }
             },
@@ -16,10 +16,8 @@
                     "pegs": {}
                 },
                 "token1": {
-                    "addr": "AmhqbiBkkpYGUC2y9NUsRbFeqbv4K9utZGgKPs8CRA9UuCmVNssW",
-                    "pegs": {
-                        "eth-poa-local": "0x65c88DF2c72a6730a9bA0642e24C545fC13e70F3"
-                    }
+                    "addr": "AmhpZ5hDZLbr8Rp5uriGaW7tbT3BTYJ1Jjqvhk4GQDYiWKmzzFcs",
+                    "pegs": {}
                 }
             },
             "type": "aergo"
@@ -34,7 +32,7 @@
                     "t_final": 5
                 }
             },
-            "ip": "localhost:8545",
+            "ip": "http://localhost:8545",
             "isPOA": true,
             "tokens": {
                 "aergo_erc20": {
@@ -50,10 +48,8 @@
                 },
                 "test_erc20": {
                     "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0x416ac7b876436662Dcb0FB531EfDd2fa0C9F0bad",
-                    "pegs": {
-                        "aergo-local": "AmhoYqbizfrTLCx1QCXKoQuyuwtjyWQRwVEfVPMPLkZJEcAY2nSa"
-                    }
+                    "addr": "0x737ED67385C69E22F4423AF7645954711e390416",
+                    "pegs": {}
                 }
             },
             "type": "ethereum"

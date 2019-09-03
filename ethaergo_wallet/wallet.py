@@ -852,7 +852,7 @@ class EthAergoWallet(WalletConfig):
         network_name: str,
     ) -> Web3:
         ip = self.config_data('networks', network_name, 'ip')
-        w3 = Web3(Web3.HTTPProvider("http://" + ip))
+        w3 = Web3(Web3.HTTPProvider(ip))
         eth_poa = self.config_data('networks', network_name, 'isPOA')
         if eth_poa:
             w3.middleware_onion.inject(geth_poa_middleware, layer=0)

@@ -38,7 +38,7 @@ def bridge_wallet(aergo_wallet):
     with open("./contracts/solidity/aergo_erc20_abi.txt", "r") as f:
         abi = f.read()
     ip = config_data['networks']['eth-poa-local']['ip']
-    w3 = Web3(Web3.HTTPProvider("http://" + ip))
+    w3 = Web3(Web3.HTTPProvider(ip))
     w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     assert w3.isConnected()
     privkey_name = 'default'

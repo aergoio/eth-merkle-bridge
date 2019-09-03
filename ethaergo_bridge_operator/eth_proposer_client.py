@@ -98,7 +98,7 @@ class EthProposerClient(threading.Thread):
         self.hera.connect(config_data['networks'][aergo_net]['ip'])
 
         ip = config_data['networks'][eth_net]['ip']
-        self.web3 = Web3(Web3.HTTPProvider("http://" + ip))
+        self.web3 = Web3(Web3.HTTPProvider(ip))
         eth_poa = config_data['networks'][eth_net]['isPOA']
         if eth_poa:
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
