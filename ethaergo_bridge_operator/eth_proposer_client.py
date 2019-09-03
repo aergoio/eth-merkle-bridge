@@ -229,7 +229,7 @@ class EthProposerClient(threading.Thread):
         for i, approval in enumerate(approvals):
             if approval is not None:
                 sigs.append(approval.sig)
-                validator_indexes.append(i+1)
+                validator_indexes.append(i)
         total_validators = len(self.config_data['validators'])
         if 3 * len(sigs) < 2 * total_validators:
             raise ValidatorMajorityError()
