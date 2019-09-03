@@ -194,7 +194,7 @@ class ValidatorService(BridgeOperatorServicer):
         self.eth_privkey = self.web3.eth.account.decrypt(encrypted_key,
                                                          privkey_pwd)
         acct = self.web3.eth.account.from_key(self.eth_privkey)
-        self.eth_address = acct.address.lower()
+        self.eth_address = acct.address
         print("  > Ethereum validator Address: {}".format(self.eth_address))
 
     def load_config_data(self) -> Dict:

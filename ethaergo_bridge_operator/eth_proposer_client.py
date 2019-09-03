@@ -214,7 +214,7 @@ class EthProposerClient(threading.Thread):
         # validate signature
         if not approval.address == self.web3.eth.account.recoverHash(
             h, signature=approval.sig
-        ).lower():
+        ):
             print("{}Invalid signature from validator {}"
                   .format(self.tab, idx))
             return None
