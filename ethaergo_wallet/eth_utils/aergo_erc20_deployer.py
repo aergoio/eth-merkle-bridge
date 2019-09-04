@@ -1,3 +1,4 @@
+import argparse
 from getpass import getpass
 import json
 import os
@@ -71,7 +72,24 @@ def deploy_aergo_erc20(
 
 
 if __name__ == '__main__':
-    with open("./test_config.json", "r") as f:
+    parser = argparse.ArgumentParser(
+        description='Test Aergo ERC20 deployer : sender receives 500M tokens')
+    parser.add_argument(
+        '-c', '--config_file_path', type=str, help='Path to config.json',
+        required=True)
+    parser.add_argument(
+        '-e', '--eth', type=str, help='Name of Ethereum network in config file',
+        required=True)
+    parser.add_argument(
+        '--privkey_name', type=str, help='Name of account in config file '
+        'to sign deploy transaction', required=False)
+    parser.add_argument(
+        '--local_test', dest='local_test', action='store_true',
+        help='Use the default privkey and password')
+    parser.set_defaults(local_test=False)
+    args = parser.parse_args()
+
+    with open(args.config_file_path, "r") as f:
         config_data = json.load(f)
     with open("./contracts/solidity/test_aergo_erc20_bytecode.txt", "r") as f:
         bytecode = f.read()
@@ -79,6 +97,11 @@ if __name__ == '__main__':
     with open(abi_path, "r") as f:
         abi = f.read()
 
-    deploy_aergo_erc20(config_data, "./test_config.json", bytecode, abi,
-                       abi_path, 'eth-poa-local', 'aergo_erc20', 'default',
-                       '1234')
+    if args.local_test:
+        deploy_aergo_erc20(
+            config_data, args.config_file_path, bytecode, abi, abi_path,
+            args.eth, 'aergo_erc20', 'default', '1234')
+    else:
+        deploy_aergo_erc20(
+            config_data, args.config_file_path, bytecode, abi, abi_path,
+            args.eth, 'aergo_erc20', args.privkey_name)
