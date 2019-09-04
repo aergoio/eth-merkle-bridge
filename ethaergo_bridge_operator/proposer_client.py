@@ -18,6 +18,8 @@ class ProposerClient:
         aergo_net: str,
         eth_net: str,
         eth_block_time: int,
+        aergo_gas_price: int,
+        eth_gas_price: int,
         privkey_name: str = None,
         privkey_pwd: str = None,
         auto_update: bool = False,
@@ -25,11 +27,11 @@ class ProposerClient:
     ) -> None:
         self.t_eth_client = EthProposerClient(
             config_file_path, aergo_net, eth_net, privkey_name,
-            privkey_pwd, "", auto_update, root_path
+            privkey_pwd, "", auto_update, root_path, eth_gas_price
         )
         self.t_aergo_client = AergoProposerClient(
             config_file_path, aergo_net, eth_net, eth_block_time, privkey_name,
-            privkey_pwd, "\t"*5, auto_update
+            privkey_pwd, "\t"*5, auto_update, aergo_gas_price
         )
 
     def run(self):
@@ -62,13 +64,22 @@ if __name__ == '__main__':
     parser.add_argument(
         '--local_test', dest='local_test', action='store_true',
         help='Start proposer with password for testing')
+    parser.add_argument(
+        '--eth_gas_price', type=int,
+        help='Gas price (gWei) to use in transactions', required=False)
+    parser.add_argument(
+        '--aergo_gas_price', type=int,
+        help='Gas price to use in transactions', required=False)
     parser.set_defaults(auto_update=False)
     parser.set_defaults(local_test=False)
+    parser.set_defaults(eth_gas_price=None)
+    parser.set_defaults(aergo_gas_price=None)
     args = parser.parse_args()
 
     if args.local_test:
         proposer = ProposerClient(
             args.config_file_path, args.aergo, args.eth, args.eth_block_time,
+            args.aergo_gas_price, args.eth_gas_price,
             privkey_name=args.privkey_name, privkey_pwd='1234',
             auto_update=args.auto_update
         )
@@ -76,6 +87,7 @@ if __name__ == '__main__':
     else:
         proposer = ProposerClient(
             args.config_file_path, args.aergo, args.eth, args.eth_block_time,
+            args.aergo_gas_price, args.eth_gas_price,
             privkey_name=args.privkey_name, auto_update=args.auto_update
         )
         proposer.run()

@@ -26,8 +26,8 @@ def lock(
     receiver: str,
     value: int,
     asset: str,
-    fee_limit: int,
-    fee_price: int,
+    gas_limit: int,
+    gas_price: int,
 ) -> Tuple[int, str]:
     """ Lock can be called to lock aer or tokens.
         it supports delegated transfers when tx broadcaster is not
@@ -95,8 +95,8 @@ def mint(
     token_origin: str,
     bridge_to: str,
     bridge_to_abi: str,
-    fee_limit: int,
-    fee_price: int
+    gas_limit: int,
+    gas_price: int
 ) -> Tuple[str, str]:
     """ Mint the receiver's deposit balance on aergo_to. """
     if not is_ethereum_address(receiver):
@@ -125,8 +125,8 @@ def mint(
         'nonce': w3.eth.getTransactionCount(
             signer_acct.address
         ),
-        'gas': 4108036,
-        'gasPrice': w3.toWei(9, 'gwei')
+        'gas': gas_limit,
+        'gasPrice': w3.toWei(gas_price, 'gwei')
     })
     signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
@@ -146,8 +146,8 @@ def burn(
     receiver: str,
     value: int,
     token_pegged: str,
-    fee_limit: int,
-    fee_price: int,
+    gas_limit: int,
+    gas_price: int,
 ) -> Tuple[int, str]:
     """ Burn a minted token on a sidechain. """
     if not is_ethereum_address(receiver):
@@ -211,8 +211,8 @@ def unlock(
     token_origin: str,
     bridge_to: str,
     bridge_to_abi: str,
-    fee_limit: int,
-    fee_price: int
+    gas_limit: int,
+    gas_price: int
 ) -> Tuple[str, str]:
     """ Unlock the receiver's burnt balance on aergo_to. """
     if not is_ethereum_address(receiver):
@@ -241,8 +241,8 @@ def unlock(
         'nonce': w3.eth.getTransactionCount(
             signer_acct.address
         ),
-        'gas': 4108036,
-        'gasPrice': w3.toWei(9, 'gwei')
+        'gas': gas_limit,
+        'gasPrice': w3.toWei(gas_price, 'gwei')
     })
     signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
@@ -258,8 +258,8 @@ def freeze(
     bridge_from: str,
     receiver: str,
     value: int,
-    fee_limit: int,
-    fee_price: int,
+    gas_limit: int,
+    gas_price: int,
 ) -> Tuple[int, str]:
     """ Freeze aergo native """
     if not is_ethereum_address(receiver):

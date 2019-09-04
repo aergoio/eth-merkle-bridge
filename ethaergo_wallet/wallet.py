@@ -41,11 +41,13 @@ class EthAergoWallet(WalletConfig):
         self,
         config_file_path: str,
         config_data: Dict = None,
-        root_path: str = './'
+        root_path: str = './',
+        eth_gas_price: int = 10,
+        aergo_gas_price: int = 0,
     ) -> None:
         WalletConfig.__init__(self, config_file_path, config_data)
-        self.gas_price = 0
-        self.fee_price = 20  # gWei
+        self.eth_gas_price = eth_gas_price / (10**6)  # gWei to eth
+        self.aergo_gas_price = aergo_gas_price
         # root_path is the path from which files are tracked
         # this way if users use the same eth-merkle-bridge file structure,
         # config files can be shared
@@ -119,20 +121,21 @@ class EthAergoWallet(WalletConfig):
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
 
-        fee_limit = 0  # TODO also count the gas fee for approval
+        gas_limit = 500000  # estimation
         eth_balance = eth_u.get_balance(token_owner, 'ether', w3)
-        if eth_balance < fee_limit*self.fee_price:
-            err = "not enough aer balance to pay tx fee"
+        if eth_balance < gas_limit*self.eth_gas_price:
+            err = "not enough eth balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
         next_nonce, tx_hash = eth_u.increase_approval(
-            bridge_from, erc20_address, amount, w3, erc20_abi, signer_acct
+            bridge_from, erc20_address, amount, w3, erc20_abi, signer_acct,
+            gas_limit, self.eth_gas_price
         )
         print("\u2b06 Increase approval success: ", tx_hash)
 
         lock_height, tx_hash = eth_to_aergo.lock(
             w3, signer_acct, receiver, amount, bridge_from, bridge_from_abi,
-            erc20_address, fee_limit, self.fee_price, next_nonce
+            erc20_address, gas_limit, self.eth_gas_price, next_nonce
         )
         print('\U0001f512 Lock success: ', tx_hash)
 
@@ -178,9 +181,9 @@ class EthAergoWallet(WalletConfig):
             print("Pegged token unknow by wallet")
             save_pegged_token_address = True
 
-        fee_limit = 0
+        gas_limit = 0
         aer_balance = aergo_u.get_balance(tx_sender, 'aergo', aergo_to)
-        if aer_balance < fee_limit*self.fee_price:
+        if aer_balance < gas_limit*self.aergo_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -192,7 +195,7 @@ class EthAergoWallet(WalletConfig):
 
         token_pegged, tx_hash = eth_to_aergo.mint(
             aergo_to, receiver, lock_proof, asset_address, bridge_to,
-            fee_limit, self.fee_price
+            gas_limit, self.aergo_gas_price
         )
         print('\u26cf Mint success: ', tx_hash)
         # new balance on destination
@@ -242,15 +245,15 @@ class EthAergoWallet(WalletConfig):
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
 
-        fee_limit = 0
+        gas_limit = 200000
         eth_balance = eth_u.get_balance(token_owner, 'ether', w3)
-        if eth_balance < fee_limit*self.fee_price:
+        if eth_balance < gas_limit*self.eth_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
         burn_height, tx_hash = eth_to_aergo.burn(
             w3, signer_acct, receiver, amount, bridge_from, bridge_from_abi,
-            token_pegged, fee_limit, self.fee_price
+            token_pegged, gas_limit, self.eth_gas_price
         )
         print('\U0001f525 Burn success: ', tx_hash)
 
@@ -291,10 +294,10 @@ class EthAergoWallet(WalletConfig):
         print("\U0001f4b0 {} balance on destination before transfer: {}"
               .format(asset_name, balance/10**18))
 
-        fee_limit = 0
+        gas_limit = 0
         if receiver != tx_sender:
             aer_balance = aergo_u.get_balance(tx_sender, 'aergo', aergo_to)
-            if aer_balance < fee_limit*self.fee_price:
+            if aer_balance < gas_limit*self.aergo_gas_price:
                 err = "not enough aer balance to pay tx fee"
                 raise InsufficientBalanceError(err)
 
@@ -305,8 +308,8 @@ class EthAergoWallet(WalletConfig):
         print("\u2699 Built lock proof")
 
         tx_hash = eth_to_aergo.unfreeze(
-            aergo_to, receiver, lock_proof, bridge_to, fee_limit,
-            self.fee_price
+            aergo_to, receiver, lock_proof, bridge_to, gas_limit,
+            self.aergo_gas_price
         )
         print('\U0001f4a7 Unfreeze success: ', tx_hash)
         # new balance on destination
@@ -351,15 +354,15 @@ class EthAergoWallet(WalletConfig):
         print("\U0001f4b0 {} balance on destination before transfer: {}"
               .format(asset_name, balance/10**18))
 
-        fee_limit = 0
+        gas_limit = 0
         aer_balance = aergo_u.get_balance(tx_sender, 'aergo', aergo_to)
-        if aer_balance < fee_limit*self.fee_price:
+        if aer_balance < gas_limit*self.aergo_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
         tx_hash = eth_to_aergo.unlock(
             aergo_to, receiver, burn_proof, asset_address, bridge_to,
-            fee_limit, self.fee_price
+            gas_limit, self.aergo_gas_price
         )
         print('\U0001f513 Unlock success: ', tx_hash)
 
@@ -490,16 +493,16 @@ class EthAergoWallet(WalletConfig):
         sender = str(aergo_from.account.address)
         bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
 
-        fee_limit = 0
+        gas_limit = 0
         balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
-        if balance < amount + fee_limit * self.fee_price:
+        if balance < amount + gas_limit * self.aergo_gas_price:
             raise InsufficientBalanceError("not enough token balance")
         print("\U0001f4b0 {} balance on sidechain before transfer: {}"
               .format(asset_name, balance/10**18))
 
         freeze_height, tx_hash = aergo_to_eth.freeze(
-            aergo_from, bridge_from, receiver, amount, fee_limit,
-            self.fee_price
+            aergo_from, bridge_from, receiver, amount, gas_limit,
+            self.aergo_gas_price
         )
         print('\u2744 Freeze success: ', tx_hash)
 
@@ -536,7 +539,7 @@ class EthAergoWallet(WalletConfig):
         bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
         asset_address = self.get_asset_address(asset_name, from_chain)
 
-        fee_limit = 0
+        gas_limit = 0
         balance = aergo_u.get_balance(sender, asset_address, aergo_from)
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
@@ -544,13 +547,13 @@ class EthAergoWallet(WalletConfig):
               .format(asset_name, balance/10**18))
 
         aer_balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
-        if aer_balance < fee_limit*self.fee_price:
+        if aer_balance < gas_limit*self.aergo_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
         lock_height, tx_hash = aergo_to_eth.lock(
             aergo_from, bridge_from, receiver, amount,
-            asset_address, fee_limit, self.fee_price
+            asset_address, gas_limit, self.aergo_gas_price
         )
         print('\U0001f512 Lock success: ', tx_hash)
 
@@ -607,9 +610,9 @@ class EthAergoWallet(WalletConfig):
             print("Pegged token unknow by wallet")
             save_pegged_token_address = True
 
-        fee_limit = 0
+        gas_limit = 1400000
         eth_balance = eth_u.get_balance(tx_sender, 'ether', w3)
-        if eth_balance < fee_limit*self.fee_price:
+        if eth_balance < gas_limit*self.eth_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -621,7 +624,7 @@ class EthAergoWallet(WalletConfig):
 
         token_pegged, tx_hash = aergo_to_eth.mint(
             w3, signer_acct, receiver, lock_proof, asset_address, bridge_to,
-            bridge_to_abi, fee_limit, self.fee_price
+            bridge_to_abi, gas_limit, self.eth_gas_price
         )
         print('\u26cf Mint success: ', tx_hash)
 
@@ -664,7 +667,7 @@ class EthAergoWallet(WalletConfig):
         token_pegged = self.get_asset_address(asset_name, from_chain,
                                               asset_origin_chain=to_chain)
 
-        fee_limit = 0
+        gas_limit = 0
         balance = aergo_u.get_balance(sender, token_pegged, aergo_from)
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
@@ -672,13 +675,13 @@ class EthAergoWallet(WalletConfig):
               .format(asset_name, balance/10**18))
 
         aer_balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
-        if aer_balance < fee_limit*self.fee_price:
+        if aer_balance < gas_limit*self.aergo_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
         burn_height, tx_hash = aergo_to_eth.burn(
             aergo_from, bridge_from, receiver, amount, token_pegged,
-            fee_limit, self.fee_price
+            gas_limit, self.aergo_gas_price
         )
         print('\U0001f525 Burn success: ', tx_hash)
 
@@ -724,9 +727,9 @@ class EthAergoWallet(WalletConfig):
         print("\U0001f4b0 {} balance on destination before transfer : {}"
               .format(asset_name, balance/10**18))
 
-        fee_limit = 0
+        gas_limit = 200000
         eth_balance = eth_u.get_balance(tx_sender, 'ether', w3)
-        if eth_balance < fee_limit*self.fee_price:
+        if eth_balance < gas_limit*self.eth_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -738,7 +741,7 @@ class EthAergoWallet(WalletConfig):
 
         tx_hash = aergo_to_eth.unlock(
             w3, signer_acct, receiver, burn_proof, asset_address, bridge_to,
-            bridge_to_abi, fee_limit, self.fee_price
+            bridge_to_abi, gas_limit, self.eth_gas_price
         )
         print('\U0001f513 Unlock success: ', tx_hash)
 

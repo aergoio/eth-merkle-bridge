@@ -87,9 +87,13 @@ class AergoProposerClient(threading.Thread):
         privkey_name: str = None,
         privkey_pwd: str = None,
         tab: str = "",
-        auto_update: bool = False
+        auto_update: bool = False,
+        aergo_gas_price: int = None
     ) -> None:
         threading.Thread.__init__(self)
+        if aergo_gas_price is None:
+            aergo_gas_price = 0
+        self.aergo_gas_price = aergo_gas_price
         self.config_file_path = config_file_path
         self.config_data = self.load_config_data()
         self.eth_block_time = eth_block_time
@@ -630,11 +634,16 @@ if __name__ == '__main__':
     parser.add_argument(
         '--auto_update', dest='auto_update', action='store_true',
         help='Update bridge contract when settings change in config file')
+    parser.add_argument(
+        '--aergo_gas_price', type=int,
+        help='Gas price to use in transactions', required=False)
     parser.set_defaults(auto_update=False)
+    parser.set_defaults(aergo_gas_price=None)
     args = parser.parse_args()
 
     proposer = AergoProposerClient(
         args.config_file_path, args.aergo, args.eth, args.eth_block_time,
-        privkey_name=args.privkey_name, auto_update=args.auto_update
+        privkey_name=args.privkey_name, auto_update=args.auto_update,
+        aergo_gas_price=args.aergo_gas_price
     )
     proposer.run()

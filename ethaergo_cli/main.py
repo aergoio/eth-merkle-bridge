@@ -26,6 +26,7 @@ from ethaergo_cli.utils import (
     prompt_file_path,
     prompt_bridge_abi_paths,
     prompt_number,
+    prompt_gas_price,
     aergo_style,
     promptYN,
     print_balance_table_header,
@@ -108,6 +109,7 @@ class EthMerkleBridgeCli():
             config_file_path = inquirer.prompt(
                 questions, style=aergo_style)['config_file_path']
             try:
+                self.config_file_path = config_file_path
                 self.wallet = EthAergoWallet(config_file_path)
                 break
             except (IsADirectoryError, FileNotFoundError):
@@ -149,6 +151,10 @@ class EthMerkleBridgeCli():
                             'name': 'Settings (Register Assets and Networks)',
                             'value': 'S'
                         },
+                        {
+                            'name': 'Update gas price (10 gWei default)',
+                            'value': 'Fee'
+                        },
                         'Back'
                     ]
                 }
@@ -167,10 +173,19 @@ class EthMerkleBridgeCli():
                     self.finalize_transfer()
                 elif answers['action'] == 'S':
                     self.edit_settings()
+                elif answers['action'] == 'Fee':
+                    self.update_gas_price()
             except (TypeError, KeyboardInterrupt, InvalidArgumentsError,
                     TxError, InsufficientBalanceError, KeyError) as e:
                 print('Someting went wrong, check the status of your pending '
                       'transfers\nError msg: {}'.format(e))
+
+    def update_gas_price(self):
+        aergo_gas_price, eth_gas_price = prompt_gas_price()
+        self.wallet = EthAergoWallet(
+            self.config_file_path, eth_gas_price=eth_gas_price,
+            aergo_gas_price=aergo_gas_price
+        )
 
     def check_balances(self):
         """Iterate every registered wallet, network and asset and query

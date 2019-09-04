@@ -36,8 +36,8 @@ def lock(
     bridge_from: str,
     bridge_from_abi: str,
     erc20_address: str,
-    fee_limit: int,
-    fee_price: int,
+    gas_limit: int,
+    gas_price: int,
     next_nonce: int = None
 ):
     """ Lock an Ethereum ERC20 token. """
@@ -58,8 +58,8 @@ def lock(
         'chainId': w3.eth.chainId,
         'from': signer_acct.address,
         'nonce': next_nonce,
-        'gas': 158036,
-        'gasPrice': w3.toWei(9, 'gwei')
+        'gas': gas_limit,
+        'gasPrice': w3.toWei(gas_price, 'gwei')
     })
     signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
@@ -105,8 +105,8 @@ def mint(
     lock_proof: AttributeDict,
     token_origin: str,
     bridge_to: str,
-    fee_limit: int,
-    fee_price: int
+    gas_limit: int,
+    gas_price: int
 ) -> Tuple[str, str]:
     """ Unlock the receiver's deposit balance on aergo_to. """
     if not is_aergo_address(receiver):
@@ -142,8 +142,8 @@ def burn(
     bridge_from: str,
     bridge_from_abi: str,
     token_pegged: str,
-    fee_limit: int,
-    fee_price: int
+    gas_limit: int,
+    gas_price: int
 ):
     """ Burn a token that was minted on ethereum. """
     if not is_aergo_address(receiver):
@@ -167,8 +167,8 @@ def burn(
         'nonce': w3.eth.getTransactionCount(
             signer_acct.address
         ),
-        'gas': 4108036,
-        'gasPrice': w3.toWei(9, 'gwei')
+        'gas': gas_limit,
+        'gasPrice': w3.toWei(gas_price, 'gwei')
     })
     signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
@@ -214,8 +214,8 @@ def unlock(
     burn_proof: AttributeDict,
     token_origin: str,
     bridge_to: str,
-    fee_limit: int,
-    fee_price: int
+    gas_limit: int,
+    gas_price: int
 ) -> str:
     """ Unlock the receiver's deposit balance on aergo_to. """
     if not is_aergo_address(receiver):
@@ -247,8 +247,8 @@ def unfreeze(
     receiver: str,
     lock_proof: AttributeDict,
     bridge_to: str,
-    fee_limit: int,
-    fee_price: int
+    gas_limit: int,
+    gas_price: int
 ) -> str:
     """ Unlock the receiver's deposit balance on aergo_to. """
     if not is_aergo_address(receiver):

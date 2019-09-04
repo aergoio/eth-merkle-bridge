@@ -52,7 +52,9 @@ def increase_approval(
     amount: int,
     w3: Web3,
     erc20_abi: str,
-    signer_acct
+    signer_acct,
+    gas_limit: int,
+    gas_price: int
 ) -> Tuple[int, str]:
     """ Increase approval increases the amount of tokens that spender
         can withdraw. For older tokens without the increaseApproval
@@ -67,8 +69,8 @@ def increase_approval(
         'chainId': w3.eth.chainId,
         'from': signer_acct.address,
         'nonce': approval_nonce,
-        'gas': 408036,
-        'gasPrice': w3.toWei(9, 'gwei')
+        'gas': gas_limit,
+        'gasPrice': w3.toWei(gas_price, 'gwei')
     })
     signed = signer_acct.sign_transaction(construct_txn)
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)

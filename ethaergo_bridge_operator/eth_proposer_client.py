@@ -83,9 +83,13 @@ class EthProposerClient(threading.Thread):
         privkey_pwd: str = None,
         tab: str = "",
         auto_update: bool = False,
-        root_path: str = './'
+        root_path: str = './',
+        eth_gas_price: int = None
     ) -> None:
         threading.Thread.__init__(self)
+        if eth_gas_price is None:
+            eth_gas_price = 10
+        self.eth_gas_price = eth_gas_price / (10**6)  # gWei to Eth
         self.config_file_path = config_file_path
         config_data = self.load_config_data()
         self.config_data = config_data
@@ -286,7 +290,7 @@ class EthProposerClient(threading.Thread):
                 self.proposer_acct.address
             ),
             'gas': 500000,
-            'gasPrice': self.web3.toWei(9, 'gwei')
+            'gasPrice': self.web3.toWei(self.eth_gas_price, 'gwei')
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
         tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
@@ -457,7 +461,7 @@ class EthProposerClient(threading.Thread):
                 self.proposer_acct.address
             ),
             'gas': 500000,
-            'gasPrice': self.web3.toWei(9, 'gwei')
+            'gasPrice': self.web3.toWei(self.eth_gas_price, 'gwei')
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
         tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
@@ -522,7 +526,7 @@ class EthProposerClient(threading.Thread):
                 self.proposer_acct.address
             ),
             'gas': 108036,
-            'gasPrice': self.web3.toWei(9, 'gwei')
+            'gasPrice': self.web3.toWei(self.eth_gas_price, 'gwei')
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
         tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
@@ -563,7 +567,7 @@ class EthProposerClient(threading.Thread):
                 self.proposer_acct.address
             ),
             'gas': 108036,
-            'gasPrice': self.web3.toWei(9, 'gwei')
+            'gasPrice': self.web3.toWei(self.eth_gas_price, 'gwei')
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
         tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
@@ -624,11 +628,16 @@ if __name__ == '__main__':
     parser.add_argument(
         '--auto_update', dest='auto_update', action='store_true',
         help='Update bridge contract when settings change in config file')
+    parser.add_argument(
+        '--eth_gas_price', type=int,
+        help='Gas price (gWei) to use in transactions', required=False)
     parser.set_defaults(auto_update=False)
+    parser.set_defaults(eth_gas_price=None)
     args = parser.parse_args()
 
     proposer = EthProposerClient(
         args.config_file_path, args.aergo, args.eth,
-        privkey_name=args.privkey_name, auto_update=args.auto_update
+        privkey_name=args.privkey_name, auto_update=args.auto_update,
+        eth_gas_price=args.eth_gas_price
     )
     proposer.run()

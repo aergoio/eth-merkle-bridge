@@ -86,6 +86,12 @@ def prompt_deposit_height():
     return prompt_number("Block height of deposit (0 to try finalization "
                          "anyway)")
 
+def prompt_gas_price():
+    """Prompt aergo and eth gas price"""
+    aergo_gas_price = prompt_number("Aergo gas price")
+    eth_gas_price = prompt_number("Ethereum gas price")
+    return aergo_gas_price, eth_gas_price
+
 
 def prompt_new_bridge(net1, net2):
     """Prompt user to input bridge contracts and tempo.
