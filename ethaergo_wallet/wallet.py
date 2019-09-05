@@ -46,7 +46,7 @@ class EthAergoWallet(WalletConfig):
         aergo_gas_price: int = 0,
     ) -> None:
         WalletConfig.__init__(self, config_file_path, config_data)
-        self.eth_gas_price = eth_gas_price / (10**6)  # gWei to eth
+        self.eth_gas_price = eth_gas_price  # gWei
         self.aergo_gas_price = aergo_gas_price
         # root_path is the path from which files are tracked
         # this way if users use the same eth-merkle-bridge file structure,
@@ -123,7 +123,7 @@ class EthAergoWallet(WalletConfig):
 
         gas_limit = 500000  # estimation
         eth_balance = eth_u.get_balance(token_owner, 'ether', w3)
-        if eth_balance < gas_limit*self.eth_gas_price:
+        if eth_balance*10**9 < gas_limit*self.eth_gas_price:
             err = "not enough eth balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -247,7 +247,7 @@ class EthAergoWallet(WalletConfig):
 
         gas_limit = 200000
         eth_balance = eth_u.get_balance(token_owner, 'ether', w3)
-        if eth_balance < gas_limit*self.eth_gas_price:
+        if eth_balance*10**9 < gas_limit*self.eth_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -612,7 +612,7 @@ class EthAergoWallet(WalletConfig):
 
         gas_limit = 1400000
         eth_balance = eth_u.get_balance(tx_sender, 'ether', w3)
-        if eth_balance < gas_limit*self.eth_gas_price:
+        if eth_balance*10**9 < gas_limit*self.eth_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -729,7 +729,7 @@ class EthAergoWallet(WalletConfig):
 
         gas_limit = 200000
         eth_balance = eth_u.get_balance(tx_sender, 'ether', w3)
-        if eth_balance < gas_limit*self.eth_gas_price:
+        if eth_balance*10**9 < gas_limit*self.eth_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 

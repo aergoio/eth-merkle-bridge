@@ -21,7 +21,7 @@
         "ropsten": {
             "bridges": {
                 "aergo-testnet": {
-                    "addr": "0x5931F7d238cF8FF0031218e157094Ba06bf6e85a",
+                    "addr": "0xB6D9335f6dE4bdEB6416ABb4693c3c4b9e9a969b",
                     "bridge_abi": "contracts/solidity/bridge_abi.txt",
                     "minted_abi": "contracts/solidity/minted_erc20_abi.txt",
                     "t_anchor": 70,
@@ -33,7 +33,7 @@
             "tokens": {
                 "aergo_erc20": {
                     "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0x36CB2666070D9d9eB4132BFCB3444C031Df035e6",
+                    "addr": "0x45653186f5B32e4E86F4F15a157F1cfD0D0ff795",
                     "pegs": {
                         "aergo-testnet": "aergo"
                     }

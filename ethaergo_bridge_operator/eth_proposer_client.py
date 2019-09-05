@@ -89,7 +89,7 @@ class EthProposerClient(threading.Thread):
         threading.Thread.__init__(self)
         if eth_gas_price is None:
             eth_gas_price = 10
-        self.eth_gas_price = eth_gas_price / (10**6)  # gWei to Eth
+        self.eth_gas_price = eth_gas_price  # gWei
         self.config_file_path = config_file_path
         config_data = self.load_config_data()
         self.config_data = config_data
