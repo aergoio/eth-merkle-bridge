@@ -17,7 +17,7 @@ docker-eth:
 		-v $(PWD)/docker_test_nodes/ethereum/bp_pwd.txt:/root/bp_pwd.txt \
 		-p 8545:8545 \
 		ethereum/client-go \
-	 	--nodiscover --datadir ./root \
+	 	--nodiscover --datadir ./root --networkid 52306\
 		--unlock "0x035d4303f9508ddcab6d074cbc5ed82cd0b436ad" --password ./root/bp_pwd.txt \
 		--mine --rpcapi web3,eth,net --rpcaddr 0.0.0.0 --rpcport 8545 --rpc --allow-insecure-unlock\
 	    --verbosity 5 --rpccorsdomain="*"
