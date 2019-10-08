@@ -330,7 +330,7 @@ def withdrawable(
     w3: Web3,
     hera: herapy.Aergo,
     eth_trie_key: bytes,
-    aergo_storage_key: str
+    aergo_storage_key: bytes
 ) -> Tuple[int, int]:
     # total_deposit : total latest deposit including pending
     bridge_from = Web3.toChecksumAddress(bridge_from)

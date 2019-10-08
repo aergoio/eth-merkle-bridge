@@ -399,7 +399,8 @@ class EthAergoWallet(WalletConfig):
             receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
         position = b'\x03'  # Locks
         eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
-        aergo_storage_key = '_sv__mints-' + receiver + token_origin[2:].lower()
+        aergo_storage_key = ('_sv__mints-' + receiver).encode('utf-8') \
+            + bytes.fromhex(token_origin[2:])
         return eth_to_aergo.withdrawable(
             bridge_from, bridge_to, w3, hera, eth_trie_key, aergo_storage_key
         )
@@ -430,7 +431,7 @@ class EthAergoWallet(WalletConfig):
         position = b'\x05'  # Burns
         eth_trie_key = keccak(account_ref.encode('utf-8')
                               + position.rjust(32, b'\0'))
-        aergo_storage_key = '_sv__unlocks-' + account_ref
+        aergo_storage_key = ('_sv__unlocks-' + account_ref).encode('utf-8')
         return eth_to_aergo.withdrawable(
             bridge_from, bridge_to, w3, hera, eth_trie_key, aergo_storage_key
         )
@@ -460,8 +461,8 @@ class EthAergoWallet(WalletConfig):
             receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
         position = b'\x03'  # Locks
         eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
-        aergo_storage_key = \
-            '_sv__unfreezes-' + receiver + token_origin[2:].lower()
+        aergo_storage_key = ('_sv__unfreezes-' + receiver).encode('utf-8') \
+            + bytes.fromhex(token_origin[2:])
         return eth_to_aergo.withdrawable(
             bridge_from, bridge_to, w3, hera, eth_trie_key, aergo_storage_key
         )
