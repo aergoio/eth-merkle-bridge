@@ -18,7 +18,7 @@ from ethaergo_wallet.eth_utils.contract_deployer import (
 )
 
 
-def deploy_aergo_erc20(
+def deploy_erc20(
     config_data: Dict,
     config_path: str,
     bytecode: str,
@@ -63,8 +63,10 @@ def deploy_aergo_erc20(
         ['addr']) = sc_address
     (config_data['networks'][network_name]['tokens'][token_name]
         ['pegs']) = {}
-    (config_data['networks'][network_name]['tokens'][token_name]['pegs']
-        ['aergo-local']) = 'aergo'
+    if token_name == 'aergo_erc20':
+        (config_data['networks'][network_name]['tokens'][token_name]['pegs']
+            ['aergo-local']) = 'aergo'
+
     (config_data['networks'][network_name]['tokens'][token_name]
         ['abi']) = abi_path
     with open(config_path, "w") as f:
@@ -76,6 +78,9 @@ if __name__ == '__main__':
         description='Test Aergo ERC20 deployer : sender receives 500M tokens')
     parser.add_argument(
         '-c', '--config_file_path', type=str, help='Path to config.json',
+        required=True)
+    parser.add_argument(
+        '-n', '--token_name', type=str, help='Name of token to record in config.json',
         required=True)
     parser.add_argument(
         '-e', '--eth', type=str, help='Name of Ethereum network in config file',
@@ -97,11 +102,12 @@ if __name__ == '__main__':
     with open(abi_path, "r") as f:
         abi = f.read()
 
+    print("\n\nDEPLOY {} on Aergo".format(args.token_name))
     if args.local_test:
-        deploy_aergo_erc20(
+        deploy_erc20(
             config_data, args.config_file_path, bytecode, abi, abi_path,
-            args.eth, 'aergo_erc20', 'default', '1234')
+            args.eth, args.token_name, 'default', '1234')
     else:
-        deploy_aergo_erc20(
+        deploy_erc20(
             config_data, args.config_file_path, bytecode, abi, abi_path,
-            args.eth, 'aergo_erc20', args.privkey_name)
+            args.eth, args.token_name, args.privkey_name)

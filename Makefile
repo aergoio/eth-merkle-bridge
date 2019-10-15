@@ -23,9 +23,11 @@ docker-eth:
 	    --verbosity 5 --rpccorsdomain="*"
 
 deploy_test_bridge:
-	python3 -m ethaergo_wallet.eth_utils.aergo_erc20_deployer -c './test_config.json' -e 'eth-poa-local' --local_test
+	python3 -m ethaergo_bridge_operator.test_setup.erc20_deployer -c './test_config.json' -n 'aergo_erc20' -e 'eth-poa-local' --local_test
 	python3 -m ethaergo_bridge_operator.bridge_deployer -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --t_anchor_aergo 6 --t_final_aergo 4 --t_anchor_eth 7 --t_final_eth 5 --privkey_name "proposer" --local_test
 	python3 -m ethaergo_bridge_operator.freeze_aergo
+	python3 -m ethaergo_bridge_operator.test_setup.erc20_deployer -c './test_config.json' -n 'test_erc20' -e 'eth-poa-local' --local_test
+	python3 -m ethaergo_bridge_operator.test_setup.arc1_deployer
 
 proposer:
 	python3 -m ethaergo_bridge_operator.proposer_client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 1 --privkey_name "proposer" --auto_update --local_test

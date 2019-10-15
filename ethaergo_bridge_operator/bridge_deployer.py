@@ -155,6 +155,7 @@ def deploy_bridge(
 
 
 if __name__ == '__main__':
+    print("\n\nDEPLOY MERKLE BRIDGE")
     parser = argparse.ArgumentParser(
         description='Deploy bridge contracts between Ethereum and Aergo.')
     # Add arguments

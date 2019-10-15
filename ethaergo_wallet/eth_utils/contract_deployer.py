@@ -30,6 +30,6 @@ def deploy_contract(
 
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    print(receipt)
-    assert receipt.status == 1, "Deployment failed"
+    if receipt.status != 1: 
+        print("Deployment failed", receipt)
     return receipt
