@@ -1,6 +1,7 @@
 import json
 from typing import (
     List,
+    Dict,
 )
 from web3 import (
     Web3,
@@ -64,3 +65,9 @@ def query_eth_id(w3: Web3, address: str, abi: str):
         abi=abi
     )
     return bridge_contract.functions._contractId().call()
+
+
+def load_config_data(config_file_path: str) -> Dict:
+    with open(config_file_path, "r") as f:
+        config_data = json.load(f)
+    return config_data
