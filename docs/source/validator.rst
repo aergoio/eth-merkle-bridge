@@ -12,13 +12,12 @@ Starting a Validator
 
 .. code-block:: bash
 
-    $ python3 -m ethaergo_bridge_operator.validator_server --help
+    $ python3 -m ethaergo_bridge_operator.validator.server --help
 
-        usage: validator_server.py [-h] -c CONFIG_FILE_PATH -a AERGO -e ETH -i
-                                   VALIDATOR_INDEX [--privkey_name PRIVKEY_NAME]
-                                   [--auto_update] [--local_test]
+        usage: server.py [-h] -c CONFIG_FILE_PATH -a AERGO -e ETH -i VALIDATOR_INDEX
+                 [--privkey_name PRIVKEY_NAME] [--auto_update] [--local_test]
 
-        Start a proposer on Ethereum and Aergo.
+        Start a validator on Ethereum and Aergo.
 
         optional arguments:
         -h, --help            show this help message and exit
@@ -36,7 +35,7 @@ Starting a Validator
                                 file
         --local_test          Start all validators locally for convenient testing
 
-    $ python3 -m ethaergo_bridge_operator.validator_server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --auto_update
+    $ python3 -m ethaergo_bridge_operator.validator.server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --auto_update
 
         ------ Connect Aergo and Ethereum -----------
         Current Aergo validators :  ['AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ', 'AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ', 'AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ']

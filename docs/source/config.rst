@@ -19,6 +19,10 @@ It can be created and updated manually of with the help of the cli.
                     }
                 },
                 "ip": "localhost:7845", // node connection ip
+                "providers": [
+                    "localhost:7845",
+                    "localhost:7845"
+                ], // redundant providers for validators to query different data sources
                 "tokens": { // list of tokens originating from 'aergo-local'
                     "aergo": { // aer native asset
                         "addr": "aergo", // 'aergo' is the reserved name and address
@@ -44,6 +48,10 @@ It can be created and updated manually of with the help of the cli.
                     }
                 },
                 "ip": "localhost:8545",
+                "providers": [
+                    "http://localhost:8545",
+                    "http://localhost:8545"
+                ], // redundant providers for validators to query different data sources
                 "isPOA": true, // web3py needs middleware to connect to POA chains
                 "tokens": {
                     "aergo_erc20": { // reserved name of aergo erc20 issued at ico

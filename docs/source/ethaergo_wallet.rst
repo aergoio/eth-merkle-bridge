@@ -18,10 +18,6 @@
     :members:
 
 
-.. automodule:: ethaergo_wallet.eth_utils.aergo_erc20_deployer
-    :members:
-
-
 .. automodule:: ethaergo_wallet.eth_utils.contract_deployer
     :members:
 
