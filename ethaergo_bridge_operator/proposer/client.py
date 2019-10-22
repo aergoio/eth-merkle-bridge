@@ -1,9 +1,9 @@
 import argparse
 
-from ethaergo_bridge_operator.proposer.eth_proposer_client import (
+from ethaergo_bridge_operator.proposer.eth.client import (
     EthProposerClient
 )
-from ethaergo_bridge_operator.proposer.aergo_proposer_client import (
+from ethaergo_bridge_operator.proposer.aergo.client import (
     AergoProposerClient
 )
 
