@@ -17,7 +17,7 @@ from ethaergo_bridge_operator.bridge_operator_pb2 import (
 from ethaergo_bridge_operator.validator.data_sources import (
     DataSources,
 )
-from ethaergo_bridge_operator.bridge_status import (
+from ethaergo_bridge_operator.validator.bridge_status import (
     check_bridge_status,
 )
 from ethaergo_bridge_operator.validator.eth_signer import (
@@ -29,6 +29,14 @@ from ethaergo_bridge_operator.validator.aergo_signer import (
 from ethaergo_bridge_operator.op_utils import (
     load_config_data,
 )
+from ethaergo_bridge_operator.validator import (
+    logger,
+)
+
+log_template = \
+    '{"val_index": %s, "signed": %s, "type": "%s", "destination": "%s"'
+success_log_template = log_template + ', "nonce": %s}'
+error_log_template = log_template + ', "error": "%s"}'
 
 
 class ValidatorService(BridgeOperatorServicer):
@@ -62,7 +70,6 @@ class ValidatorService(BridgeOperatorServicer):
         self.aergo_id, self.eth_id = check_bridge_status(
             config_data, aergo_net, eth_net, auto_update)
 
-        print("------ Set Signer Accounts -----------")
         if privkey_name is None:
             privkey_name = 'validator'
         if privkey_pwd is None:
@@ -73,12 +80,10 @@ class ValidatorService(BridgeOperatorServicer):
         self.aergo_signer = AergoSigner(
             root_path, config_data, privkey_name, privkey_pwd)
         # record private key for signing EthAnchor
-        print("  > Aergo validator Address: {}"
-              .format(self.aergo_signer.address))
+        logger.info("Aergo validator Address: %s", self.aergo_signer.address)
 
         # record private key for signing AergoAnchor
-        print("  > Ethereum validator Address: {}"
-              .format(self.eth_signer.address))
+        logger.info("Ethereum validator Address: %s", self.eth_signer.address)
 
     def GetAergoAnchorSignature(self, anchor, context):
         """ Verifies an aergo anchor and signs it to be broadcasted on ethereum
@@ -92,6 +97,10 @@ class ValidatorService(BridgeOperatorServicer):
         """
         err_msg = self.data_sources.is_valid_aergo_anchor(anchor)
         if err_msg is not None:
+            logger.warning(
+                error_log_template, self.validator_index, "false",
+                "\u2693 anchor", self.eth_net, err_msg
+            )
             return Approval(error=err_msg)
 
         # sign anchor and return approval
@@ -103,10 +112,10 @@ class ValidatorService(BridgeOperatorServicer):
         sig = self.eth_signer.sign(h)
         approval = Approval(
             address=self.eth_signer.address, sig=bytes(sig.signature))
-        print("{0}{1} Validator {2} signed a new anchor for {3},\n"
-              "{0}with nonce {4}"
-              .format("\t"*5, u'\u2693', self.validator_index, "Ethereum",
-                      anchor.destination_nonce))
+        logger.info(
+            success_log_template, self.validator_index, "true",
+            "\u2693 anchor", self.eth_net, anchor.destination_nonce
+        )
         return approval
 
     def GetEthAnchorSignature(self, anchor, context):
@@ -122,6 +131,10 @@ class ValidatorService(BridgeOperatorServicer):
         """
         err_msg = self.data_sources.is_valid_eth_anchor(anchor)
         if err_msg is not None:
+            logger.warning(
+                error_log_template, self.validator_index, "false",
+                "\u2693 anchor", self.aergo_net, err_msg
+            )
             return Approval(error=err_msg)
 
         # sign anchor and return approval
@@ -132,10 +145,10 @@ class ValidatorService(BridgeOperatorServicer):
         h = hashlib.sha256(msg).digest()
         sig = self.aergo_signer.sign(h)
         approval = Approval(address=self.aergo_signer.address, sig=sig)
-        print("{0}{1} Validator {2} signed a new anchor for {3},\n"
-              "{0}with nonce {4}"
-              .format("", u'\u2693', self.validator_index, "Aergo",
-                      anchor.destination_nonce))
+        logger.info(
+            success_log_template, self.validator_index, "true",
+            "\u2693 anchor", self.aergo_net, anchor.destination_nonce
+        )
         return approval
 
     def GetEthTAnchorSignature(self, tempo_msg, context):
@@ -144,9 +157,13 @@ class ValidatorService(BridgeOperatorServicer):
 
         """
         if not self.auto_update:
-            return Approval(error="Voting not enabled")
+            return Approval(error="Setting update not enabled")
         err_msg = self.data_sources.is_valid_eth_t_anchor(tempo_msg)
         if err_msg is not None:
+            logger.warning(
+                error_log_template, self.validator_index, "false",
+                "\u231B t_anchor", self.aergo_net, err_msg
+            )
             return Approval(error=err_msg)
 
         return self.sign_eth_tempo(tempo_msg, 't_anchor', "A")
@@ -157,9 +174,13 @@ class ValidatorService(BridgeOperatorServicer):
 
         """
         if not self.auto_update:
-            return Approval(error="Voting not enabled")
+            return Approval(error="Setting update not enabled")
         err_msg = self.data_sources.is_valid_eth_t_final(tempo_msg)
         if err_msg is not None:
+            logger.warning(
+                error_log_template, self.validator_index, "false",
+                "\u231B t_final", self.aergo_net, err_msg
+            )
             return Approval(error=err_msg)
 
         return self.sign_eth_tempo(tempo_msg, 't_final', "F")
@@ -173,10 +194,10 @@ class ValidatorService(BridgeOperatorServicer):
         h = hashlib.sha256(msg).digest()
         sig = self.aergo_signer.sign(h)
         approval = Approval(address=self.aergo_signer.address, sig=sig)
-        print("{0}{1} Validator {2} signed a new {3} for {4},\n"
-              "{0}with nonce {5}"
-              .format("", u'\u231B', self.validator_index, tempo_str, "Aergo",
-                      tempo_msg.destination_nonce))
+        logger.info(
+            success_log_template, self.validator_index, "true",
+            "\u231B " + tempo_str, self.aergo_net, tempo_msg.destination_nonce
+        )
         return approval
 
     def GetAergoTAnchorSignature(self, tempo_msg, context):
@@ -185,9 +206,13 @@ class ValidatorService(BridgeOperatorServicer):
 
         """
         if not self.auto_update:
-            return Approval(error="Voting not enabled")
+            return Approval(error="Setting update not enabled")
         err_msg = self.data_sources.is_valid_aergo_t_anchor(tempo_msg)
         if err_msg is not None:
+            logger.warning(
+                error_log_template, self.validator_index, "false",
+                "\u231B t_anchor", self.eth_net, err_msg
+            )
             return Approval(error=err_msg)
         return self.sign_aergo_tempo(tempo_msg, 't_anchor', 'A')
 
@@ -197,9 +222,13 @@ class ValidatorService(BridgeOperatorServicer):
 
         """
         if not self.auto_update:
-            return Approval(error="Voting not enabled")
+            return Approval(error="Setting update not enabled")
         err_msg = self.data_sources.is_valid_aergo_t_final(tempo_msg)
         if err_msg is not None:
+            logger.warning(
+                error_log_template, self.validator_index, "false",
+                "\u231B t_final", self.eth_net, err_msg
+            )
             return Approval(error=err_msg)
         return self.sign_aergo_tempo(tempo_msg, 't_final', 'F')
 
@@ -213,10 +242,10 @@ class ValidatorService(BridgeOperatorServicer):
         sig = self.eth_signer.sign(h)
         approval = Approval(
             address=self.eth_signer.address, sig=bytes(sig.signature))
-        print("{0}{1} Validator {2} signed a new {3} for {4},\n"
-              "{0}with nonce {5}"
-              .format("\t"*5, u'\u231B', self.validator_index, tempo_str,
-                      "Ethereum", tempo_msg.destination_nonce))
+        logger.info(
+            success_log_template, self.validator_index, "true",
+            "\u231B " + tempo_str, self.eth_net, tempo_msg.destination_nonce
+        )
         return approval
 
     def GetEthValidatorsSignature(self, val_msg, context):
@@ -225,9 +254,13 @@ class ValidatorService(BridgeOperatorServicer):
 
         """
         if not self.auto_update:
-            return Approval(error="Voting not enabled")
+            return Approval(error="Setting update not enabled")
         err_msg = self.data_sources.is_valid_eth_validators(val_msg)
         if err_msg is not None:
+            logger.warning(
+                error_log_template, self.validator_index, "false",
+                "\U0001f58b validator set", self.aergo_net, err_msg
+            )
             return Approval(error=err_msg)
 
         # sign validators
@@ -239,10 +272,11 @@ class ValidatorService(BridgeOperatorServicer):
         h = hashlib.sha256(data_bytes).digest()
         sig = self.aergo_signer.sign(h)
         approval = Approval(address=self.aergo_signer.address, sig=sig)
-        print("{0}{1} Validator {2} signed a new validator set for {3},\n"
-              "{0}with nonce {4}"
-              .format("", u'\U0001f58b', self.validator_index, "Aergo",
-                      val_msg.destination_nonce))
+        logger.info(
+            success_log_template, self.validator_index, "true",
+            "\U0001f58b validator set", self.aergo_net,
+            val_msg.destination_nonce
+        )
         return approval
 
     def GetAergoValidatorsSignature(self, val_msg, context):
@@ -251,9 +285,13 @@ class ValidatorService(BridgeOperatorServicer):
 
         """
         if not self.auto_update:
-            return Approval(error="Voting not enabled")
+            return Approval(error="Setting update not enabled")
         err_msg = self.data_sources.is_valid_aergo_validators(val_msg)
         if err_msg is not None:
+            logger.warning(
+                error_log_template, self.validator_index, "false",
+                "\U0001f58b validator set", self.eth_net, err_msg
+            )
             return Approval(error=err_msg)
 
         # sign validators
@@ -268,10 +306,10 @@ class ValidatorService(BridgeOperatorServicer):
         sig = self.eth_signer.sign(h)
         approval = Approval(
             address=self.eth_signer.address, sig=bytes(sig.signature))
-        print("{0}{1} Validator {2} signed a new validator set for {3},\n"
-              "{0}with nonce {4}"
-              .format("\t"*5, u'\U0001f58b', self.validator_index, "Ethereum",
-                      val_msg.destination_nonce))
+        logger.info(
+            success_log_template, self.validator_index, "true",
+            "\U0001f58b validator set", self.eth_net, val_msg.destination_nonce
+        )
         return approval
 
     def GetAergoUnfreezeFeeSignature(self, new_fee_msg, context):
@@ -280,9 +318,13 @@ class ValidatorService(BridgeOperatorServicer):
 
         """
         if not self.auto_update:
-            return Approval(error="Voting not enabled")
+            return Approval(error="Setting update not enabled")
         err_msg = self.data_sources.is_valid_unfreeze_fee(new_fee_msg)
         if err_msg is not None:
+            logger.warning(
+                error_log_template, self.validator_index, "false",
+                "\U0001f4a7 unfreeze fee", self.aergo_net, err_msg
+            )
             return Approval(error=err_msg)
 
         # sign anchor and return approval
@@ -293,8 +335,9 @@ class ValidatorService(BridgeOperatorServicer):
         h = hashlib.sha256(msg).digest()
         sig = self.aergo_signer.sign(h)
         approval = Approval(address=self.aergo_signer.address, sig=sig)
-        print("{0}{1} Validator {2} signed a new unfreeze fee for Aergo,\n"
-              "{0}with nonce {3}"
-              .format("", "\U0001f4a7", self.validator_index,
-                      new_fee_msg.destination_nonce))
+        logger.info(
+            success_log_template, self.validator_index, "true",
+            "\U0001f4a7 unfreeze fee", self.aergo_net,
+            new_fee_msg.destination_nonce
+        )
         return approval

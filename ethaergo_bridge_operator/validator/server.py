@@ -18,6 +18,7 @@ from ethaergo_bridge_operator.bridge_operator_pb2_grpc import (
 )
 from ethaergo_bridge_operator.validator.validator_service import (
     ValidatorService,
+    logger,
 )
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
@@ -51,13 +52,12 @@ class ValidatorServer:
 
     def run(self):
         self.server.start()
-        print("server", self.validator_index, " started")
-        print("{}Aergo{}Ethereum".format("\t", "\t"*4))
+        logger.info("server %s started", self.validator_index)
         try:
             while True:
                 time.sleep(_ONE_DAY_IN_SECONDS)
         except KeyboardInterrupt:
-            print("\nShutting down validator")
+            logger.info("Shutting down validator")
             self.shutdown()
 
     def shutdown(self):

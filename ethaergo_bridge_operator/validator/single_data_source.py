@@ -33,7 +33,7 @@ class SingleDataSource():
         config_data = load_config_data(config_file_path)
         self.aergo_net = aergo_net
         self.eth_net = eth_net
-        print("------ Connect Aergo and Ethereum -----------")
+
         self.hera = herapy.Aergo()
         self.hera.connect(aergo_ip)
 
@@ -71,8 +71,8 @@ class SingleDataSource():
         # lib = best_height - finalized_from
         lib = self.hera.get_status().consensus_info.status['LibNo']
         if anchor.height > lib:
-            print("anchor not finalized\n", anchor)
-            return "anchor not finalized"
+            return ("anchor height not finalized, got: {}, expected: {}"
+                    .format(anchor.height, lib))
 
         # 2- get contract state root at origin_height
         # and check equals anchor root
@@ -81,24 +81,24 @@ class SingleDataSource():
                                          root=block.blocks_root_hash)
         root = contract.state_proof.state.storageRoot
         if root != anchor.root:
-            print("root to sign doesnt match expected root\n", anchor)
-            return "root to sign doesnt match expected root"
+            return ("root doesn't match height {}, got: {}, expected: {}"
+                    .format(lib, anchor.root.hex(), root.hex()))
 
         last_nonce_to = self.eth_bridge.functions._nonce().call()
-        last_merged_height_from = self.eth_bridge.functions._anchorHeight().call()
+        last_merged_height_from = \
+            self.eth_bridge.functions._anchorHeight().call()
 
         # 3- check merkle bridge nonces are correct
         if last_nonce_to != anchor.destination_nonce:
-            print("anchor nonce is invalid\n", anchor)
-            return "anchor nonce is invalid"
+            return ("anchor nonce invalid, got: {}, expected: {}"
+                    .format(anchor.destination_nonce, last_nonce_to))
 
         # 4- check anchored height comes after the previous one and t_anchor is
         # passed
         t_anchor = self.eth_bridge.functions._tAnchor().call()
         if last_merged_height_from + t_anchor > anchor.height:
-            print("root update height is invalid: "
-                  "must be higher than previous merge + t_anchor\n", anchor)
-            return "root update height is invalid"
+            return ("anchor height too soon, got: {}, expected: {}"
+                    .format(anchor.height, last_merged_height_from + t_anchor))
         return None
 
     def is_valid_eth_anchor(
@@ -117,8 +117,8 @@ class SingleDataSource():
         best_height = self.web3.eth.blockNumber
         lib = best_height - t_final
         if anchor.height > lib:
-            print("anchor not finalized\n", anchor)
-            return "anchor not finalized"
+            return ("anchor height not finalized, got: {}, expected: {}"
+                    .format(anchor.height, lib))
 
         # 2- get contract state root at origin_height
         # and check equals anchor root
@@ -127,8 +127,8 @@ class SingleDataSource():
             .storageHash
         )
         if root != anchor.root:
-            print("root to sign doesnt match expected root\n", anchor)
-            return "root to sign doesnt match expected root"
+            return ("root doesn't match height {}, got: {}, expected: {}"
+                    .format(lib, anchor.root.hex(), root.hex()))
 
         merge_info = self.hera.query_sc_state(
             self.aergo_bridge, ["_sv__nonce", "_sv__anchorHeight"]
@@ -138,15 +138,14 @@ class SingleDataSource():
 
         # 3- check merkle bridge nonces are correct
         if last_nonce_to != anchor.destination_nonce:
-            print("anchor nonce is invalid\n", anchor)
-            return "anchor nonce is invalid"
+            return ("anchor nonce invalid, got: {}, expected: {}"
+                    .format(anchor.destination_nonce, last_nonce_to))
 
         # 4- check anchored height comes after the previous one and t_anchor is
         # passed
         if last_merged_height_from + t_anchor > anchor.height:
-            print("root update height is invalid: "
-                  "must be higher than previous merge + t_anchor\n", anchor)
-            return "root update height is invalid"
+            return ("anchor height too soon, got: {}, expected: {}"
+                    .format(anchor.height, last_merged_height_from + t_anchor))
         return None
 
     def is_valid_eth_t_anchor(
@@ -191,14 +190,16 @@ class SingleDataSource():
             self.aergo_bridge, ["_sv__nonce"]
         ).var_proofs[0].value)
         if nonce != tempo_msg.destination_nonce:
-            return "Incorrect Nonce"
+            return ("Incorrect Nonce, got: {}, expected: {}"
+                    .format(tempo_msg.destination_nonce, nonce))
         # check new tempo is different from current one to prevent
         # update spamming
         if current_tempo == config_tempo:
-            return "New {} is same as current one".format(tempo_str)
+            return "Not voting for a new {}".format(tempo_str)
         # check tempo matches the one in config
         if config_tempo != tempo_msg.tempo:
-            return "Refused to vote for this anchor periode"
+            return ("Invalid {}, got: {}, expected: {}"
+                    .format(tempo_str, tempo_msg.tempo, config_tempo))
         return None
 
     def is_valid_aergo_t_anchor(
@@ -237,14 +238,16 @@ class SingleDataSource():
         # check destination nonce is correct
         nonce = self.eth_bridge.functions._nonce().call()
         if nonce != tempo_msg.destination_nonce:
-            return "Incorrect Nonce"
+            return ("Incorrect Nonce, got: {}, expected: {}"
+                    .format(tempo_msg.destination_nonce, nonce))
         # check new tempo is different from current one to prevent
         # update spamming
         if current_tempo == config_tempo:
-            return "New {} is same as current one".format(tempo_str)
+            return "Not voting for a new {}".format(tempo_str)
         # check tempo matches the one in config
         if config_tempo != tempo_msg.tempo:
-            return "Refused to vote for this anchor periode"
+            return ("Invalid {}, got: {}, expected: {}"
+                    .format(tempo_str, tempo_msg.tempo, config_tempo))
         return None
 
     def is_valid_eth_validators(self, config_vals, val_msg):
@@ -258,16 +261,17 @@ class SingleDataSource():
                 self.aergo_bridge, ["_sv__nonce"]).var_proofs[0].value
         )
         if nonce != val_msg.destination_nonce:
-            return "Incorrect Nonce"
+            return ("Incorrect Nonce, got: {}, expected: {}"
+                    .format(val_msg.destination_nonce, nonce))
         # check new validators are different from current ones to prevent
         # update spamming
         current_validators = query_aergo_validators(self.hera,
                                                     self.aergo_bridge)
         if current_validators == config_vals:
-            return "New validators are same as current ones"
+            return "Not voting for a new validator set"
         # check validators are same in config file
         if config_vals != val_msg.validators:
-            return "Refused to vote for this validator set"
+            return "Invalid validator set"
         return None
 
     def is_valid_aergo_validators(self, config_vals, val_msg):
@@ -278,15 +282,16 @@ class SingleDataSource():
         # check destination nonce is correct
         nonce = self.eth_bridge.functions._nonce().call()
         if nonce != val_msg.destination_nonce:
-            return "Incorrect Nonce"
+            return ("Incorrect Nonce, got: {}, expected: {}"
+                    .format(val_msg.destination_nonce, nonce))
         # check new validators are different from current ones to prevent
         # update spamming
         current_validators = self.eth_bridge.functions.getValidators().call()
         if current_validators == config_vals:
-            return "New validators are same as current ones"
+            return "Not voting for a new validator set"
         # check validators are same in config file
         if config_vals != val_msg.validators:
-            return "Refused to vote for this validator set"
+            return "Invalid validator set"
         return None
 
     def is_valid_unfreeze_fee(self, config_fee, new_fee_msg):
@@ -300,11 +305,13 @@ class SingleDataSource():
             self.aergo_bridge, ["_sv__nonce"]
         ).var_proofs[0].value)
         if nonce != new_fee_msg.destination_nonce:
-            return "Incorrect Nonce"
+            return ("Incorrect Nonce, got: {}, expected: {}"
+                    .format(new_fee_msg.destination_nonce, nonce))
         # check new tempo is different from current one to prevent
         # update spamming
         if current_fee == config_fee:
-            return "New fee is same as current one"
+            return "Not voting for a new unfreeze fee"
         # check tempo matches the one in config
         if config_fee != new_fee_msg.fee:
-            return "Refused to vote for this fee"
+            return ("Invalid unfreeze fee, got: {}, expected: {}"
+                    .format(new_fee_msg.fee, config_fee))

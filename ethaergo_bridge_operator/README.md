@@ -3,7 +3,7 @@
 ## Proposer
 
 ```sh
-$ python3 -m ethaergo_bridge_operator.proposer.proposer_client --help
+$ python3 -m ethaergo_bridge_operator.proposer.client --help
 
 usage: client.py [-h] -c CONFIG_FILE_PATH -a AERGO -e ETH --eth_block_time
                  ETH_BLOCK_TIME [--privkey_name PRIVKEY_NAME] [--auto_update]

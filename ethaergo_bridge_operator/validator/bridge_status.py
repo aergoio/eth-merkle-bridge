@@ -1,3 +1,4 @@
+import json
 import aergo.herapy as herapy
 from web3 import (
     Web3,
@@ -14,10 +15,13 @@ from ethaergo_bridge_operator.op_utils import (
     query_aergo_id,
     query_eth_id,
 )
+from ethaergo_bridge_operator.validator import (
+    logger,
+)
 
 
 def check_bridge_status(config_data, aergo_net, eth_net, auto_update):
-    print("------ Connect Aergo and Ethereum -----------")
+    logger.info("Connect Aergo and Ethereum")
     hera = herapy.Aergo()
     hera.connect(config_data['networks'][aergo_net]['ip'])
 
@@ -43,8 +47,8 @@ def check_bridge_status(config_data, aergo_net, eth_net, auto_update):
     aergo_vals = query_aergo_validators(hera, aergo_bridge)
     eth_vals = query_eth_validators(web3, eth_bridge_addr,
                                     eth_abi)
-    print("Current Aergo validators : ", aergo_vals)
-    print("Current Ethereum validators : ", eth_vals)
+    logger.info("Current Aergo validators : %s", json.dumps(aergo_vals))
+    logger.info("Current Ethereum validators : %s", json.dumps(eth_vals))
     # get the current t_anchor and t_final for both sides of bridge
     t_anchor_aergo, t_final_aergo = query_aergo_tempo(
         hera, aergo_bridge
@@ -52,36 +56,50 @@ def check_bridge_status(config_data, aergo_net, eth_net, auto_update):
     t_anchor_eth, t_final_eth = query_eth_tempo(
         web3, eth_bridge_addr, eth_abi
     )
-    print("{}             <- {} (t_final={}) : t_anchor={}"
-          .format(aergo_net, eth_net, t_final_aergo,
-                  t_anchor_aergo))
-    print("{} (t_final={}) -> {}              : t_anchor={}"
-          .format(aergo_net, t_final_eth, eth_net, t_anchor_eth))
+    logger.info(
+        "%s <- %s (t_final=%s) : t_anchor=%s", aergo_net, eth_net,
+        t_final_aergo, t_anchor_aergo
+    )
+    logger.info(
+        "%s (t_final=%s) -> %s : t_anchor=%s", aergo_net, t_final_eth,
+        eth_net, t_anchor_eth
+    )
 
     if auto_update:
-        print("WARNING: This validator will vote for settings update in "
-              "config.json")
+        logger.warning(
+            "WARNING: This validator will vote for settings update in "
+            "config.json"
+        )
         if len(aergo_vals) != len(eth_vals):
-            print("WARNING: different number of validators on both sides "
-                  "of the bridge")
+            logger.warning(
+                "WARNING: different number of validators on both sides of the "
+                "bridge"
+            )
         if len(config_data['validators']) != len(aergo_vals):
-            print("WARNING: This validator is voting for a new set of "
-                  "aergo validators")
+            logger.warning(
+                "WARNING: This validator is voting for a new set of aergo "
+                "validators"
+            )
         if len(config_data['validators']) != len(eth_vals):
-            print("WARNING: This validator is voting for a new set of eth "
-                  "validators")
+            logger.warning(
+                "WARNING: This validator is voting for a new set of eth "
+                "validators"
+            )
         for i, validator in enumerate(config_data['validators']):
             try:
                 if validator['addr'] != aergo_vals[i]:
-                    print("WARNING: This validator is voting for a new "
-                          "set of aergo validators\n")
+                    logger.warning(
+                        "WARNING: This validator is voting for a new set of "
+                        "aergo validators\n")
             except IndexError:
                 # new validators index larger than current validators
                 pass
             try:
                 if validator['eth-addr'] != eth_vals[i]:
-                    print("WARNING: This validator is voting for a new "
-                          "set of eth validators\n")
+                    logger.warning(
+                        "WARNING: This validator is voting for a new set of "
+                        "eth validators\n"
+                    )
             except IndexError:
                 # new validators index larger than current validators
                 pass
@@ -95,17 +113,25 @@ def check_bridge_status(config_data, aergo_net, eth_net, auto_update):
         t_final_eth_c = (config_data['networks'][eth_net]['bridges']
                          [aergo_net]['t_final'])
         if t_anchor_aergo_c != t_anchor_aergo:
-            print("WARNING: This validator is voting to update anchoring "
-                  "periode on aergo")
+            logger.warning(
+                "WARNING: This validator is voting to update anchoring periode"
+                " on aergo"
+            )
         if t_final_aergo_c != t_final_aergo:
-            print("WARNING: This validator is voting to update finality "
-                  "of eth on aergo")
+            logger.warning(
+                "WARNING: This validator is voting to update finality of eth"
+                " on aergo"
+            )
         if t_anchor_eth_c != t_anchor_eth:
-            print("WARNING: This validator is voting to update anchoring "
-                  "periode on eth")
+            logger.warning(
+                "WARNING: This validator is voting to update anchoring periode"
+                " on eth"
+            )
         if t_final_eth_c != t_final_eth:
-            print("WARNING: This validator is voting to update finality "
-                  "of aergo on eth")
+            logger.warning(
+                "WARNING: This validator is voting to update finality of aergo"
+                " on eth"
+            )
 
     aergo_id = query_aergo_id(hera, aergo_bridge)
     eth_id = query_eth_id(web3, eth_bridge_addr, eth_abi)
