@@ -34,9 +34,10 @@ from ethaergo_bridge_operator.validator import (
 )
 
 log_template = \
-    '{"val_index": %s, "signed": %s, "type": "%s", "destination": "%s"'
-success_log_template = log_template + ', "nonce": %s}'
-error_log_template = log_template + ', "error": "%s"}'
+    '{\"val_index\": %s, \"signed\": %s, \"type\": \"%s\", '\
+    '\"value\": %s, \"destination\": \"%s\"'
+success_log_template = log_template + ', \"nonce\": %s}'
+error_log_template = log_template + ', \"error\": \"%s\"}'
 
 
 class ValidatorService(BridgeOperatorServicer):
@@ -80,10 +81,12 @@ class ValidatorService(BridgeOperatorServicer):
         self.aergo_signer = AergoSigner(
             root_path, config_data, privkey_name, privkey_pwd)
         # record private key for signing EthAnchor
-        logger.info("Aergo validator Address: %s", self.aergo_signer.address)
+        logger.info(
+            "\"Aergo validator Address: %s\"", self.aergo_signer.address)
 
         # record private key for signing AergoAnchor
-        logger.info("Ethereum validator Address: %s", self.eth_signer.address)
+        logger.info(
+            "\"Ethereum validator Address: %s\"", self.eth_signer.address)
 
     def GetAergoAnchorSignature(self, anchor, context):
         """ Verifies an aergo anchor and signs it to be broadcasted on ethereum
@@ -114,7 +117,10 @@ class ValidatorService(BridgeOperatorServicer):
             address=self.eth_signer.address, sig=bytes(sig.signature))
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\u2693 anchor", self.eth_net, anchor.destination_nonce
+            "\u2693 anchor",
+            "{{\"root\": \"0x{}\", \"height\": {}}}"
+            .format(anchor.root.hex(), anchor.height),
+            self.eth_net, anchor.destination_nonce
         )
         return approval
 
@@ -147,7 +153,10 @@ class ValidatorService(BridgeOperatorServicer):
         approval = Approval(address=self.aergo_signer.address, sig=sig)
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\u2693 anchor", self.aergo_net, anchor.destination_nonce
+            "\u2693 anchor",
+            "{{\"root\": \"0x{}\", \"height\": {}}}"
+            .format(anchor.root.hex(), anchor.height),
+            self.aergo_net, anchor.destination_nonce
         )
         return approval
 
@@ -196,7 +205,8 @@ class ValidatorService(BridgeOperatorServicer):
         approval = Approval(address=self.aergo_signer.address, sig=sig)
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\u231B " + tempo_str, self.aergo_net, tempo_msg.destination_nonce
+            "\u231B " + tempo_str, tempo_msg.tempo, self.aergo_net,
+            tempo_msg.destination_nonce
         )
         return approval
 
@@ -244,7 +254,8 @@ class ValidatorService(BridgeOperatorServicer):
             address=self.eth_signer.address, sig=bytes(sig.signature))
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\u231B " + tempo_str, self.eth_net, tempo_msg.destination_nonce
+            "\u231B " + tempo_str, tempo_msg.tempo, self.eth_net,
+            tempo_msg.destination_nonce
         )
         return approval
 
@@ -274,7 +285,7 @@ class ValidatorService(BridgeOperatorServicer):
         approval = Approval(address=self.aergo_signer.address, sig=sig)
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\U0001f58b validator set", self.aergo_net,
+            "\U0001f58b validator set", val_msg.validators, self.aergo_net,
             val_msg.destination_nonce
         )
         return approval
@@ -308,7 +319,8 @@ class ValidatorService(BridgeOperatorServicer):
             address=self.eth_signer.address, sig=bytes(sig.signature))
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\U0001f58b validator set", self.eth_net, val_msg.destination_nonce
+            "\U0001f58b validator set", val_msg.validators, self.eth_net,
+            val_msg.destination_nonce
         )
         return approval
 
@@ -337,7 +349,7 @@ class ValidatorService(BridgeOperatorServicer):
         approval = Approval(address=self.aergo_signer.address, sig=sig)
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\U0001f4a7 unfreeze fee", self.aergo_net,
+            "\U0001f4a7 unfreeze fee", new_fee_msg.fee, self.aergo_net,
             new_fee_msg.destination_nonce
         )
         return approval

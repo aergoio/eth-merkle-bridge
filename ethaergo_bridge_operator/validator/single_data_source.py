@@ -271,7 +271,8 @@ class SingleDataSource():
             return "Not voting for a new validator set"
         # check validators are same in config file
         if config_vals != val_msg.validators:
-            return "Invalid validator set"
+            return ("Invalid validator set, got: {}, expected: {}"
+                    .format(val_msg.validators, config_vals))
         return None
 
     def is_valid_aergo_validators(self, config_vals, val_msg):
@@ -291,7 +292,8 @@ class SingleDataSource():
             return "Not voting for a new validator set"
         # check validators are same in config file
         if config_vals != val_msg.validators:
-            return "Invalid validator set"
+            return ("Invalid validator set, got: {}, expected: {}"
+                    .format(val_msg.validators, config_vals))
         return None
 
     def is_valid_unfreeze_fee(self, config_fee, new_fee_msg):
