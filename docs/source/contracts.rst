@@ -1,9 +1,9 @@
 Deploying a new bridge
 ======================
 
-Before using the bridge deployer, a config file should be create to register network node connections, 
-validators and the address of aergo_erc20 on ethereum. The aergo bridge contract must record the aergo_erc20 address
-so that aergo can be unfroozen.
+Before using the bridge deployer, a config file should be created to register network node connections, 
+bridge tempo (anchoring periode and finality of both chains), validators and the address of aergo_erc20 on ethereum.
+The aergo bridge contract must record the aergo_erc20 so that aergo can be unfroozen.
 
 .. image:: images/scratch.png
 
@@ -14,10 +14,7 @@ so that aergo can be unfroozen.
 
     $ python3 -m ethaergo_bridge_operator.bridge_deployer --help                                                                                                                                                                           18h17m ⚑ ◒  
         usage: bridge_deployer.py [-h] -c CONFIG_FILE_PATH -a AERGO -e ETH
-                                  --t_anchor_eth T_ANCHOR_ETH --t_final_eth
-                                  T_FINAL_ETH --t_anchor_aergo T_ANCHOR_AERGO
-                                  --t_final_aergo T_FINAL_AERGO
-                                  [--privkey_name PRIVKEY_NAME]
+                                [--privkey_name PRIVKEY_NAME] [--local_test]
 
         Deploy bridge contracts between Ethereum and Aergo.
 
@@ -28,28 +25,15 @@ so that aergo can be unfroozen.
         -a AERGO, --aergo AERGO
                                 Name of Aergo network in config file
         -e ETH, --eth ETH     Name of Ethereum network in config file
-        --t_anchor_eth T_ANCHOR_ETH
-                                Anchoring periode (in Aergo blocks) of Aergo on
-                                ethereum
-        --t_final_eth T_FINAL_ETH
-                                Finality of Aergo (in Aergo blocks) root anchored on
-                                Ethereum
-        --t_anchor_aergo T_ANCHOR_AERGO
-                                Anchoring periode (in Ethereum blocks) of Ethereum on
-                                Aergo
-        --t_final_aergo T_FINAL_AERGO
-                                Finality of Ethereum (in Ethereum blocks) root
-                                anchored on Aergo
         --privkey_name PRIVKEY_NAME
                                 Name of account in config file to sign anchors
+        --local_test          Start proposer with password for testing 
 
     $ python3 -m ethaergo_bridge_operator.bridge_deployer -c './test_config.json' -a 'aergo-local' -e eth-poa-local --t_anchor_aergo 6 --t_final_aergo 4 --t_anchor_eth 7 --t_final_eth 5 --privkey_name "proposer"
 
         ------ DEPLOY BRIDGE BETWEEN Aergo & Ethereum -----------
         ------ Connect AERGO -----------
         ------ Connect Web3 -----------
-        aergo finality:  4
-        ethereum finality:  4
         ------ Set Sender Account -----------
         Decrypt Aergo private key 'proposer'
         Password:

@@ -37,23 +37,19 @@ Starting a Validator
 
     $ python3 -m ethaergo_bridge_operator.validator.server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --auto_update
 
-        ------ Connect Aergo and Ethereum -----------
-        Current Aergo validators :  ['AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ', 'AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ', 'AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ']
-        Current Ethereum validators :  ['0x210467b3849a408c3a3bEE14b4627aa57F342134', '0x210467b3849a408c3a3bEE14b4627aa57F342134', '0x210467b3849a408c3a3bEE14b4627aa57F342134']
-        aergo-local             <- eth-poa-local (t_final=4) : t_anchor=6
-        aergo-local (t_final=4) -> eth-poa-local              : t_anchor=7
-        WARNING: This validator will vote for settings update in config.json
-        ------ Set Signer Account -----------
+        "Connect Aergo and Ethereum"
+        "Current Aergo validators : ['AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ', 'AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ', 'AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ']"
+        "Current Ethereum validators : ['0x210467b3849a408c3a3bEE14b4627aa57F342134', '0x210467b3849a408c3a3bEE14b4627aa57F342134', '0x210467b3849a408c3a3bEE14b4627aa57F342134']"
+        "aergo-local <- eth-poa-local (t_final=4) : t_anchor=6"
+        "aergo-local (t_final=5) -> eth-poa-local : t_anchor=7"
+        "WARNING: This validator will vote for settings update in config.json"
         Decrypt Aergo and Ethereum accounts 'validator'
         Password: 
-        > Aergo validator Address: AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ
-        > Ethereum validator Address: 0x210467b3849a408c3a3bEE14b4627aa57F342134
-        server 1  started
-                Aergo                           Ethereum
-        ⚓ Validator 1 signed a new anchor for Aergo,
-        with nonce 739
-                                                ⚓ Validator 1 signed a new anchor for Ethereum,
-                                                with nonce 997
+        "Aergo validator Address: AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ"
+        "Ethereum validator Address: 0x210467b3849a408c3a3bEE14b4627aa57F342134"
+        "server 1 started"
+        {"val_index": 1, "signed": true, "type": "⚓ anchor", "value": {"root": "0xd97d33cb90c9e58befdba86467907ba68258b49f0f85a22781db7c4eda3033e4", "height": 8102}, "destination": "aergo-local", "nonce": 0}
+        {"val_index": 1, "signed": true, "type": "⚓ anchor", "value": {"root": "0x5d471941372b64d66361c29fca4e13c899819afe212cce87143794d80b510613", "height": 8119}, "destination": "eth-poa-local", "nonce": 0}
 
 
 Updating bridge settings
