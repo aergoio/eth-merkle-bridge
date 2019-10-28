@@ -133,6 +133,11 @@ def prompt_new_bridge(net1, net2):
             'type': 'input',
             'name': 't_final2',
             'message': 'Finality of {}'.format(net1)
+        },
+        {
+            'type': 'input',
+            'name': 'unfreeze_fee',
+            'message': 'Aergo native unfreeze fee'
         }
     ]
     return inquirer.prompt(questions, style=aergo_style)

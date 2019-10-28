@@ -20,12 +20,6 @@ def deploy_bridge(
     config_path: str,
     lua_bytecode_path: str,
     sol_bytecode_path: str,
-    bridge_abi_path: str,
-    minted_erc20_abi_path: str,
-    t_anchor_eth: int,
-    t_final_eth: int,
-    t_anchor_aergo: int,
-    t_final_aergo: int,
     eth_net: str,
     aergo_net: str,
     aergo_erc20: str = 'aergo_erc20',
@@ -40,10 +34,22 @@ def deploy_bridge(
         lua_bytecode = f.read()[:-1]
     with open(sol_bytecode_path, "r") as f:
         sol_bytecode = f.read()
+    bridge_abi_path = \
+        config_data['networks'][eth_net]['bridges'][aergo_net]['bridge_abi']
     with open(bridge_abi_path, "r") as f:
         bridge_abi = f.read()
     if privkey_name is None:
         privkey_name = 'proposer'
+    t_anchor_aergo = \
+        config_data['networks'][aergo_net]['bridges'][eth_net]['t_anchor']
+    t_final_aergo = \
+        config_data['networks'][aergo_net]['bridges'][eth_net]['t_final']
+    t_anchor_eth = \
+        config_data['networks'][eth_net]['bridges'][aergo_net]['t_anchor']
+    t_final_eth = \
+        config_data['networks'][eth_net]['bridges'][aergo_net]['t_final']
+    unfreeze_fee = \
+        config_data['networks'][aergo_net]['bridges'][eth_net]['unfreeze_fee']
     print("------ DEPLOY BRIDGE BETWEEN Aergo & Ethereum -----------")
 
     print("------ Connect AERGO -----------")
@@ -56,9 +62,6 @@ def deploy_bridge(
     if eth_poa:
         w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     assert w3.isConnected()
-
-    print("aergo finality: ", t_final_eth)
-    print("ethereum finality: ", t_final_aergo)
 
     print("------ Set Sender Account -----------")
     if privkey_pwd is None:
@@ -90,7 +93,8 @@ def deploy_bridge(
 
     print("------ Deploy Aergo SC -----------")
     payload = herapy.utils.decode_address(lua_bytecode)
-    aergo_erc20_addr = config_data['networks'][eth_net]['tokens'][aergo_erc20]['addr']
+    aergo_erc20_addr = \
+        config_data['networks'][eth_net]['tokens'][aergo_erc20]['addr']
     tx, result = aergo.deploy_sc(amount=0,
                                  payload=payload,
                                  args=[aergo_erc20_addr[2:].lower(),
@@ -126,26 +130,10 @@ def deploy_bridge(
     print("  > SC Address Aergo: {}".format(aergo_bridge))
 
     print("------ Store bridge addresses in test_config.json  -----------")
-    config_data['networks'][eth_net]['bridges'][aergo_net] = {}
-    config_data['networks'][aergo_net]['bridges'][eth_net] = {}
     (config_data['networks'][eth_net]['bridges'][aergo_net]
         ['addr']) = eth_bridge
     (config_data['networks'][aergo_net]['bridges'][eth_net]
         ['addr']) = aergo_bridge
-    (config_data['networks'][eth_net]['bridges'][aergo_net]
-        ['t_anchor']) = t_anchor_eth
-    (config_data['networks'][eth_net]['bridges'][aergo_net]
-        ['t_final']) = t_final_eth
-    (config_data['networks'][aergo_net]['bridges'][eth_net]
-        ['t_anchor']) = t_anchor_aergo
-    (config_data['networks'][aergo_net]['bridges'][eth_net]
-        ['t_final']) = t_final_aergo
-    (config_data['networks'][eth_net]['bridges'][aergo_net]
-        ['bridge_abi']) = bridge_abi_path
-    (config_data['networks'][eth_net]['bridges'][aergo_net]
-        ['minted_abi']) = minted_erc20_abi_path
-    (config_data['networks'][aergo_net]['bridges'][eth_net]
-        ['unfreeze_fee']) = 1000
 
     with open(config_path, "w") as f:
         json.dump(config_data, f, indent=4, sort_keys=True)
@@ -169,18 +157,6 @@ if __name__ == '__main__':
         '-e', '--eth', type=str, required=True,
         help='Name of Ethereum network in config file')
     parser.add_argument(
-        '--t_anchor_eth', type=int, required=True,
-        help='Anchoring periode (in Aergo blocks) of Aergo on ethereum')
-    parser.add_argument(
-        '--t_final_eth', type=int, required=True,
-        help='Finality of Aergo (in Aergo blocks) root anchored on Ethereum')
-    parser.add_argument(
-        '--t_anchor_aergo', type=int, required=True,
-        help='Anchoring periode (in Ethereum blocks) of Ethereum on Aergo')
-    parser.add_argument(
-        '--t_final_aergo', type=int, required=True,
-        help='Finality of Ethereum (in Ethereum blocks) root anchored on Aergo')
-    parser.add_argument(
         '--privkey_name', type=str, help='Name of account in config file '
         'to sign anchors', required=False)
     parser.add_argument(
@@ -192,8 +168,6 @@ if __name__ == '__main__':
 
     lua_bytecode_path = "contracts/lua/bridge_bytecode.txt"
     sol_bytecode_path = "contracts/solidity/bridge_bytecode.txt"
-    minted_erc20_abi_path = "contracts/solidity/minted_erc20_abi.txt"
-    bridge_abi_path = "contracts/solidity/bridge_abi.txt"
 
     # NOTE t_final is the minimum time to get lib : only informative (not
     # actually used in code except for Eth bridge because Eth doesn't have LIB)
@@ -201,15 +175,11 @@ if __name__ == '__main__':
     if args.local_test:
         deploy_bridge(
             args.config_file_path, lua_bytecode_path, sol_bytecode_path,
-            bridge_abi_path, minted_erc20_abi_path, args.t_anchor_eth,
-            args.t_final_eth, args.t_anchor_aergo, args.t_final_aergo,
             args.eth, args.aergo, 'aergo_erc20',
             privkey_name=args.privkey_name, privkey_pwd='1234'
         )
     else:
         deploy_bridge(
             args.config_file_path, lua_bytecode_path, sol_bytecode_path,
-            bridge_abi_path, minted_erc20_abi_path, args.t_anchor_eth,
-            args.t_final_eth, args.t_anchor_aergo, args.t_final_aergo,
             args.eth, args.aergo, 'aergo_erc20', privkey_name=args.privkey_name
         )

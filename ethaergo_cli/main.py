@@ -383,6 +383,8 @@ class EthMerkleBridgeCli():
                     bridge_abi
                 new_config['networks'][net1]['bridges'][net2]['minted_abi'] = \
                     minted_abi
+                new_config['networks'][net2]['bridges'][net1]['unfreeze_fee'] = \
+                    answers['unfreeze_fee']
             if net2_type == 'ethereum':
                 bridge_abi, minted_abi = prompt_bridge_abi_paths()
                 bridge_abi = os.path.relpath(bridge_abi, self.root_path)
@@ -391,6 +393,8 @@ class EthMerkleBridgeCli():
                     bridge_abi
                 new_config['networks'][net2]['bridges'][net1]['minted_abi'] = \
                     minted_abi
+                new_config['networks'][net1]['bridges'][net2]['unfreeze_fee'] = \
+                    answers['unfreeze_fee']
         # Register a new private key for each network
         new_config['wallet-eth'] = {}
         new_config['wallet'] = {}
