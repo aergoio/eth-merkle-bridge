@@ -3,6 +3,9 @@ from typing import (
 )
 
 import aergo.herapy as herapy
+import logging
+
+logger = logging.getLogger("proposer.aergo")
 
 
 class AergoTx():
@@ -17,17 +20,16 @@ class AergoTx():
         aergo_gas_price: int,
         t_anchor: int,
         eth_block_time: int,
-        tab: str
     ):
         self.aergo_gas_price= aergo_gas_price
         self.t_anchor = t_anchor
         self.eth_block_time = eth_block_time
-        self.tab = tab
         self.hera = hera
         self.aergo_bridge = aergo_bridge
 
         self.hera.import_account(encrypted_key, privkey_pwd)
-        print("  > Proposer Address: {}".format(self.hera.account.address))
+        logger.info(
+            "\"Proposer Address: %s\"", self.hera.account.address)
 
     def new_anchor(
         self,
@@ -42,19 +44,22 @@ class AergoTx():
             args=[root, next_anchor_height, validator_indexes, sigs]
         )
         if result.status != herapy.CommitStatus.TX_OK:
-            print("{}Anchor on aergo Tx commit failed : {}"
-                  .format(self.tab, result))
+            logger.warning(
+                "\"Anchor on aergo Tx commit failed : %s\"", result.json())
             return
 
         result = self.hera.wait_tx_result(tx.tx_hash)
         if result.status != herapy.TxResultStatus.SUCCESS:
-            print("{}Anchor failed: already anchored, or invalid "
-                  "signature: {}".format(self.tab, result))
+            logger.warning(
+                "\"Anchor failed: already anchored, or invalid "
+                "signature: %s\"", result.json()
+            )
         else:
-            print("{0}{1} Anchor success,\n{0}{2} wait until next anchor "
-                  "time: {3}s..."
-                  .format(self.tab, u'\u2693', u'\u23F0',
-                          self.t_anchor * self.eth_block_time))
+            logger.info(
+                "\"\u2693 Anchor success, \u23F0 wait until next anchor "
+                "time: %ss...\"",
+                self.t_anchor * self.eth_block_time
+            )
 
     def set_validators(self, new_validators, validator_indexes, sigs):
         """Update validators on chain"""
@@ -63,18 +68,21 @@ class AergoTx():
             args=[new_validators, validator_indexes, sigs]
         )
         if result.status != herapy.CommitStatus.TX_OK:
-            print("{}Set new validators Tx commit failed : {}"
-                  .format(self.tab, result))
+            logger.warning(
+                "\"Set new validators Tx commit failed : %s\"",
+                result.json()
+            )
             return False
 
         result = self.hera.wait_tx_result(tx.tx_hash)
         if result.status != herapy.TxResultStatus.SUCCESS:
-            print("{}Set new validators failed : nonce already used, or "
-                  "invalid signature: {}".format(self.tab, result))
+            logger.warning(
+                "\"Set new validators failed : nonce already used, or "
+                "invalid signature: %s\"", result.json()
+            )
             return False
         else:
-            print("{}{} New validators update success"
-                  .format(self.tab, u'\U0001f58b'))
+            logger.info("\"\U0001f58b New validators update success\"")
         return True
 
     def set_single_param(
@@ -91,16 +99,21 @@ class AergoTx():
             args=[num, validator_indexes, sigs]
         )
         if result.status != herapy.CommitStatus.TX_OK:
-            print("{}Set new validators Tx commit failed : {}"
-                  .format(self.tab, result))
+            logger.warning(
+                "\"Set %s Tx commit failed : %s\"",
+                contract_function, result.json()
+            )
             return False
 
         result = self.hera.wait_tx_result(tx.tx_hash)
         if result.status != herapy.TxResultStatus.SUCCESS:
-            print("{}Set {} failed: nonce already used, or invalid "
-                  "signature: {}".format(self.tab, contract_function, result))
+            logger.warning(
+                "\"Set %s failed: nonce already used, or invalid "
+                "signature: %s\"",
+                contract_function, result.json()
+            )
             return False
         else:
-            print("{}{} {} success"
-                  .format(self.tab, emoticon, contract_function))
+            logger.info(
+                "\"%s %s success\"", emoticon, contract_function)
         return True

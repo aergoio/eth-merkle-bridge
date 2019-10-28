@@ -10,7 +10,7 @@ file_formatter = logging.Formatter(
 stream_formatter = logging.Formatter('%(message)s')
 
 
-file_handler = logging.FileHandler('validator.log')
+file_handler = logging.FileHandler('logs/validator.log')
 file_handler.setFormatter(file_formatter)
 
 stream_handler = logging.StreamHandler()

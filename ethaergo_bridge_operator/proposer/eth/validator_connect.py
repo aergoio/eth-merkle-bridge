@@ -34,6 +34,9 @@ from ethaergo_bridge_operator.bridge_operator_pb2 import (
 from ethaergo_bridge_operator.proposer.exceptions import (
     ValidatorMajorityError,
 )
+import logging
+
+logger = logging.getLogger("proposer.eth")
 
 
 class EthValConnect():
@@ -48,9 +51,7 @@ class EthValConnect():
         web3: Web3,
         eth_bridge_address: str,
         eth_abi: str,
-        tab,
     ):
-        self.tab = tab
         self.web3 = web3
         self.config_data = config_data
 
@@ -61,7 +62,7 @@ class EthValConnect():
         self.eth_id = self.eth_bridge.functions._contractId().call()
 
         current_validators = self.eth_bridge.functions.getValidators().call()
-        print("Validators: ", current_validators)
+        logger.info("\"Validators: %s\"", current_validators)
 
         self.channels: List[grpc._channel.Channel] = []
         self.stubs: List[BridgeOperatorStub] = []
@@ -119,23 +120,25 @@ class EthValConnect():
         """ Get a validator's (index) signature and verify it"""
         try:
             approval = getattr(self.stubs[idx], rpc_service)(request)
-        except grpc.RpcError as e:
-            print(e)
+        except grpc.RpcError:
+            logger.warning(
+                "\"Failed to connect to validator %s (RpcError)\"", idx)
             return None
         if approval.error:
-            print("{}{}".format(self.tab, approval.error))
+            logger.warning("\"%s\"", approval.error)
             return None
         if approval.address != self.config_data['validators'][idx]['eth-addr']:
             # check nothing is wrong with validator address
-            print("{}Unexpected validator {} address : {}"
-                  .format(self.tab, idx, approval.address))
+            logger.warning(
+                "\"Unexpected validator %s address: %s\"", idx,
+                approval.address
+            )
             return None
         # validate signature
         if not approval.address == self.web3.eth.account.recoverHash(
             h, signature=approval.sig
         ):
-            print("{}Invalid signature from validator {}"
-                  .format(self.tab, idx))
+            logger.warning("\"Invalid signature from validator %s\"", idx)
             return None
         return approval
 

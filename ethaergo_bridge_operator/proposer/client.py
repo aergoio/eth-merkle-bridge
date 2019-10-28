@@ -27,11 +27,11 @@ class ProposerClient:
     ) -> None:
         self.t_eth_client = EthProposerClient(
             config_file_path, aergo_net, eth_net, privkey_name,
-            privkey_pwd, "", auto_update, root_path, eth_gas_price
+            privkey_pwd, auto_update, root_path, eth_gas_price
         )
         self.t_aergo_client = AergoProposerClient(
             config_file_path, aergo_net, eth_net, eth_block_time, privkey_name,
-            privkey_pwd, "\t"*5, auto_update, aergo_gas_price
+            privkey_pwd, auto_update, aergo_gas_price
         )
 
     def run(self):

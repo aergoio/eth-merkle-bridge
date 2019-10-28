@@ -26,6 +26,9 @@ from ethaergo_bridge_operator.proposer.aergo.validator_connect import (
 from ethaergo_bridge_operator.proposer.aergo.transact import (
     AergoTx,
 )
+import logging
+
+logger = logging.getLogger("proposer.aergo")
 
 
 class AergoProposerClient(threading.Thread):
@@ -59,22 +62,20 @@ class AergoProposerClient(threading.Thread):
         eth_block_time: int,
         privkey_name: str = None,
         privkey_pwd: str = None,
-        tab: str = "",
         auto_update: bool = False,
         aergo_gas_price: int = None
     ) -> None:
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="AergoProposerClient")
         if aergo_gas_price is None:
             aergo_gas_price = 0
         self.aergo_gas_price = aergo_gas_price
         self.config_file_path = config_file_path
         config_data = load_config_data(self.config_file_path)
         self.eth_block_time = eth_block_time
-        self.tab = tab
         self.eth_net = eth_net
         self.aergo_net = aergo_net
         self.auto_update = auto_update
-        print("------ Connect Aergo and Ethereum -----------")
+        logger.info("\"Connect Aergo and Ethereum providers\"")
         self.hera = herapy.Aergo()
         self.hera.connect(config_data['networks'][aergo_net]['ip'])
 
@@ -94,10 +95,11 @@ class AergoProposerClient(threading.Thread):
         self.t_anchor, self.t_final = query_aergo_tempo(
             self.hera, self.aergo_bridge
         )
-        print("{}              <- {} (t_final={}) : t_anchor={}"
-              .format(aergo_net, eth_net, self.t_final, self.t_anchor))
+        logger.info(
+            "\"%s <- %s (t_final=%s) : t_anchor=%s\"", aergo_net, eth_net,
+            self.t_final, self.t_anchor
+        )
 
-        print("------ Set Sender Account -----------")
         if privkey_name is None:
             privkey_name = 'proposer'
         if privkey_pwd is None:
@@ -106,12 +108,12 @@ class AergoProposerClient(threading.Thread):
         sender_priv_key = config_data['wallet'][privkey_name]['priv_key']
         self.aergo_tx = AergoTx(
             self.hera, sender_priv_key, privkey_pwd, self.aergo_bridge,
-            aergo_gas_price, self.t_anchor, eth_block_time, tab
+            aergo_gas_price, self.t_anchor, eth_block_time
         )
 
-        print("------ Connect to Validators -----------")
+        logger.info("\"Connect to AergoValidators\"")
         self.val_connect = AergoValConnect(
-            config_data, self.hera, self.aergo_bridge, tab)
+            config_data, self.hera, self.aergo_bridge)
 
     def wait_next_anchor(
         self,
@@ -125,8 +127,10 @@ class AergoProposerClient(threading.Thread):
         # wait for merged_height + t_anchor > lib
         wait = (merged_height + self.t_anchor) - lib + 1
         while wait > 0:
-            print("{}{} waiting new anchor time : {}s ..."
-                  .format(self.tab, u'\u23F0', wait * self.eth_block_time))
+            logger.info(
+                "\"\u23F0 waiting new anchor time : %ss ...\"",
+                wait * self.eth_block_time
+            )
             self.monitor_settings_and_sleep(wait * self.eth_block_time)
             # Wait lib > last merged block height + t_anchor
             best_height = self.web3.eth.blockNumber
@@ -156,13 +160,11 @@ class AergoProposerClient(threading.Thread):
             self.t_anchor = int(t_anchor)
             self.t_final = int(t_final)
 
-            print("\n{0}| Last anchor from Ethereum:\n"
-                  "{0}| --------------------------\n"
-                  "{0}| height: {1}\n"
-                  "{0}| contract trie root: 0x{2}...\n"
-                  "{0}| current update nonce: {3}\n"
-                  .format(self.tab, merged_height_from,
-                          root_from.decode('utf-8')[1:20], nonce_to))
+            logger.info(
+                "\"Current Eth -> Aergo \u2693 anchor: "
+                "height: %s, root: 0x%s, nonce: %s\"",
+                merged_height_from, root_from.decode('utf-8')[1:-1], nonce_to
+            )
 
             # Wait for the next anchor time
             next_anchor_height = self.wait_next_anchor(merged_height_from)
@@ -171,15 +173,14 @@ class AergoProposerClient(threading.Thread):
                 self.eth_bridge, [], next_anchor_height)
             root = state.storageHash.hex()[2:]
             if len(root) == 0:
-                print("{}waiting deployment finalization..."
-                      .format(self.tab))
+                logger.info("\"waiting deployment finalization...\"")
                 time.sleep(5)
                 continue
 
-            print("{}anchoring new Ethereum root :'0x{}...'"
-                  .format(self.tab, root[:17]))
-            print("{}{} Gathering signatures from validators ..."
-                  .format(self.tab, u'\U0001f58b'))
+            logger.info(
+                "\"\U0001f58b Gathering validator signatures for: "
+                "root: 0x%s, height: %s'\"", root, next_anchor_height
+            )
 
             nonce_to = int(self.hera.query_sc_state(
                 self.aergo_bridge, ["_sv__nonce"]
@@ -190,9 +191,10 @@ class AergoProposerClient(threading.Thread):
                     self.val_connect.get_anchor_signatures(
                         root, next_anchor_height, nonce_to)
             except ValidatorMajorityError:
-                print("{0}Failed to gather 2/3 validators signatures,\n"
-                      "{0}{1} waiting for next anchor..."
-                      .format(self.tab, u'\u23F0'))
+                logger.warning(
+                    "\"Failed to gather 2/3 validators signatures, "
+                    "\u23F0 waiting for next anchor...\""
+                )
                 self.monitor_settings_and_sleep(
                     self.t_anchor * self.eth_block_time)
                 continue
@@ -202,8 +204,10 @@ class AergoProposerClient(threading.Thread):
                                                   ["_sv__anchorHeight"])
             merged_height = int(last_merge.var_proofs[0].value)
             if merged_height + self.t_anchor >= next_anchor_height:
-                print("{}Not yet anchor time "
-                      "or another proposer already anchored".format(self.tab))
+                logger.warning(
+                    "\"Not yet anchor time, maybe another proposer already "
+                    "anchored\""
+                )
                 wait = merged_height + self.t_anchor - next_anchor_height
                 self.monitor_settings_and_sleep(wait * self.eth_block_time)
                 continue
@@ -247,23 +251,26 @@ class AergoProposerClient(threading.Thread):
         config_validators = [val['addr']
                              for val in config_data['validators']]
         if validators != config_validators:
-            print('{}Validator set update requested'.format(self.tab))
+            logger.info(
+                '\"Validator set update requested: %s\"', config_validators)
             if self.update_validators(config_validators):
                 self.val_connect.use_new_validators(config_data)
         config_t_anchor = (config_data['networks'][self.aergo_net]['bridges']
                            [self.eth_net]['t_anchor'])
         if t_anchor != config_t_anchor:
-            print('{}Anchoring periode update requested'.format(self.tab))
+            logger.info(
+                '\"Anchoring periode update requested: %s\"', config_t_anchor)
             self.update_t_anchor(config_t_anchor)
         config_t_final = (config_data['networks'][self.aergo_net]['bridges']
                           [self.eth_net]['t_final'])
         if t_final != config_t_final:
-            print('{}Finality update requested'.format(self.tab))
+            logger.info('\"Finality update requested: %s\"', config_t_final)
             self.update_t_final(config_t_final)
         config_unfreeze_fee = (config_data['networks'][self.aergo_net]
                                ['bridges'][self.eth_net]['unfreeze_fee'])
         if unfreeze_fee != config_unfreeze_fee:
-            print('{}Unfreeze fee update requested'.format(self.tab))
+            logger.info(
+                '\"Unfreeze fee update requested: %s\"', config_unfreeze_fee)
             self.update_unfreeze_fee(config_unfreeze_fee)
 
     def update_validators(self, new_validators):
@@ -272,8 +279,7 @@ class AergoProposerClient(threading.Thread):
             sigs, validator_indexes = \
                 self.val_connect.get_new_validators_signatures(new_validators)
         except ValidatorMajorityError:
-            print("{0}Failed to gather 2/3 validators signatures"
-                  .format(self.tab))
+            logger.warning("\"Failed to gather 2/3 validators signatures\"")
             return False
         # broadcast transaction
         return self.aergo_tx.set_validators(
@@ -289,8 +295,7 @@ class AergoProposerClient(threading.Thread):
                 self.val_connect.get_tempo_signatures(
                     t_anchor, "GetEthTAnchorSignature", "A")
         except ValidatorMajorityError:
-            print("{0}Failed to gather 2/3 validators signatures"
-                  .format(self.tab))
+            logger.warning("\"Failed to gather 2/3 validators signatures\"")
             return
         # broadcast transaction
         self.aergo_tx.set_single_param(
@@ -306,8 +311,7 @@ class AergoProposerClient(threading.Thread):
                 self.val_connect.get_tempo_signatures(
                     t_final, "GetEthTFinalSignature", "F")
         except ValidatorMajorityError:
-            print("{0}Failed to gather 2/3 validators signatures"
-                  .format(self.tab))
+            logger.warning("\"Failed to gather 2/3 validators signatures\"")
             return
         # broadcast transaction
         self.aergo_tx.set_single_param(
@@ -322,8 +326,7 @@ class AergoProposerClient(threading.Thread):
             sigs, validator_indexes = \
                 self.val_connect.get_unfreeze_fee_signatures(fee)
         except ValidatorMajorityError:
-            print("{0}Failed to gather 2/3 validators signatures"
-                  .format(self.tab))
+            logger.warning("\"Failed to gather 2/3 validators signatures\"")
             return
         # broadcast transaction
         self.aergo_tx.set_single_param(

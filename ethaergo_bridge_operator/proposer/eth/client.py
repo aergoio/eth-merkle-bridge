@@ -24,6 +24,9 @@ from ethaergo_bridge_operator.proposer.eth.validator_connect import (
 from ethaergo_bridge_operator.proposer.eth.transact import (
     EthTx,
 )
+import logging
+
+logger = logging.getLogger("proposer.eth")
 
 
 class EthProposerClient(threading.Thread):
@@ -57,21 +60,19 @@ class EthProposerClient(threading.Thread):
         eth_net: str,
         privkey_name: str = None,
         privkey_pwd: str = None,
-        tab: str = "",
         auto_update: bool = False,
         root_path: str = './',
         eth_gas_price: int = None
     ) -> None:
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="EthProposerClient")
         if eth_gas_price is None:
             eth_gas_price = 10
         self.config_file_path = config_file_path
         config_data = load_config_data(config_file_path)
-        self.tab = tab
         self.eth_net = eth_net
         self.aergo_net = aergo_net
         self.auto_update = auto_update
-        print("------ Connect Aergo and Ethereum -----------")
+        logger.info("\"Connect Aergo and Ethereum providers\"")
         self.hera = herapy.Aergo()
         self.hera.connect(config_data['networks'][aergo_net]['ip'])
 
@@ -100,10 +101,11 @@ class EthProposerClient(threading.Thread):
         # get the current t_anchor and t_final for anchoring on etherem
         self.t_anchor = self.eth_bridge.functions._tAnchor().call()
         self.t_final = self.eth_bridge.functions._tFinal().call()
-        print("{} (t_final={}) -> {} : t_anchor={}"
-              .format(aergo_net, self.t_final, eth_net, self.t_anchor))
+        logger.info(
+            "\"%s (t_final=%s ) -> %s : t_anchor=%s\"", aergo_net,
+            self.t_final, eth_net, self.t_anchor
+        )
 
-        print("------ Set Sender Account -----------")
         if privkey_name is None:
             privkey_name = 'proposer'
         keystore = config_data["wallet-eth"][privkey_name]['keystore']
@@ -114,12 +116,12 @@ class EthProposerClient(threading.Thread):
                                   "Password: ".format(privkey_name))
         self.eth_tx = EthTx(
             self.web3, encrypted_key, privkey_pwd, self.eth_bridge_address,
-            self.eth_abi, eth_gas_price, self.t_anchor, tab)
+            self.eth_abi, eth_gas_price, self.t_anchor)
 
-        print("------ Connect to Validators -----------")
+        logger.info("\"Connect to EthValidators\"")
         self.val_connect = EthValConnect(
             config_data, self.web3, self.eth_bridge_address,
-            self.eth_abi, tab
+            self.eth_abi
         )
 
     def wait_next_anchor(
@@ -132,8 +134,7 @@ class EthProposerClient(threading.Thread):
         lib = self.hera.get_status().consensus_info.status['LibNo']
         wait = (merged_height + self.t_anchor) - lib + 1
         while wait > 0:
-            print("{}{} waiting new anchor time : {}s ..."
-                  .format(self.tab, u'\u23F0', wait))
+            logger.info("\"\u23F0 waiting new anchor time : %ss ...\"", wait)
             self.monitor_settings_and_sleep(wait)
             # Wait lib > last merged block height + t_anchor
             lib = self.hera.get_status().consensus_info.status['LibNo']
@@ -146,7 +147,7 @@ class EthProposerClient(threading.Thread):
         """ Gathers signatures from validators, verifies them, and if 2/3 majority
         is acquired, set the new anchored root in eth_bridge.
         """
-        print("------ START BRIDGE OPERATOR -----------\n")
+        logger.info("\"Start Eth proposer\"")
         while True:  # anchor a new root
             # Get last merge information
             merged_height_from = self.eth_bridge.functions._anchorHeight().call()
@@ -154,13 +155,11 @@ class EthProposerClient(threading.Thread):
             nonce_to = self.eth_bridge.functions._nonce().call()
             self.t_anchor = self.eth_bridge.functions._tAnchor().call()
 
-            print("\n{0}| Last anchor from Aergo:\n"
-                  "{0}| -----------------------\n"
-                  "{0}| height: {1}\n"
-                  "{0}| contract trie root: 0x{2}...\n"
-                  "{0}| current update nonce: {3}\n"
-                  .format(self.tab, merged_height_from,
-                          merged_root_from.hex()[0:20], nonce_to))
+            logger.info(
+                "\"Current Aergo -> Eth \u2693 anchor: "
+                "height: %s, root: 0x%s, nonce: %s\"",
+                merged_height_from, merged_root_from.hex(), nonce_to
+            )
 
             # Wait for the next anchor time
             next_anchor_height = self.wait_next_anchor(merged_height_from)
@@ -172,15 +171,14 @@ class EthProposerClient(threading.Thread):
             )
             root = contract.state_proof.state.storageRoot
             if len(root) == 0:
-                print("{}waiting deployment finalization..."
-                      .format(self.tab))
+                logger.info("\"waiting deployment finalization...\"")
                 time.sleep(5)
                 continue
 
-            print("{}anchoring new Aergo root :'0x{}...'"
-                  .format(self.tab, root[:8].hex()))
-            print("{}{} Gathering signatures from validators ..."
-                  .format(self.tab, u'\U0001f58b'))
+            logger.info(
+                "\"\U0001f58b Gathering validator signatures for: "
+                "root: 0x%s, height: %s'\"", root.hex(), next_anchor_height
+            )
 
             try:
                 nonce_to = self.eth_bridge.functions._nonce().call()
@@ -188,17 +186,20 @@ class EthProposerClient(threading.Thread):
                     self.val_connect.get_anchor_signatures(
                         root, next_anchor_height, nonce_to)
             except ValidatorMajorityError:
-                print("{0}Failed to gather 2/3 validators signatures,\n"
-                      "{0}{1} waiting for next anchor..."
-                      .format(self.tab, u'\u23F0'))
+                logger.warning(
+                    "\"Failed to gather 2/3 validators signatures, "
+                    "\u23F0 waiting for next anchor...\""
+                )
                 self.monitor_settings_and_sleep(self.t_anchor)
                 continue
 
             # don't broadcast if somebody else already did
             merged_height = self.eth_bridge.functions._anchorHeight().call()
             if merged_height + self.t_anchor >= next_anchor_height:
-                print("{}Not yet anchor time, maybe another proposer"
-                      " already anchored".format(self.tab))
+                logger.warning(
+                    "\"Not yet anchor time, maybe another proposer already "
+                    "anchored\""
+                )
                 self.monitor_settings_and_sleep(
                     merged_height + self.t_anchor - next_anchor_height)
                 continue
@@ -239,20 +240,22 @@ class EthProposerClient(threading.Thread):
         config_validators = [val['eth-addr']
                              for val in config_data['validators']]
         if validators != config_validators:
-            print('{}Validator set update requested'.format(self.tab))
+            logger.info(
+                '\"Validator set update requested: %s\"', config_validators)
             if self.update_validators(config_validators):
                 self.val_connect.use_new_validators(config_data)
         t_anchor = self.eth_bridge.functions._tAnchor().call()
         config_t_anchor = (config_data['networks'][self.eth_net]['bridges']
                            [self.aergo_net]['t_anchor'])
         if t_anchor != config_t_anchor:
-            print('{}Anchoring periode update requested'.format(self.tab))
+            logger.info(
+                '\"Anchoring periode update requested: %s\"', config_t_anchor)
             self.update_t_anchor(config_t_anchor)
         t_final = self.eth_bridge.functions._tFinal().call()
         config_t_final = (config_data['networks'][self.eth_net]['bridges']
                           [self.aergo_net]['t_final'])
         if t_final != config_t_final:
-            print('{}Finality update requested'.format(self.tab))
+            logger.info('\"Finality update requested: %s\"', config_t_final)
             self.update_t_final(config_t_final)
 
     def update_validators(self, new_validators):
@@ -261,11 +264,11 @@ class EthProposerClient(threading.Thread):
             sigs, validator_indexes = \
                 self.val_connect.get_new_validators_signatures(new_validators)
         except ValidatorMajorityError:
-            print("{0}Failed to gather 2/3 validators signatures"
-                  .format(self.tab))
+            logger.warning("\"Failed to gather 2/3 validators signatures\"")
             return False
         # broadcast transaction
-        return self.eth_tx.set_validators(new_validators, validator_indexes, sigs)
+        return self.eth_tx.set_validators(
+            new_validators, validator_indexes, sigs)
 
     def update_t_anchor(self, t_anchor):
         """Try to update the anchoring periode registered in the bridge
@@ -276,8 +279,7 @@ class EthProposerClient(threading.Thread):
             sigs, validator_indexes = self.val_connect.get_tempo_signatures(
                 t_anchor, "GetAergoTAnchorSignature", "A")
         except ValidatorMajorityError:
-            print("{0}Failed to gather 2/3 validators signatures"
-                  .format(self.tab))
+            logger.warning("\"Failed to gather 2/3 validators signatures\"")
             return
         # broadcast transaction
         self.eth_tx.set_t_anchor(t_anchor, validator_indexes, sigs)
@@ -291,8 +293,7 @@ class EthProposerClient(threading.Thread):
             sigs, validator_indexes = self.val_connect.get_tempo_signatures(
                 t_final, "GetAergoTFinalSignature", "F")
         except ValidatorMajorityError:
-            print("{0}Failed to gather 2/3 validators signatures"
-                  .format(self.tab))
+            logger.warning("\"Failed to gather 2/3 validators signatures\"")
             return
         # broadcast transaction
         self.eth_tx.set_t_final(t_final, validator_indexes, sigs)

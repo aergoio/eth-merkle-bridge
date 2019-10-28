@@ -37,6 +37,9 @@ from ethaergo_bridge_operator.op_utils import (
 from ethaergo_bridge_operator.proposer.exceptions import (
     ValidatorMajorityError,
 )
+import logging
+
+logger = logging.getLogger("proposer.aergo")
 
 
 class AergoValConnect():
@@ -50,9 +53,7 @@ class AergoValConnect():
         config_data: Dict,
         hera: herapy.Aergo,
         aergo_bridge: str,
-        tab: str,
     ):
-        self.tab = tab
         self.hera = hera
         self.config_data = config_data
         self.aergo_bridge = aergo_bridge
@@ -60,7 +61,7 @@ class AergoValConnect():
 
         current_validators = query_aergo_validators(
             self.hera, self.aergo_bridge)
-        print("Validators: ", current_validators)
+        logger.info("\"Validators: %s\"", current_validators)
 
         # create all channels with validators
         self.channels: List[grpc._channel.Channel] = []
@@ -116,26 +117,28 @@ class AergoValConnect():
         rpc_service: str,
         request,
         h: bytes,
-        index: int
+        idx: int
     ) -> Optional[Any]:
         """ Get a validator's (index) signature and verify it"""
         try:
-            approval = getattr(self.stubs[index], rpc_service)(request)
-        except grpc.RpcError as e:
-            print(e)
+            approval = getattr(self.stubs[idx], rpc_service)(request)
+        except grpc.RpcError:
+            logger.warning(
+                "\"Failed to connect to validator %s (RpcError)\"", idx)
             return None
         if approval.error:
-            print("{}{}".format(self.tab, approval.error))
+            logger.warning("\"%s\"", approval.error)
             return None
-        if approval.address != self.config_data['validators'][index]['addr']:
+        if approval.address != self.config_data['validators'][idx]['addr']:
             # check nothing is wrong with validator address
-            print("{}Unexpected validator {} address : {}"
-                  .format(self.tab, index, approval.address))
+            logger.warning(
+                "\"Unexpected validator %s address: %s\"", idx,
+                approval.address
+            )
             return None
         # validate signature
         if not verify_sig(h, approval.sig, approval.address):
-            print("{}Invalid signature from validator {}"
-                  .format(self.tab, index))
+            logger.warning("\"Invalid signature from validator %s\"", idx)
             return None
         return approval
 
