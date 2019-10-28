@@ -1,4 +1,5 @@
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -10,7 +11,8 @@ file_formatter = logging.Formatter(
 stream_formatter = logging.Formatter('%(message)s')
 
 
-file_handler = logging.FileHandler('logs/validator.log')
+root_dir = os.path.dirname(os.path.dirname(__file__))
+file_handler = logging.FileHandler(root_dir + '/logs/validator.log')
 file_handler.setFormatter(file_formatter)
 
 stream_handler = logging.StreamHandler()

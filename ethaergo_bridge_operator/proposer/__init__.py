@@ -1,4 +1,5 @@
 import logging
+import os
 
 logger = logging.getLogger("proposer")
 logger.setLevel(logging.INFO)
@@ -11,7 +12,8 @@ file_formatter = logging.Formatter(
 stream_formatter = logging.Formatter("%(name)s: %(message)s")
 
 
-file_handler = logging.FileHandler('logs/proposer.log')
+root_dir = os.path.dirname(os.path.dirname(__file__))
+file_handler = logging.FileHandler(root_dir + '/logs/proposer.log')
 file_handler.setFormatter(file_formatter)
 
 stream_handler = logging.StreamHandler()
