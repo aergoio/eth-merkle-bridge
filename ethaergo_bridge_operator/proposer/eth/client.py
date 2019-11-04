@@ -61,6 +61,7 @@ class EthProposerClient(threading.Thread):
         privkey_name: str = None,
         privkey_pwd: str = None,
         auto_update: bool = False,
+        oracle_update: bool = False,
         root_path: str = './',
         eth_gas_price: int = None
     ) -> None:
@@ -72,6 +73,7 @@ class EthProposerClient(threading.Thread):
         self.eth_net = eth_net
         self.aergo_net = aergo_net
         self.auto_update = auto_update
+        self.oracle_update = oracle_update
         logger.info("\"Connect Aergo and Ethereum providers\"")
         self.hera = herapy.Aergo()
         self.hera.connect(config_data['networks'][aergo_net]['ip'])
@@ -270,6 +272,13 @@ class EthProposerClient(threading.Thread):
         if t_final != config_t_final:
             logger.info('\"Finality update requested: %s\"', config_t_final)
             self.update_t_final(config_t_final)
+        if self.oracle_update:
+            oracle = self.eth_bridge.functions._oracle().call()
+            config_oracle = (config_data['networks'][self.eth_net]['bridges']
+                             [self.aergo_net]['oracle'])
+            if oracle != config_oracle:
+                logger.info('\"Oracle change requested: %s\"', config_oracle)
+                self.update_oracle(config_oracle)
 
     def update_validators(self, new_validators):
         """Try to update the validator set with the one in the config file."""
@@ -310,6 +319,20 @@ class EthProposerClient(threading.Thread):
             return
         # broadcast transaction
         self.eth_tx.set_t_final(t_final, validator_indexes, sigs)
+
+    def update_oracle(self, oracle):
+        """Try to update the oracle registered in the bridge
+        contract.
+
+        """
+        try:
+            sigs, validator_indexes = \
+                self.val_connect.get_new_oracle_signatures(oracle)
+        except ValidatorMajorityError:
+            logger.warning("\"Failed to gather 2/3 validators signatures\"")
+            return
+        # broadcast transaction
+        self.eth_tx.set_oracle(oracle, validator_indexes, sigs)
 
 
 if __name__ == '__main__':

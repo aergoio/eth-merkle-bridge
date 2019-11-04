@@ -23,6 +23,11 @@ service BridgeOperator {
 
     // Get signature to update unfreezing fee service on Aergo
     rpc GetAergoUnfreezeFeeSignature(NewUnfreezeFee) returns (Approval) {}
+
+    // Get signature to update oracle of anchors from Ethereum
+    rpc GetEthOracleSignature(NewOracle) returns (Approval) {}
+    // Get signature to update oralce of anchors from Aergo
+    rpc GetAergoOracleSignature(NewOracle) returns (Approval) {}
 }
 
 message Anchor {
@@ -37,7 +42,7 @@ message Anchor {
 message Approval {
     // address of the private key that produced signatures
     string address = 1;
-    // signature of anchor / tempo update / validators update
+    // signature of anchor / tempo update / validators update, oracle update
     bytes sig = 2;
     // error message why the requested anchor is invalid
     string error = 3;
@@ -46,20 +51,27 @@ message Approval {
 message NewTempo {
     // anchoring periode or finality
     uint64 tempo = 1;
-    // bridge update nonce
+    // oracle update nonce
     uint64 destination_nonce = 2;
 }
 
 message NewValidators {
     // validators addresses : either '0x...' or 'A...' 
     repeated string validators = 1;
-    // eth bridge update nonce
+    // oracle update nonce
     uint64 destination_nonce = 2;
 }
 
 message NewUnfreezeFee {
     // aer unfreeze fee
     uint64 fee = 1;
-    // eth bridge update nonce
+    // aergo oracle update nonce
+    uint64 destination_nonce = 2;
+}
+
+message NewOracle {
+    // oracle address : either '0x...' or 'A...' 
+    string oracle = 1;
+    // oracle update nonce
     uint64 destination_nonce = 2;
 }

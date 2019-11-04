@@ -28,6 +28,7 @@ from ethaergo_bridge_operator.bridge_operator_pb2 import (
     NewValidators,
     NewTempo,
     NewUnfreezeFee,
+    NewOracle,
 
 )
 from ethaergo_bridge_operator.op_utils import (
@@ -245,3 +246,24 @@ class AergoValConnect():
             self.stubs.append(stub)
 
         self.pool = Pool(len(self.stubs))
+
+    def get_new_oracle_signatures(self, oracle):
+        """Request approvals of validators for the new oracle."""
+        nonce = int(
+            self.hera.query_sc_state(
+                self.aergo_oracle, ["_sv__nonce"]).var_proofs[0].value
+        )
+        new_oracle_msg = NewOracle(
+            oracle=oracle, destination_nonce=nonce)
+        data = oracle + str(nonce) + self.aergo_id + "O"
+        data_bytes = bytes(data, 'utf-8')
+        h = hashlib.sha256(data_bytes).digest()
+        # get validator signatures and verify sig in worker
+        validator_indexes = [i for i in range(len(self.stubs))]
+        worker = partial(
+            self.get_signature_worker, "GetEthOracleSignature",
+            new_oracle_msg, h
+        )
+        approvals = self.pool.map(worker, validator_indexes)
+        sigs, validator_indexes = self.extract_signatures(approvals)
+        return sigs, validator_indexes

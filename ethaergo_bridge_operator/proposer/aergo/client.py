@@ -10,6 +10,7 @@ from ethaergo_bridge_operator.op_utils import (
     query_aergo_validators,
     query_unfreeze_fee,
     load_config_data,
+    query_aergo_oracle,
 )
 from ethaergo_bridge_operator.proposer.exceptions import (
     ValidatorMajorityError,
@@ -63,6 +64,7 @@ class AergoProposerClient(threading.Thread):
         privkey_name: str = None,
         privkey_pwd: str = None,
         auto_update: bool = False,
+        oracle_update: bool = False,
         aergo_gas_price: int = None
     ) -> None:
         threading.Thread.__init__(self, name="AergoProposerClient")
@@ -75,6 +77,7 @@ class AergoProposerClient(threading.Thread):
         self.eth_net = eth_net
         self.aergo_net = aergo_net
         self.auto_update = auto_update
+        self.oracle_update = oracle_update
         logger.info("\"Connect Aergo and Ethereum providers\"")
         self.hera = herapy.Aergo()
         self.hera.connect(config_data['networks'][aergo_net]['ip'])
@@ -278,6 +281,13 @@ class AergoProposerClient(threading.Thread):
             logger.info(
                 '\"Unfreeze fee update requested: %s\"', config_unfreeze_fee)
             self.update_unfreeze_fee(config_unfreeze_fee)
+        if self.oracle_update:
+            oracle = query_aergo_oracle(self.hera, self.aergo_bridge)
+            config_oracle = (config_data['networks'][self.aergo_net]['bridges']
+                             [self.eth_net]['oracle'])
+            if oracle != config_oracle:
+                logger.info('\"Oracle change requested: %s\"', config_oracle)
+                self.update_oracle(config_oracle)
 
     def update_validators(self, new_validators):
         """Try to update the validator set with the one in the config file."""
@@ -339,6 +349,20 @@ class AergoProposerClient(threading.Thread):
             {'_bignum': str(fee)}, validator_indexes, sigs,
             "unfreezeFeeUpdate", "\U0001f4a7"
         )
+
+    def update_oracle(self, oracle):
+        """Try to update the oracle periode registered in the bridge
+        contract.
+
+        """
+        try:
+            sigs, validator_indexes = \
+                self.val_connect.get_new_oracle_signatures(oracle)
+        except ValidatorMajorityError:
+            logger.warning("\"Failed to gather 2/3 validators signatures\"")
+            return
+        # broadcast transaction
+        self.aergo_tx.set_oracle(oracle, validator_indexes, sigs)
 
 
 if __name__ == '__main__':

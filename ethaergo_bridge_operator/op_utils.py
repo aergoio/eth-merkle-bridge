@@ -41,6 +41,12 @@ def query_unfreeze_fee(aergo: herapy.Aergo, bridge: str) -> int:
     return int(json.loads(unfreeze_fee_q.var_proofs[0].value)['_bignum'])
 
 
+def query_aergo_oracle(aergo: herapy.Aergo, bridge: str) -> str:
+    oracle_q = aergo.query_sc_state(bridge, ["_sv__oracle"])
+    oracle = oracle_q.var_proofs[0].value.decode('utf-8')[1:-1]
+    return oracle
+
+
 def query_eth_validators(w3: Web3, address: str, abi: str):
     bridge_contract = w3.eth.contract(
         address=address,

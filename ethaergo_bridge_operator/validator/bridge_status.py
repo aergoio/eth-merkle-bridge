@@ -1,3 +1,6 @@
+from typing import (
+    Dict,
+)
 import aergo.herapy as herapy
 from web3 import (
     Web3,
@@ -19,7 +22,14 @@ from ethaergo_bridge_operator.validator import (
 )
 
 
-def check_bridge_status(root_path, config_data, aergo_net, eth_net, auto_update):
+def check_bridge_status(
+    root_path: str,
+    config_data: Dict,
+    aergo_net: str,
+    eth_net: str,
+    auto_update: bool,
+    oracle_update: bool
+):
     logger.info("\"Connect Aergo and Ethereum\"")
     hera = herapy.Aergo()
     hera.connect(config_data['networks'][aergo_net]['ip'])
@@ -76,6 +86,10 @@ def check_bridge_status(root_path, config_data, aergo_net, eth_net, auto_update)
     )
 
     if auto_update:
+        if oracle_update:
+            logger.warning(
+                "\"WARNING: This validator will vote for updating the oracle\""
+            )
         logger.warning(
             "\"WARNING: This validator will vote for settings update in "
             "config.json\""

@@ -138,3 +138,23 @@ class DataSources():
             if err_msg is not None:
                 return err_msg
         return None
+
+    def is_valid_aergo_oracle(self, oracle_msg):
+        config_data = load_config_data(self.config_file_path)
+        config_oracle = (config_data['networks'][self.eth_net]['bridges']
+                         [self.aergo_net]['oracle'])
+        for ds in self.data_sources:
+            err_msg = ds.is_valid_aergo_oracle(config_oracle, oracle_msg)
+            if err_msg is not None:
+                return err_msg
+        return None
+
+    def is_valid_eth_oracle(self, oracle_msg):
+        config_data = load_config_data(self.config_file_path)
+        config_oracle = (config_data['networks'][self.aergo_net]['bridges']
+                         [self.eth_net]['oracle'])
+        for ds in self.data_sources:
+            err_msg = ds.is_valid_eth_oracle(config_oracle, oracle_msg)
+            if err_msg is not None:
+                return err_msg
+        return None

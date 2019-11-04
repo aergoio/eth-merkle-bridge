@@ -117,3 +117,27 @@ class AergoTx():
             logger.info(
                 "\"%s %s success\"", emoticon, contract_function)
         return True
+
+    def set_oracle(self, new_oracle, validator_indexes, sigs):
+        """Update oracle on chain"""
+        tx, result = self.hera.call_sc(
+            self.aergo_oracle, "oracleUpdate",
+            args=[new_oracle, validator_indexes, sigs]
+        )
+        if result.status != herapy.CommitStatus.TX_OK:
+            logger.warning(
+                "\"Set new oracle Tx commit failed : %s\"",
+                result.json()
+            )
+            return False
+
+        result = self.hera.wait_tx_result(tx.tx_hash)
+        if result.status != herapy.TxResultStatus.SUCCESS:
+            logger.warning(
+                "\"Set new oracle failed : nonce already used, or "
+                "invalid signature: %s\"", result.json()
+            )
+            return False
+        else:
+            logger.info("\"\U0001f58b New oracle update success\"")
+        return True
