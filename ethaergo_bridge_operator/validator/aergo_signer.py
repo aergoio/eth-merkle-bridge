@@ -2,7 +2,7 @@ import aergo.herapy as herapy
 
 
 class AergoSigner():
-    def __init__(self, root_path, config_data, privkey_name, privkey_pwd):
+    def __init__(self, config_data, privkey_name, privkey_pwd):
         aergo_privkey = \
             config_data['wallet'][privkey_name]['priv_key']
         self.hera = herapy.Aergo()

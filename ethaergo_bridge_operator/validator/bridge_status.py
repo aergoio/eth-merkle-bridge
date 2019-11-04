@@ -19,7 +19,7 @@ from ethaergo_bridge_operator.validator import (
 )
 
 
-def check_bridge_status(config_data, aergo_net, eth_net, auto_update):
+def check_bridge_status(root_path, config_data, aergo_net, eth_net, auto_update):
     logger.info("\"Connect Aergo and Ethereum\"")
     hera = herapy.Aergo()
     hera.connect(config_data['networks'][aergo_net]['ip'])
@@ -35,14 +35,14 @@ def check_bridge_status(config_data, aergo_net, eth_net, auto_update):
     # eth bridge
     bridge_abi_path = (config_data['networks'][eth_net]['bridges']
                        [aergo_net]['bridge_abi'])
-    with open(bridge_abi_path, "r") as f:
+    with open(root_path + bridge_abi_path, "r") as f:
         bridge_abi = f.read()
     eth_bridge_addr = (config_data['networks'][eth_net]['bridges']
                        [aergo_net]['addr'])
     # eth oracle
     oracle_abi_path = (config_data['networks'][eth_net]['bridges']
                        [aergo_net]['oracle_abi'])
-    with open(oracle_abi_path, "r") as f:
+    with open(root_path + oracle_abi_path, "r") as f:
         oracle_abi = f.read()
     eth_oracle_addr = (config_data['networks'][eth_net]['bridges']
                        [aergo_net]['oracle'])
