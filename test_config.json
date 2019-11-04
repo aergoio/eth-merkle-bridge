@@ -3,8 +3,8 @@
         "aergo-local": {
             "bridges": {
                 "eth-poa-local": {
-                    "addr": "AmgoWC3ZfErBzfz31tUqdevqSZicmu1khv5WBbSyG6J1jvFmTF2Y",
-                    "oracle": "AmhfXPKMudxxwrpXheQ5xpZqnUkMQSpVru5imKPcnbFpVpxqTb9b",
+                    "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
+                    "oracle": "AmgQdbUqDuoX5krsmvSEHc9X3apBuXyJTQ4mimfWzejEsYScTo3f",
                     "t_anchor": 6,
                     "t_final": 4,
                     "unfreeze_fee": 1000
@@ -21,9 +21,9 @@
                     "pegs": {}
                 },
                 "token1": {
-                    "addr": "AmhqbiBkkpYGUC2y9NUsRbFeqbv4K9utZGgKPs8CRA9UuCmVNssW",
+                    "addr": "AmgpYGMMPEnb7ukcJkhpGCGJXwqEq2MgpneN47hHrbBS7C3AjDke",
                     "pegs": {
-                        "eth-poa-local": "0x84967ee424074A987D2f3D12A5E27D3DCbC1398E"
+                        "eth-poa-local": "0x65c88DF2c72a6730a9bA0642e24C545fC13e70F3"
                     }
                 }
             },
@@ -32,10 +32,10 @@
         "eth-poa-local": {
             "bridges": {
                 "aergo-local": {
-                    "addr": "0x8401773b322F60CED26Ea6e78D4788E8a2D0C48f",
+                    "addr": "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
                     "bridge_abi": "contracts/solidity/bridge_abi.txt",
                     "minted_abi": "contracts/solidity/minted_erc20_abi.txt",
-                    "oracle": "0xD57040E1D35917b26678216711714F7C199C5C8f",
+                    "oracle": "0x5b9fd5f3e14F0F886AD11aCc24Ff53823Bf9bdb5",
                     "oracle_abi": "contracts/solidity/oracle_abi.txt",
                     "t_anchor": 7,
                     "t_final": 5
@@ -50,7 +50,7 @@
             "tokens": {
                 "aergo_erc20": {
                     "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0xE0D698f8B2e9E1688624F62284a959dABc60a933",
+                    "addr": "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
                     "pegs": {
                         "aergo-local": "aergo"
                     }
@@ -61,9 +61,9 @@
                 },
                 "test_erc20": {
                     "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0xad4d0229193ae2A3376BBce2842CB75520035d27",
+                    "addr": "0x3f79E699eBb125054E425BD2cce38225CB861664",
                     "pegs": {
-                        "aergo-local": "AmgPDfQBQsnQ1sEBVwGyCpKBFFVmz4jZh16GXTK2AFQgugKj26Lb"
+                        "aergo-local": "AmhoYqbizfrTLCx1QCXKoQuyuwtjyWQRwVEfVPMPLkZJEcAY2nSa"
                     }
                 }
             },
@@ -119,31 +119,31 @@
     },
     "wallet-eth": {
         "broadcaster": {
-            "addr": "0x1abdc1d5568cbb639fa605e2a155480f151c0e55",
+            "addr": "0x1aBDc1d5568CBb639FA605E2A155480f151C0E55",
             "keystore": "keystore/UTC--2018-12-27T07-43-50.585671000Z--1abdc1d5568cbb639fa605e2a155480f151c0e55"
         },
         "default": {
-            "addr": "0xfec3c905bcd3d9a5471452e53f82106844cb1e76",
+            "addr": "0xfec3C905BcD3d9A5471452E53F82106844CB1E76",
             "keystore": "keystore/UTC--2019-05-13T09-23-35.377701000Z--fec3c905bcd3d9a5471452e53f82106844cb1e76"
         },
         "default2": {
-            "addr": "0x429c2388cad780f8e801849cb5f1aa76389727cd",
+            "addr": "0x429C2388caD780f8e801849cb5F1aa76389727cd",
             "keystore": "keystore/UTC--2019-05-13T09-26-18.058577000Z--429c2388cad780f8e801849cb5f1aa76389727cd"
         },
         "proposer": {
-            "addr": "0xc19b69591141443676a3ee56fbf1d3ea869d53d8",
+            "addr": "0xc19b69591141443676a3EE56fbf1d3EA869d53D8",
             "keystore": "keystore/UTC--2019-05-13T09-26-29.993150000Z--c19b69591141443676a3ee56fbf1d3ea869d53d8"
         },
         "receiver": {
-            "addr": "0x7acb4a265bf759ec772510c2465fb7c8f4eaf54e",
+            "addr": "0x7Acb4A265bF759eC772510C2465Fb7c8F4EaF54e",
             "keystore": "keystore/UTC--2019-05-13T09-26-38.701134000Z--7acb4a265bf759ec772510c2465fb7c8f4eaf54e"
         },
         "test": {
-            "addr": "0xf1bf3497d98ead7f6a1bb9ee6dfbde9d448d7062",
+            "addr": "0xF1BF3497D98EaD7F6a1BB9EE6DfbdE9D448d7062",
             "keystore": "keystore/UTC--2019-05-13T09-26-46.916719000Z--f1bf3497d98ead7f6a1bb9ee6dfbde9d448d7062"
         },
         "validator": {
-            "addr": "0x210467b3849a408c3a3bee14b4627aa57f342134",
+            "addr": "0x210467b3849a408c3a3bEE14b4627aa57F342134",
             "keystore": "keystore/UTC--2019-05-13T09-26-54.907966000Z--210467b3849a408c3a3bee14b4627aa57f342134"
         }
     }
