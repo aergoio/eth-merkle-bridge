@@ -480,6 +480,10 @@ class EthMerkleBridgeCli():
                                     'oracle_abi', value=oracle_abi)
             self.wallet.config_data('networks', net1, 'bridges', net2,
                                     'minted_abi', value=minted_abi)
+            self.wallet.config_data(
+                'networks', net2, 'bridges', net1, 'unfreeze_fee',
+                value=answers['unfreeze_fee']
+            )
         if net2_type == 'ethereum':
             bridge_abi, minted_abi, oracle_abi = prompt_bridge_abi_paths()
             bridge_abi = os.path.relpath(bridge_abi, self.root_path)
@@ -490,6 +494,10 @@ class EthMerkleBridgeCli():
                                     'oracle_abi', value=oracle_abi)
             self.wallet.config_data('networks', net2, 'bridges', net1,
                                     'minted_abi', value=minted_abi)
+            self.wallet.config_data(
+                'networks', net1, 'bridges', net2, 'unfreeze_fee',
+                value=answers['unfreeze_fee']
+            )
         self.wallet.save_config()
 
     def register_asset(self):
