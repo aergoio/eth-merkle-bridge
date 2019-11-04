@@ -59,6 +59,16 @@ class BridgeOperatorStub(object):
         request_serializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.NewUnfreezeFee.SerializeToString,
         response_deserializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
         )
+    self.GetEthOracleSignature = channel.unary_unary(
+        '/BridgeOperator/GetEthOracleSignature',
+        request_serializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.NewOracle.SerializeToString,
+        response_deserializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
+        )
+    self.GetAergoOracleSignature = channel.unary_unary(
+        '/BridgeOperator/GetAergoOracleSignature',
+        request_serializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.NewOracle.SerializeToString,
+        response_deserializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.Approval.FromString,
+        )
 
 
 class BridgeOperatorServicer(object):
@@ -128,6 +138,20 @@ class BridgeOperatorServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
+  def GetEthOracleSignature(self, request, context):
+    """Get signature to update oracle of anchors from Ethereum
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def GetAergoOracleSignature(self, request, context):
+    """Get signature to update oralce of anchors from Aergo
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
 
 def add_BridgeOperatorServicer_to_server(servicer, server):
   rpc_method_handlers = {
@@ -174,6 +198,16 @@ def add_BridgeOperatorServicer_to_server(servicer, server):
       'GetAergoUnfreezeFeeSignature': grpc.unary_unary_rpc_method_handler(
           servicer.GetAergoUnfreezeFeeSignature,
           request_deserializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.NewUnfreezeFee.FromString,
+          response_serializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
+      ),
+      'GetEthOracleSignature': grpc.unary_unary_rpc_method_handler(
+          servicer.GetEthOracleSignature,
+          request_deserializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.NewOracle.FromString,
+          response_serializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
+      ),
+      'GetAergoOracleSignature': grpc.unary_unary_rpc_method_handler(
+          servicer.GetAergoOracleSignature,
+          request_deserializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.NewOracle.FromString,
           response_serializer=ethaergo__bridge__operator_dot_bridge__operator__pb2.Approval.SerializeToString,
       ),
   }

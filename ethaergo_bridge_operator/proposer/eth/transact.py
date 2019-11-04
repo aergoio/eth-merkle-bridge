@@ -169,3 +169,31 @@ class EthTx():
             rs.append(self.web3.toHex(sig[:32]))
             ss.append(self.web3.toHex(sig[32:64]))
         return vs, rs, ss
+
+    def set_oracle(self, new_oracle, validator_indexes, sigs):
+        """Update oracle on chain"""
+        vs, rs, ss = self.prepare_rsv(sigs)
+        construct_txn = self.eth_oracle.functions.oracleUpdate(
+            new_oracle, validator_indexes, vs, rs, ss
+        ).buildTransaction({
+            'chainId': self.web3.eth.chainId,
+            'from': self.proposer_acct.address,
+            'nonce': self.web3.eth.getTransactionCount(
+                self.proposer_acct.address
+            ),
+            'gas': 500000,
+            'gasPrice': self.web3.toWei(self.eth_gas_price, 'gwei')
+        })
+        signed = self.proposer_acct.sign_transaction(construct_txn)
+        tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
+        receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
+
+        if receipt.status == 1:
+            logger.info("\"\U0001f58b Set new oracle update success\"")
+            return True
+        else:
+            logger.warning(
+                "\"Set new oracle failed: nonce already used, or "
+                "invalid signature: %s\"", receipt
+            )
+            return False

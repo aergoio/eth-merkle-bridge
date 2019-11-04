@@ -36,13 +36,15 @@ class ValidatorServer:
         privkey_pwd: str = None,
         validator_index: int = 0,
         auto_update: bool = False,
+        oracle_update: bool = False,
         root_path: str = './'
     ) -> None:
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         add_BridgeOperatorServicer_to_server(
             ValidatorService(
                 config_file_path, aergo_net, eth_net, privkey_name,
-                privkey_pwd, validator_index, auto_update, root_path
+                privkey_pwd, validator_index, auto_update, oracle_update,
+                root_path
             ),
             self.server
         )
@@ -77,7 +79,7 @@ def _serve_all(config_file_path, aergo_net, eth_net,
         config_data = json.load(f)
     validator_indexes = [i for i in range(len(config_data['validators']))]
     servers = [ValidatorServer(config_file_path, aergo_net, eth_net,
-                               privkey_name, privkey_pwd, index, True)
+                               privkey_name, privkey_pwd, index, True, True)
                for index in validator_indexes]
     worker = partial(_serve_worker, servers)
     pool = Pool(len(validator_indexes))

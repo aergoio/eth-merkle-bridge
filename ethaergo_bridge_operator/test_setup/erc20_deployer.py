@@ -102,7 +102,7 @@ if __name__ == '__main__':
     with open(abi_path, "r") as f:
         abi = f.read()
 
-    print("\n\nDEPLOY {} on Aergo".format(args.token_name))
+    print("\n\nDEPLOY {} on Ethereum".format(args.token_name))
     if args.local_test:
         deploy_erc20(
             config_data, args.config_file_path, bytecode, abi, abi_path,

@@ -59,10 +59,12 @@ class ValidatorService(BridgeOperatorServicer):
         privkey_pwd: str = None,
         validator_index: int = 0,
         auto_update: bool = False,
+        oracle_update: bool = False,
         root_path: str = './'
     ) -> None:
         """ Initialize parameters of the bridge validator"""
         self.auto_update = auto_update
+        self.oracle_update = oracle_update
         self.data_sources = DataSources(
             config_file_path, aergo_net, eth_net, root_path)
         config_data = load_config_data(config_file_path)
@@ -70,7 +72,9 @@ class ValidatorService(BridgeOperatorServicer):
         self.aergo_net = aergo_net
         self.eth_net = eth_net
         self.aergo_oracle_id, self.eth_oracle_id = check_bridge_status(
-            root_path, config_data, aergo_net, eth_net, auto_update)
+            root_path, config_data, aergo_net, eth_net, auto_update,
+            oracle_update
+        )
 
         if privkey_name is None:
             privkey_name = 'validator'
@@ -352,5 +356,66 @@ class ValidatorService(BridgeOperatorServicer):
             success_log_template, self.validator_index, "true",
             "\U0001f4a7 unfreeze fee", new_fee_msg.fee, self.aergo_net,
             new_fee_msg.destination_nonce
+        )
+        return approval
+
+    def GetAergoOracleSignature(self, oracle_msg, context):
+        """Get a vote(signature) from the validator to update the
+        oracle controlling the Ethereum bridge contract bridging to Aergo
+
+        """
+        if not self.oracle_update:
+            return Approval(error="Oracle update not enabled")
+        err_msg = self.data_sources.is_valid_aergo_oracle(oracle_msg)
+        if err_msg is not None:
+            logger.warning(
+                error_log_template, self.validator_index, "false",
+                "\U0001f58b oracle change", self.eth_net, err_msg
+            )
+            return Approval(error=err_msg)
+
+        # sign oracle
+        oracle = bytes.fromhex(oracle_msg.oracle[2:])
+        msg_bytes = oracle \
+            + oracle_msg.destination_nonce.to_bytes(32, byteorder='big') \
+            + self.eth_oracle_id \
+            + bytes("O", 'utf-8')
+        h = keccak(msg_bytes)
+        sig = self.eth_signer.sign(h)
+        approval = Approval(
+            address=self.eth_signer.address, sig=bytes(sig.signature))
+        logger.info(
+            success_log_template, self.validator_index, "true",
+            "\U0001f58b oracle change", oracle_msg.oracle, self.eth_net,
+            oracle_msg.destination_nonce
+        )
+        return approval
+
+    def GetEthOracleSignature(self, oracle_msg, context):
+        """Get a vote(signature) from the validator to update the
+        oracle controlling the Aergo bridge contract bridging to Ethereum
+
+        """
+        if not self.oracle_update:
+            return Approval(error="Oracle update not enabled")
+        err_msg = self.data_sources.is_valid_eth_oracle(oracle_msg)
+        if err_msg is not None:
+            logger.warning(
+                error_log_template, self.validator_index, "false",
+                "\U0001f58b oracle change", self.aergo_net, err_msg
+            )
+            return Approval(error=err_msg)
+
+        # sign validators
+        data = oracle_msg.oracle \
+            + str(oracle_msg.destination_nonce) + self.aergo_oracle_id + "O"
+        data_bytes = bytes(data, 'utf-8')
+        h = hashlib.sha256(data_bytes).digest()
+        sig = self.aergo_signer.sign(h)
+        approval = Approval(address=self.aergo_signer.address, sig=sig)
+        logger.info(
+            success_log_template, self.validator_index, "true",
+            "\U0001f58b oracle change", oracle_msg.oracle, self.aergo_net,
+            oracle_msg.destination_nonce
         )
         return approval

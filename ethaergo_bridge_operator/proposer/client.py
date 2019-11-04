@@ -23,15 +23,16 @@ class ProposerClient:
         privkey_name: str = None,
         privkey_pwd: str = None,
         auto_update: bool = False,
+        oracle_update: bool = False,
         root_path: str = './'
     ) -> None:
         self.t_eth_client = EthProposerClient(
             config_file_path, aergo_net, eth_net, privkey_name,
-            privkey_pwd, auto_update, root_path, eth_gas_price
+            privkey_pwd, auto_update, oracle_update, root_path, eth_gas_price
         )
         self.t_aergo_client = AergoProposerClient(
             config_file_path, aergo_net, eth_net, eth_block_time, privkey_name,
-            privkey_pwd, auto_update, aergo_gas_price
+            privkey_pwd, auto_update, oracle_update, aergo_gas_price
         )
 
     def run(self):
@@ -81,10 +82,11 @@ if __name__ == '__main__':
             args.config_file_path, args.aergo, args.eth, args.eth_block_time,
             args.aergo_gas_price, args.eth_gas_price,
             privkey_name=args.privkey_name, privkey_pwd='1234',
-            auto_update=args.auto_update
+            auto_update=args.auto_update, oracle_update=True
         )
         proposer.run()
     else:
+        # oracle update not supported by cli for safety
         proposer = ProposerClient(
             args.config_file_path, args.aergo, args.eth, args.eth_block_time,
             args.aergo_gas_price, args.eth_gas_price,

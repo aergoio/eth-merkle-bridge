@@ -15,6 +15,7 @@ from ethaergo_bridge_operator.op_utils import (
     query_aergo_validators,
     query_unfreeze_fee,
     load_config_data,
+    query_aergo_oracle,
 )
 
 
@@ -339,3 +340,49 @@ class SingleDataSource():
         if config_fee != new_fee_msg.fee:
             return ("Invalid unfreeze fee, got: {}, expected: {}"
                     .format(new_fee_msg.fee, config_fee))
+
+    def is_valid_aergo_oracle(self, config_oracle, oracle_msg):
+        """ Check if the Aergo oracle update requested matches the local
+        oracle setting.
+
+        """
+        # check destination nonce is correct
+        nonce = self.eth_oracle.functions._nonce().call()
+        if nonce != oracle_msg.destination_nonce:
+            return ("Incorrect Nonce, got: {}, expected: {}"
+                    .format(oracle_msg.destination_nonce, nonce))
+        # check new oracle is different from current one to prevent
+        # update spamming
+        current_oracle = self.eth_bridge.functions._oracle().call()
+        if current_oracle == config_oracle:
+            return "Not voting for a new oracle"
+        # check oracle is same in config file
+        if config_oracle != oracle_msg.oracle:
+            return ("Invalid oracle, got: {}, expected: {}"
+                    .format(oracle_msg.oracle, config_oracle))
+        return None
+
+    def is_valid_eth_oracle(self, config_oracle, oracle_msg):
+        """ Check if the Ethereum validator set update requested matches the local
+        validator setting.
+
+        """
+        # check destination nonce is correct
+        nonce = int(
+            self.hera.query_sc_state(
+                self.aergo_oracle, ["_sv__nonce"]).var_proofs[0].value
+        )
+        if nonce != oracle_msg.destination_nonce:
+            return ("Incorrect Nonce, got: {}, expected: {}"
+                    .format(oracle_msg.destination_nonce, nonce))
+        # check new oracle is different from current one to prevent
+        # update spamming
+        current_oracle = query_aergo_oracle(
+            self.hera, self.aergo_oracle)
+        if current_oracle == config_oracle:
+            return "Not voting for a new validator set"
+        # check oracle is same in config file
+        if config_oracle != oracle_msg.oracle:
+            return ("Invalid validator set, got: {}, expected: {}"
+                    .format(oracle_msg.oracle, config_oracle))
+        return None

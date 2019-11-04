@@ -29,7 +29,8 @@ from ethaergo_bridge_operator.bridge_operator_pb2_grpc import (
 from ethaergo_bridge_operator.bridge_operator_pb2 import (
     Anchor,
     NewValidators,
-    NewTempo
+    NewTempo,
+    NewOracle,
 )
 from ethaergo_bridge_operator.proposer.exceptions import (
     ValidatorMajorityError,
@@ -218,3 +219,24 @@ class EthValConnect():
             self.stubs.append(stub)
 
         self.pool = Pool(len(self.stubs))
+
+    def get_new_oracle_signatures(self, oracle):
+        """Request approvals of validators for the new oracle."""
+        nonce = self.eth_oracle.functions._nonce().call()
+        new_oracle_msg = NewOracle(
+            oracle=oracle, destination_nonce=nonce)
+        data = bytes.fromhex(oracle[2:])
+        msg_bytes = data \
+            + nonce.to_bytes(32, byteorder='big') \
+            + self.eth_id \
+            + bytes("O", 'utf-8')
+        h = keccak(msg_bytes)
+        # get validator signatures and verify sig in worker
+        validator_indexes = [i for i in range(len(self.stubs))]
+        worker = partial(
+            self.get_signature_worker, "GetAergoOracleSignature",
+            new_oracle_msg, h
+        )
+        approvals = self.pool.map(worker, validator_indexes)
+        sigs, validator_indexes = self.extract_signatures(approvals)
+        return sigs, validator_indexes
