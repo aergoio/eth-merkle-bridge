@@ -28,6 +28,7 @@ class SingleDataSource():
         eth_net: str,
         aergo_ip: str,
         eth_ip: str,
+        root_path: str,
     ) -> None:
         self.config_file_path = config_file_path
         config_data = load_config_data(config_file_path)
@@ -47,7 +48,7 @@ class SingleDataSource():
         # eth bridge contract
         bridge_abi_path = (config_data['networks'][eth_net]['bridges']
                            [aergo_net]['bridge_abi'])
-        with open(bridge_abi_path, "r") as f:
+        with open(root_path + bridge_abi_path, "r") as f:
             bridge_abi = f.read()
         self.eth_bridge_addr = (config_data['networks'][eth_net]['bridges']
                                 [aergo_net]['addr'])
@@ -58,7 +59,7 @@ class SingleDataSource():
         # eth oracle contract
         oracle_abi_path = (config_data['networks'][eth_net]['bridges']
                            [aergo_net]['oracle_abi'])
-        with open(oracle_abi_path, "r") as f:
+        with open(root_path + oracle_abi_path, "r") as f:
             oracle_abi = f.read()
         self.eth_oracle_addr = (config_data['networks'][eth_net]['bridges']
                                 [aergo_net]['oracle'])

@@ -63,13 +63,14 @@ class ValidatorService(BridgeOperatorServicer):
     ) -> None:
         """ Initialize parameters of the bridge validator"""
         self.auto_update = auto_update
-        self.data_sources = DataSources(config_file_path, aergo_net, eth_net)
+        self.data_sources = DataSources(
+            config_file_path, aergo_net, eth_net, root_path)
         config_data = load_config_data(config_file_path)
         self.validator_index = validator_index
         self.aergo_net = aergo_net
         self.eth_net = eth_net
         self.aergo_oracle_id, self.eth_oracle_id = check_bridge_status(
-            config_data, aergo_net, eth_net, auto_update)
+            root_path, config_data, aergo_net, eth_net, auto_update)
 
         if privkey_name is None:
             privkey_name = 'validator'
@@ -79,7 +80,7 @@ class ValidatorService(BridgeOperatorServicer):
         self.eth_signer = EthSigner(
             root_path, config_data, privkey_name, privkey_pwd)
         self.aergo_signer = AergoSigner(
-            root_path, config_data, privkey_name, privkey_pwd)
+            config_data, privkey_name, privkey_pwd)
         # record private key for signing EthAnchor
         logger.info(
             "\"Aergo validator Address: %s\"", self.aergo_signer.address)

@@ -20,7 +20,8 @@ class DataSources():
         self,
         config_file_path: str,
         aergo_net: str,
-        eth_net: str
+        eth_net: str,
+        root_path: str,
     ) -> None:
         self.config_file_path = config_file_path
         config_data = load_config_data(self.config_file_path)
@@ -33,7 +34,9 @@ class DataSources():
             eth_ip = eth_providers[i]
             self.data_sources.append(
                 SingleDataSource(
-                    config_file_path, aergo_net, eth_net, aergo_ip, eth_ip)
+                    config_file_path, aergo_net, eth_net, aergo_ip, eth_ip,
+                    root_path
+                )
             )
 
     def is_valid_aergo_anchor(

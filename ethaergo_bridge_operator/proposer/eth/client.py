@@ -88,7 +88,7 @@ class EthProposerClient(threading.Thread):
         # bridge contract
         bridge_abi_path = (config_data['networks'][eth_net]['bridges']
                            [aergo_net]['bridge_abi'])
-        with open(bridge_abi_path, "r") as f:
+        with open(root_path + bridge_abi_path, "r") as f:
             bridge_abi = f.read()
         eth_bridge_address = (config_data['networks'][eth_net]
                               ['bridges'][aergo_net]['addr'])
@@ -99,7 +99,7 @@ class EthProposerClient(threading.Thread):
         # oracle contract
         oracle_abi_path = (config_data['networks'][eth_net]['bridges']
                            [aergo_net]['oracle_abi'])
-        with open(oracle_abi_path, "r") as f:
+        with open(root_path + oracle_abi_path, "r") as f:
             oracle_abi = f.read()
         eth_oracle_address = (config_data['networks'][eth_net]
                               ['bridges'][aergo_net]['oracle'])
