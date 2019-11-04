@@ -125,7 +125,7 @@ end
 -- Replace the oracle with another one
 -- @type    call
 -- @param   newOracle (address) Aergo address of the new oracle
-function oracleUpdate(newOracle)
+function oracleUpdate(newOracle, signers, signatures)
     oldNonce = _nonce:get()
     message = crypto.sha256(newOracle..tostring(oldNonce).._contractId:get().."O")
     assert(_validateSignatures(message, signers, signatures), "Failed new oracle signature validation")
