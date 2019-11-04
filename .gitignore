@@ -2,6 +2,7 @@
 data/
 geth/
 .pytest_cache/
+nenv/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

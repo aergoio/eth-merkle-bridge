@@ -8,8 +8,15 @@ contract EthMerkleBridge {
     bytes32 public _anchorRoot;
     // Height of the last block anchored
     uint public _anchorHeight;
-    //  2/3 of validators must sign a root update
-    address[] public _validators;
+    // _tAnchor is the anchoring periode of the bridge
+    uint public _tAnchor;
+    // _tFinal is the time after which the bridge operator consideres a block finalised
+    // this value is only useful if the anchored chain doesn't have LIB
+    // Since Aergo has LIB it is a simple indicator for wallets.
+    uint public _tFinal;
+    // address that controls anchoring and settings of the bridge
+    address public _oracle;
+
     // Registers locked balances per account reference: user provides merkle proof of locked balance
     mapping(bytes => uint) public _locks;
     // Registers unlocked balances per account reference: prevents unlocking more than was burnt
@@ -23,17 +30,6 @@ contract EthMerkleBridge {
     // _mintedTokens is the same as _bridgeTokens but keys and values are swapped
     // _mintedTokens is used for preventing a minted token from being locked instead of burnt.
     mapping(address => string) public _mintedTokens;
-    // _tAnchor is the anchoring periode of the bridge
-    uint public _tAnchor;
-    // _tFinal is the time after which the bridge operator consideres a block finalised
-    // this value is only useful if the anchored chain doesn't have LIB
-    // Since Aergo has LIB it is a simple indicator for wallets.
-    uint public _tFinal;
-    // _nonce is a replay protection for validator and root updates.
-    uint public _nonce;
-    // _contractId is a replay protection between sidechains as the same addresses can be validators
-    // on multiple chains.
-    bytes32 public _contractId;
 
     event newMintedERC20(string indexed origin, MintedERC20 indexed addr);
     event lockEvent(IERC20 indexed tokenAddress, string indexed receiver, uint amount);
@@ -41,126 +37,69 @@ contract EthMerkleBridge {
     event mintEvent(MintedERC20 indexed tokenAddress, address indexed receiver, uint amount);
     event burnEvent(MintedERC20 indexed tokenAddress, string indexed receiver, uint amount);
     event anchorEvent(bytes32 root, uint height);
-    event newValidatorsEvent(address[] validators);
     event newTAnchorEvent(uint tAnchor);
     event newTFinalEvent(uint tFinal);
+    event newOracleEvent(address newOracle);
 
     constructor(
-        address[] memory validators,
         uint tAnchor,
         uint tFinal
-
     ) public {
         _tAnchor = tAnchor;
         _tFinal = tFinal;
-        _validators = validators;
-        _contractId = keccak256(abi.encodePacked(blockhash(block.number - 1), this));
+        // the oracle is set to the sender who must transfer ownership to oracle contract
+        // with oracleUpdate(), once deployed
+        _oracle = msg.sender;
     }
 
-    function getValidators() public view returns (address[] memory) {
-        return _validators;
+
+    // Throws if called by any account other than the owner.
+    modifier onlyOracle() {
+        require(msg.sender == _oracle, "Only oracle can call");
+        _;
     }
 
-    // Register a new set of validators
-    // @param   validators - signers of state anchors
-    // @param   signers - array of signer indexes
-    // @param   vs, rs, ss - array of signatures matching signers indexes
-    function validatorsUpdate(
-        address[] memory validators,
-        uint[] memory signers,
-        uint8[] memory vs,
-        bytes32[] memory rs,
-        bytes32[] memory ss
-    ) public {
-        // validators should not sign a set that is equal to the current one to prevent spamming
-        bytes32 message = keccak256(abi.encodePacked(validators, _nonce, _contractId, "V"));
-        validateSignatures(message, signers, vs, rs, ss);
-        _validators = validators;
-        _nonce += 1;
-        emit newValidatorsEvent(validators);
+    // Change the current oracle contract
+    // @param   newOracle - address of new oracle
+    function oracleUpdate(
+        address newOracle
+    ) public onlyOracle {
+        require(newOracle != address(0), "Don't burn the oracle");
+        _oracle = newOracle;
+        emit newOracleEvent(newOracle);
     }
 
     // Register new anchoring periode
     // @param   tAnchor - new anchoring periode
-    // @param   signers - array of signer indexes
-    // @param   vs, rs, ss - array of signatures matching signers indexes
     function tAnchorUpdate(
-        uint tAnchor,
-        uint[] memory signers,
-        uint8[] memory vs,
-        bytes32[] memory rs,
-        bytes32[] memory ss
-    ) public {
-        // validators should not sign a number that is equal to the current one to prevent spamming
-        bytes32 message = keccak256(abi.encodePacked(tAnchor, _nonce, _contractId, "A"));
-        validateSignatures(message, signers, vs, rs, ss);
+        uint tAnchor
+    ) public onlyOracle {
         _tAnchor = tAnchor;
-        _nonce += 1;
         emit newTAnchorEvent(tAnchor);
     }
 
     // Register new finality of anchored chain
     // @param   tFinal - new finality of anchored chain
-    // @param   signers - array of signer indexes
-    // @param   vs, rs, ss - array of signatures matching signers indexes
     function tFinalUpdate(
-        uint tFinal,
-        uint[] memory signers,
-        uint8[] memory vs,
-        bytes32[] memory rs,
-        bytes32[] memory ss
-    ) public {
-        // validators should not sign a number that is equal to the current one to prevent spamming
-        bytes32 message = keccak256(abi.encodePacked(tFinal, _nonce, _contractId, "F"));
-        validateSignatures(message, signers, vs, rs, ss);
+        uint tFinal
+    ) public onlyOracle {
         _tFinal = tFinal;
-        _nonce += 1;
         emit newTFinalEvent(tFinal);
     }
 
     // Register a new anchor
     // @param   root - Aergo storage root
     // @param   height - block height of root
-    // @param   signers - array of signer indexes
-    // @param   vs, rs, ss - array of signatures matching signers indexes
     function newAnchor(
         bytes32 root,
-        uint height,
-        uint[] memory signers,
-        uint8[] memory vs,
-        bytes32[] memory rs,
-        bytes32[] memory ss
-    ) public {
+        uint height
+    ) public onlyOracle {
         require(height > _anchorHeight + _tAnchor, "Next anchor height not reached");
-        bytes32 message = keccak256(abi.encodePacked(root, height, _nonce, _contractId, "R"));
-        validateSignatures(message, signers, vs, rs, ss);
         _anchorRoot = root;
         _anchorHeight = height;
-        _nonce += 1;
         emit anchorEvent(root, height);
     }
 
-    // Check 2/3 validators signed message hash
-    // @param   message - message signed (hash of data)
-    // @param   signers - array of signer indexes
-    // @param   vs, rs, ss - array of signatures matching signers indexes
-    function validateSignatures(
-        bytes32 message,
-        uint[] memory signers,
-        uint8[] memory vs,
-        bytes32[] memory rs,
-        bytes32[] memory ss
-    ) public view returns (bool) {
-        require(_validators.length*2 <= signers.length*3, "2/3 validators must sign");
-        for (uint i = 0; i < signers.length; i++) {
-        if (i > 0) {
-          require(signers[i] > signers[i-1], "Provide ordered signers");
-        }
-        address signer = ecrecover(message, vs[i], rs[i], ss[i]);
-        require(signer == _validators[signers[i]], "Signature doesn't match validator");
-      }
-        return true;
-    }
 
     // lock tokens in the bridge contract
     // @param   token - token locked to transfer
@@ -176,6 +115,7 @@ contract EthMerkleBridge {
         // Add locked amount to total
         bytes memory accountRef = abi.encodePacked(receiver, token);
         _locks[accountRef] += amount;
+        require(_locks[accountRef] >= amount, "total _locks overflow");
         // Pull token from owner to bridge contract (owner must set approval before calling lock)
         // using msg.sender, the owner must call lock, but we can make delegated transfers with sender
         // address as parameter.
@@ -262,6 +202,7 @@ contract EthMerkleBridge {
         // Add burnt amount to total
         bytes memory accountRef = abi.encodePacked(receiver, originAddress);
         _burns[accountRef] += amount;
+        require(_burns[accountRef] >= amount, "total _burns overflow");
         // Burn token
         require(mintAddress.burn(msg.sender, amount), "Failed to burn");
         emit burnEvent(mintAddress, receiver, amount);
