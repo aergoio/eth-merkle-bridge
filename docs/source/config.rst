@@ -14,6 +14,7 @@ It can be created and updated manually of with the help of the cli.
                 "bridges": { // list of bridges between 'aergo-local' and other blockchains
                     "eth-poa-local": { // name of bridged network
                         "addr": "AmhXrQ7KdNA4naBi2sTwHj13aBzVBohRhxy262nXsPbV2YbULXUR", // address of bridge contract
+                        "oracle": "AmgQdbUqDuoX5krsmvSEHc9X3apBuXyJTQ4mimfWzejEsYScTo3f", // address of oracle controlling 'addr' bridge contract
                         "t_anchor": 6, // anchoring periode in bridge contract
                         "t_final": 4 // finality of chain anchored on bridge contract
                     }
@@ -41,8 +42,10 @@ It can be created and updated manually of with the help of the cli.
                 "bridges": {
                     "aergo-local": {
                         "addr": "0xbC5385259C2Dfdd99996CFb9B6C2f92767FcB32b",
-                        "bridge_abi": "/Users/pa/Python_workspace/aergoio/eth-merkle-bridge/contracts/solidity/bridge_abi.txt", // path to bridge abi
-                        "minted_abi": "/Users/pa/Python_workspace/aergoio/eth-merkle-bridge/contracts/solidity/minted_erc20_abi.txt", // path to minted token abi
+                        "bridge_abi": "contracts/solidity/bridge_abi.txt", // path to bridge abi
+                        "minted_abi": "contracts/solidity/minted_erc20_abi.txt", // path to minted token abi
+                        "oracle": "0x5b9fd5f3e14F0F886AD11aCc24Ff53823Bf9bdb5",
+                        "oracle_abi": "contracts/solidity/oracle_abi.txt", // path to oracle abi
                         "t_anchor": 7,
                         "t_final": 5
                     }
@@ -60,10 +63,6 @@ It can be created and updated manually of with the help of the cli.
                         "pegs": {
                             "aergo-local": "aergo"
                         }
-                    },
-                    "ether": {
-                        "addr": "ether",
-                        "pegs": {}
                     },
                     "test_erc20": {
                         "abi": "contracts/solidity/aergo_erc20_abi.txt",

@@ -33,6 +33,9 @@ Registering a new bridge
 
 .. image:: images/register_bridge.png
 
+When creating the initial config file for a bridge that is not yet deployed, leave oracle and bridge addresses empty.
+
+
 Updating bridge settings
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
