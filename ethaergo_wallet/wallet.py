@@ -397,7 +397,7 @@ class EthAergoWallet(WalletConfig):
         w3 = self.get_web3(from_chain)
         account_ref_eth = \
             receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
-        position = b'\x03'  # Locks
+        position = b'\x05'  # Locks
         eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
         aergo_storage_key = ('_sv__mints-' + receiver).encode('utf-8') \
             + bytes.fromhex(token_origin[2:])
@@ -428,7 +428,7 @@ class EthAergoWallet(WalletConfig):
         hera = self.connect_aergo(to_chain)
         w3 = self.get_web3(from_chain)
         account_ref = receiver + token_origin
-        position = b'\x05'  # Burns
+        position = b'\x07'  # Burns
         eth_trie_key = keccak(account_ref.encode('utf-8')
                               + position.rjust(32, b'\0'))
         aergo_storage_key = ('_sv__unlocks-' + account_ref).encode('utf-8')
@@ -459,7 +459,7 @@ class EthAergoWallet(WalletConfig):
         w3 = self.get_web3(from_chain)
         account_ref_eth = \
             receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
-        position = b'\x03'  # Locks
+        position = b'\x05'  # Locks
         eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
         aergo_storage_key = ('_sv__unfreezes-' + receiver).encode('utf-8') \
             + bytes.fromhex(token_origin[2:])

@@ -91,8 +91,8 @@ def build_lock_proof(
             "token_origin {} must be an Ethereum address".format(token_origin)
         )
     account_ref = receiver.encode('utf-8') + bytes.fromhex(token_origin[2:])
-    # 'Burns is the 4th state var defined in solitity contract
-    position = b'\x03'
+    # 'Locks is the 6th state var defined in solitity contract
+    position = b'\x05'
     trie_key = keccak(account_ref + position.rjust(32, b'\0'))
     return _build_deposit_proof(
         w3, aergo_to, bridge_from, bridge_to, lock_height, trie_key
@@ -200,8 +200,8 @@ def build_burn_proof(
             "token_origin {} must be an Aergo address".format(token_origin)
         )
     account_ref = (receiver + token_origin).encode('utf-8')
-    # 'Burns is the 6th state var defined in solitity contract
-    position = b'\x05'
+    # 'Burns is the 8th state var defined in solitity contract
+    position = b'\x07'
     trie_key = keccak(account_ref + position.rjust(32, b'\0'))
     return _build_deposit_proof(
         w3, aergo_to, bridge_from, bridge_to, burn_height, trie_key
