@@ -32,20 +32,31 @@ def check_bridge_status(config_data, aergo_net, eth_net, auto_update):
     assert web3.isConnected()
 
     # remember bridge contracts
+    # eth bridge
     bridge_abi_path = (config_data['networks'][eth_net]['bridges']
                        [aergo_net]['bridge_abi'])
     with open(bridge_abi_path, "r") as f:
-        eth_abi = f.read()
+        bridge_abi = f.read()
     eth_bridge_addr = (config_data['networks'][eth_net]['bridges']
                        [aergo_net]['addr'])
+    # eth oracle
+    oracle_abi_path = (config_data['networks'][eth_net]['bridges']
+                       [aergo_net]['oracle_abi'])
+    with open(oracle_abi_path, "r") as f:
+        oracle_abi = f.read()
+    eth_oracle_addr = (config_data['networks'][eth_net]['bridges']
+                       [aergo_net]['oracle'])
+    # aergo contracts
     aergo_bridge = (config_data['networks'][aergo_net]['bridges']
                     [eth_net]['addr'])
+    aergo_oracle = (config_data['networks'][aergo_net]['bridges']
+                    [eth_net]['oracle'])
 
     # check validators are correct and warn the validator will vote for
     # a new validator set
-    aergo_vals = query_aergo_validators(hera, aergo_bridge)
-    eth_vals = query_eth_validators(web3, eth_bridge_addr,
-                                    eth_abi)
+    aergo_vals = query_aergo_validators(hera, aergo_oracle)
+    eth_vals = query_eth_validators(
+        web3, eth_oracle_addr, oracle_abi)
     logger.info("\"Current Aergo validators : %s\"", aergo_vals)
     logger.info("\"Current Ethereum validators : %s\"", eth_vals)
     # get the current t_anchor and t_final for both sides of bridge
@@ -53,7 +64,7 @@ def check_bridge_status(config_data, aergo_net, eth_net, auto_update):
         hera, aergo_bridge
     )
     t_anchor_eth, t_final_eth = query_eth_tempo(
-        web3, eth_bridge_addr, eth_abi
+        web3, eth_bridge_addr, bridge_abi
     )
     logger.info(
         "\"%s <- %s (t_final=%s) : t_anchor=%s\"", aergo_net, eth_net,
@@ -89,7 +100,8 @@ def check_bridge_status(config_data, aergo_net, eth_net, auto_update):
                 if validator['addr'] != aergo_vals[i]:
                     logger.warning(
                         "\"WARNING: This validator is voting for a new set of "
-                        "aergo validators\"")
+                        "aergo validators\""
+                    )
             except IndexError:
                 # new validators index larger than current validators
                 pass
@@ -113,8 +125,8 @@ def check_bridge_status(config_data, aergo_net, eth_net, auto_update):
                          [aergo_net]['t_final'])
         if t_anchor_aergo_c != t_anchor_aergo:
             logger.warning(
-                "\"WARNING: This validator is voting to update anchoring periode"
-                " on aergo\""
+                "\"WARNING: This validator is voting to update anchoring"
+                " periode on aergo\""
             )
         if t_final_aergo_c != t_final_aergo:
             logger.warning(
@@ -123,16 +135,16 @@ def check_bridge_status(config_data, aergo_net, eth_net, auto_update):
             )
         if t_anchor_eth_c != t_anchor_eth:
             logger.warning(
-                "\"WARNING: This validator is voting to update anchoring periode"
-                " on eth\""
+                "\"WARNING: This validator is voting to update anchoring"
+                " periode on eth\""
             )
         if t_final_eth_c != t_final_eth:
             logger.warning(
-                "\"WARNING: This validator is voting to update finality of aergo"
-                " on eth\""
+                "\"WARNING: This validator is voting to update finality of"
+                " aergo on eth\""
             )
 
-    aergo_id = query_aergo_id(hera, aergo_bridge)
-    eth_id = query_eth_id(web3, eth_bridge_addr, eth_abi)
+    aergo_id = query_aergo_id(hera, aergo_oracle)
+    eth_id = query_eth_id(web3, eth_oracle_addr, oracle_abi)
 
     return aergo_id, eth_id

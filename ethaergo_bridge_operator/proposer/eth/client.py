@@ -85,15 +85,27 @@ class EthProposerClient(threading.Thread):
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         assert self.web3.isConnected()
 
+        # bridge contract
         bridge_abi_path = (config_data['networks'][eth_net]['bridges']
                            [aergo_net]['bridge_abi'])
         with open(bridge_abi_path, "r") as f:
-            self.eth_abi = f.read()
-        self.eth_bridge_address = (config_data['networks'][eth_net]
-                                   ['bridges'][aergo_net]['addr'])
+            bridge_abi = f.read()
+        eth_bridge_address = (config_data['networks'][eth_net]
+                              ['bridges'][aergo_net]['addr'])
         self.eth_bridge = self.web3.eth.contract(
-            address=self.eth_bridge_address,
-            abi=self.eth_abi
+            address=eth_bridge_address,
+            abi=bridge_abi
+        )
+        # oracle contract
+        oracle_abi_path = (config_data['networks'][eth_net]['bridges']
+                           [aergo_net]['oracle_abi'])
+        with open(oracle_abi_path, "r") as f:
+            oracle_abi = f.read()
+        eth_oracle_address = (config_data['networks'][eth_net]
+                              ['bridges'][aergo_net]['oracle'])
+        self.eth_oracle = self.web3.eth.contract(
+            address=eth_oracle_address,
+            abi=oracle_abi
         )
         self.aergo_bridge = (config_data['networks'][aergo_net]['bridges']
                              [eth_net]['addr'])
@@ -115,13 +127,13 @@ class EthProposerClient(threading.Thread):
             privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\n"
                                   "Password: ".format(privkey_name))
         self.eth_tx = EthTx(
-            self.web3, encrypted_key, privkey_pwd, self.eth_bridge_address,
-            self.eth_abi, eth_gas_price, self.t_anchor)
+            self.web3, encrypted_key, privkey_pwd, eth_oracle_address,
+            oracle_abi, eth_gas_price, self.t_anchor)
 
         logger.info("\"Connect to EthValidators\"")
         self.val_connect = EthValConnect(
-            config_data, self.web3, self.eth_bridge_address,
-            self.eth_abi
+            config_data, self.web3, eth_oracle_address,
+            oracle_abi
         )
 
     def wait_next_anchor(
@@ -150,9 +162,10 @@ class EthProposerClient(threading.Thread):
         logger.info("\"Start Eth proposer\"")
         while True:  # anchor a new root
             # Get last merge information
-            merged_height_from = self.eth_bridge.functions._anchorHeight().call()
+            merged_height_from = \
+                self.eth_bridge.functions._anchorHeight().call()
             merged_root_from = self.eth_bridge.functions._anchorRoot().call()
-            nonce_to = self.eth_bridge.functions._nonce().call()
+            nonce_to = self.eth_oracle.functions._nonce().call()
             self.t_anchor = self.eth_bridge.functions._tAnchor().call()
 
             logger.info(
@@ -181,7 +194,7 @@ class EthProposerClient(threading.Thread):
             )
 
             try:
-                nonce_to = self.eth_bridge.functions._nonce().call()
+                nonce_to = self.eth_oracle.functions._nonce().call()
                 sigs, validator_indexes = \
                     self.val_connect.get_anchor_signatures(
                         root, next_anchor_height, nonce_to)
@@ -236,7 +249,7 @@ class EthProposerClient(threading.Thread):
 
         """
         config_data = load_config_data(self.config_file_path)
-        validators = self.eth_bridge.functions.getValidators().call()
+        validators = self.eth_oracle.functions.getValidators().call()
         config_validators = [val['eth-addr']
                              for val in config_data['validators']]
         if validators != config_validators:
