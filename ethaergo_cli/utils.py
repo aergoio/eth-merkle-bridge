@@ -86,6 +86,7 @@ def prompt_deposit_height():
     return prompt_number("Block height of deposit (0 to try finalization "
                          "anyway)")
 
+
 def prompt_gas_price():
     """Prompt aergo and eth gas price"""
     aergo_gas_price = prompt_number("Aergo gas price")
@@ -111,6 +112,11 @@ def prompt_new_bridge(net1, net2):
         },
         {
             'type': 'input',
+            'name': 'oracle1',
+            'message':  'Oracle address on {}'.format(net1)
+        },
+        {
+            'type': 'input',
             'name': 't_anchor1',
             'message': 'Anchoring periode of {} on {}'.format(net2, net1)
         },
@@ -123,6 +129,11 @@ def prompt_new_bridge(net1, net2):
             'type': 'input',
             'name': 'bridge2',
             'message': 'Bridge contract address on {}'.format(net2)
+        },
+        {
+            'type': 'input',
+            'name': 'oracle2',
+            'message': 'Oracle contract address on {}'.format(net2)
         },
         {
             'type': 'input',
@@ -169,7 +180,8 @@ def prompt_bridge_abi_paths():
     bridge_abi = prompt_file_path("Path to Ethereum bridge abi text file")
     minted_abi = prompt_file_path("Path to Ethereum bridge minted token abi "
                                   "text file")
-    return bridge_abi, minted_abi
+    oracle_abi = prompt_file_path("Path to Ethereum oracle abi text file")
+    return bridge_abi, minted_abi, oracle_abi
 
 
 def prompt_new_network():

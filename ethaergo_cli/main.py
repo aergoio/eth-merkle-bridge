@@ -365,32 +365,38 @@ class EthMerkleBridgeCli():
             new_config['networks'][net1]['bridges'] = {
                 net2: {'addr': answers['bridge1'],
                        't_anchor': int(answers['t_anchor1']),
-                       't_final': int(answers['t_final1'])
+                       't_final': int(answers['t_final1']),
+                       'oracle': answers['oracle1']
                        }
             }
             new_config['networks'][net2]['bridges'] = {
                 net1: {'addr': answers['bridge2'],
                        't_anchor': int(answers['t_anchor2']),
-                       't_final': int(answers['t_final2'])
+                       't_final': int(answers['t_final2']),
+                       'oracle': answers['oracle2']
                        }
             }
             # Register paths to abis
             if net1_type == 'ethereum':
-                bridge_abi, minted_abi = prompt_bridge_abi_paths()
+                bridge_abi, minted_abi, oracle_abi = prompt_bridge_abi_paths()
                 bridge_abi = os.path.relpath(bridge_abi, self.root_path)
                 minted_abi = os.path.relpath(minted_abi, self.root_path)
                 new_config['networks'][net1]['bridges'][net2]['bridge_abi'] = \
                     bridge_abi
+                new_config['networks'][net1]['bridges'][net2]['oracle_abi'] = \
+                    oracle_abi
                 new_config['networks'][net1]['bridges'][net2]['minted_abi'] = \
                     minted_abi
                 new_config['networks'][net2]['bridges'][net1]['unfreeze_fee'] = \
                     answers['unfreeze_fee']
             if net2_type == 'ethereum':
-                bridge_abi, minted_abi = prompt_bridge_abi_paths()
+                bridge_abi, minted_abi, oracle_abi = prompt_bridge_abi_paths()
                 bridge_abi = os.path.relpath(bridge_abi, self.root_path)
                 minted_abi = os.path.relpath(minted_abi, self.root_path)
                 new_config['networks'][net2]['bridges'][net1]['bridge_abi'] = \
                     bridge_abi
+                new_config['networks'][net2]['bridges'][net1]['oracle_abi'] = \
+                    oracle_abi
                 new_config['networks'][net2]['bridges'][net1]['minted_abi'] = \
                     minted_abi
                 new_config['networks'][net1]['bridges'][net2]['unfreeze_fee'] = \
@@ -449,33 +455,39 @@ class EthMerkleBridgeCli():
             'networks', net1, 'bridges', net2,
             value={'addr': answers['bridge1'],
                    't_anchor': int(answers['t_anchor1']),
-                   't_final': int(answers['t_final1'])
+                   't_final': int(answers['t_final1']),
+                   'oracle': answers['oracle1']
                    }
         )
         self.wallet.config_data(
             'networks', net2, 'bridges', net1,
             value={'addr': answers['bridge2'],
                    't_anchor': int(answers['t_anchor2']),
-                   't_final': int(answers['t_final2'])
+                   't_final': int(answers['t_final2']),
+                   'oracle': answers['oracle2']
                    }
         )
         # Register paths to abis
         net1_type = self.wallet.config_data('networks', net1, 'type')
         net2_type = self.wallet.config_data('networks', net2, 'type')
         if net1_type == 'ethereum':
-            bridge_abi, minted_abi = prompt_bridge_abi_paths()
+            bridge_abi, minted_abi, oracle_abi = prompt_bridge_abi_paths()
             bridge_abi = os.path.relpath(bridge_abi, self.root_path)
             minted_abi = os.path.relpath(minted_abi, self.root_path)
             self.wallet.config_data('networks', net1, 'bridges', net2,
                                     'bridge_abi', value=bridge_abi)
             self.wallet.config_data('networks', net1, 'bridges', net2,
+                                    'oracle_abi', value=oracle_abi)
+            self.wallet.config_data('networks', net1, 'bridges', net2,
                                     'minted_abi', value=minted_abi)
         if net2_type == 'ethereum':
-            bridge_abi, minted_abi = prompt_bridge_abi_paths()
+            bridge_abi, minted_abi, oracle_abi = prompt_bridge_abi_paths()
             bridge_abi = os.path.relpath(bridge_abi, self.root_path)
             minted_abi = os.path.relpath(minted_abi, self.root_path)
             self.wallet.config_data('networks', net2, 'bridges', net1,
                                     'bridge_abi', value=bridge_abi)
+            self.wallet.config_data('networks', net2, 'bridges', net1,
+                                    'oracle_abi', value=oracle_abi)
             self.wallet.config_data('networks', net2, 'bridges', net1,
                                     'minted_abi', value=minted_abi)
         self.wallet.save_config()
