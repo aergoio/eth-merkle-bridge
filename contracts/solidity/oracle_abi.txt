@@ -1,0 +1,334 @@
+[
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "validators",
+				"type": "address[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "validatorsUpdate",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "_nonce",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tFinal",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "tFinalUpdate",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "oracle",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "oracleUpdate",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tAnchor",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "tAnchorUpdate",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "_contractId",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getValidators",
+		"outputs": [
+			{
+				"internalType": "address[]",
+				"name": "",
+				"type": "address[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "message",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "validateSignatures",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "_bridge",
+		"outputs": [
+			{
+				"internalType": "contract EthMerkleBridge",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "root",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint256",
+				"name": "height",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "newAnchor",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "_validators",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "validators",
+				"type": "address[]"
+			},
+			{
+				"internalType": "contract EthMerkleBridge",
+				"name": "bridge",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address[]",
+				"name": "validators",
+				"type": "address[]"
+			}
+		],
+		"name": "newValidatorsEvent",
+		"type": "event"
+	}
+]

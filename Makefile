@@ -46,6 +46,9 @@ clean:
 compile_bridge:
 	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/lua/eth_merkle_bridge.lua > contracts/lua/bridge_bytecode.txt
 
+compile_oracle:
+	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/lua/oracle.lua > contracts/lua/oracle_bytecode.txt
+
 compile_token:
 	$(GOPATH)/src/github.com/aergoio/aergo/bin/aergoluac --payload contracts/lua/standard_token.lua > contracts/lua/std_token_bytecode.txt
 
