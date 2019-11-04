@@ -68,7 +68,7 @@ class ValidatorService(BridgeOperatorServicer):
         self.validator_index = validator_index
         self.aergo_net = aergo_net
         self.eth_net = eth_net
-        self.aergo_id, self.eth_id = check_bridge_status(
+        self.aergo_oracle_id, self.eth_oracle_id = check_bridge_status(
             config_data, aergo_net, eth_net, auto_update)
 
         if privkey_name is None:
@@ -109,7 +109,7 @@ class ValidatorService(BridgeOperatorServicer):
         # sign anchor and return approval
         msg_bytes = anchor.root + anchor.height.to_bytes(32, byteorder='big') \
             + anchor.destination_nonce.to_bytes(32, byteorder='big') \
-            + self.eth_id \
+            + self.eth_oracle_id \
             + bytes("R", 'utf-8')
         h = keccak(msg_bytes)
         sig = self.eth_signer.sign(h)
@@ -146,7 +146,7 @@ class ValidatorService(BridgeOperatorServicer):
         # sign anchor and return approval
         msg = bytes(
             anchor.root.hex() + ',' + str(anchor.height)
-            + str(anchor.destination_nonce) + self.aergo_id + "R",
+            + str(anchor.destination_nonce) + self.aergo_oracle_id + "R",
             'utf-8')
         h = hashlib.sha256(msg).digest()
         sig = self.aergo_signer.sign(h)
@@ -198,7 +198,7 @@ class ValidatorService(BridgeOperatorServicer):
         # sign anchor and return approval
         msg = bytes(
             str(tempo_msg.tempo) + str(tempo_msg.destination_nonce)
-            + self.aergo_id + tempo_id, 'utf-8'
+            + self.aergo_oracle_id + tempo_id, 'utf-8'
         )
         h = hashlib.sha256(msg).digest()
         sig = self.aergo_signer.sign(h)
@@ -246,7 +246,7 @@ class ValidatorService(BridgeOperatorServicer):
         # sign anchor and return approval
         msg_bytes = tempo_msg.tempo.to_bytes(32, byteorder='big') \
             + tempo_msg.destination_nonce.to_bytes(32, byteorder='big') \
-            + self.eth_id \
+            + self.eth_oracle_id \
             + bytes(tempo_id, 'utf-8')
         h = keccak(msg_bytes)
         sig = self.eth_signer.sign(h)
@@ -278,7 +278,7 @@ class ValidatorService(BridgeOperatorServicer):
         data = ""
         for val in val_msg.validators:
             data += val
-        data += str(val_msg.destination_nonce) + self.aergo_id + "V"
+        data += str(val_msg.destination_nonce) + self.aergo_oracle_id + "V"
         data_bytes = bytes(data, 'utf-8')
         h = hashlib.sha256(data_bytes).digest()
         sig = self.aergo_signer.sign(h)
@@ -311,7 +311,7 @@ class ValidatorService(BridgeOperatorServicer):
             concat_vals += pad_bytes(b'\x00', 32, bytes.fromhex(val[2:]))
         msg_bytes = concat_vals \
             + val_msg.destination_nonce.to_bytes(32, byteorder='big') \
-            + self.eth_id \
+            + self.eth_oracle_id \
             + bytes("V", 'utf-8')
         h = keccak(msg_bytes)
         sig = self.eth_signer.sign(h)
@@ -342,7 +342,7 @@ class ValidatorService(BridgeOperatorServicer):
         # sign anchor and return approval
         msg = bytes(
             str(new_fee_msg.fee) + str(new_fee_msg.destination_nonce)
-            + self.aergo_id + "UF", 'utf-8'
+            + self.aergo_oracle_id + "UF", 'utf-8'
         )
         h = hashlib.sha256(msg).digest()
         sig = self.aergo_signer.sign(h)

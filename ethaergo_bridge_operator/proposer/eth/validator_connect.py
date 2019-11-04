@@ -49,19 +49,19 @@ class EthValConnect():
         self,
         config_data: Dict,
         web3: Web3,
-        eth_bridge_address: str,
-        eth_abi: str,
+        oracle_addr: str,
+        oracle_abi: str,
     ):
         self.web3 = web3
         self.config_data = config_data
 
-        self.eth_bridge = self.web3.eth.contract(
-            address=eth_bridge_address,
-            abi=eth_abi
+        self.eth_oracle = self.web3.eth.contract(
+            address=oracle_addr,
+            abi=oracle_abi
         )
-        self.eth_id = self.eth_bridge.functions._contractId().call()
+        self.eth_id = self.eth_oracle.functions._contractId().call()
 
-        current_validators = self.eth_bridge.functions.getValidators().call()
+        current_validators = self.eth_oracle.functions.getValidators().call()
         logger.info("\"Validators: %s\"", current_validators)
 
         self.channels: List[grpc._channel.Channel] = []
@@ -162,7 +162,7 @@ class EthValConnect():
 
     def get_new_validators_signatures(self, validators):
         """Request approvals of validators for the new validator set."""
-        nonce = self.eth_bridge.functions._nonce().call()
+        nonce = self.eth_oracle.functions._nonce().call()
         new_validators_msg = NewValidators(
             validators=validators, destination_nonce=nonce)
         concat_vals = b''
@@ -185,7 +185,7 @@ class EthValConnect():
 
     def get_tempo_signatures(self, tempo, rpc_service, tempo_id):
         """Request approvals of validators for the new t_anchor or t_final."""
-        nonce = self.eth_bridge.functions._nonce().call()
+        nonce = self.eth_oracle.functions._nonce().call()
         new_tempo_msg = NewTempo(
             tempo=tempo, destination_nonce=nonce)
         msg_bytes = tempo.to_bytes(32, byteorder='big') \

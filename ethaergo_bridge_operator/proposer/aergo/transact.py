@@ -16,7 +16,7 @@ class AergoTx():
         hera: herapy.Aergo,
         encrypted_key: str,
         privkey_pwd: str,
-        aergo_bridge: str,
+        aergo_oracle: str,
         aergo_gas_price: int,
         t_anchor: int,
         eth_block_time: int,
@@ -25,7 +25,7 @@ class AergoTx():
         self.t_anchor = t_anchor
         self.eth_block_time = eth_block_time
         self.hera = hera
-        self.aergo_bridge = aergo_bridge
+        self.aergo_oracle = aergo_oracle
 
         self.hera.import_account(encrypted_key, privkey_pwd)
         logger.info(
@@ -40,7 +40,7 @@ class AergoTx():
     ) -> None:
         """Anchor a new root on chain"""
         tx, result = self.hera.call_sc(
-            self.aergo_bridge, "newAnchor",
+            self.aergo_oracle, "newAnchor",
             args=[root, next_anchor_height, validator_indexes, sigs]
         )
         if result.status != herapy.CommitStatus.TX_OK:
@@ -64,7 +64,7 @@ class AergoTx():
     def set_validators(self, new_validators, validator_indexes, sigs):
         """Update validators on chain"""
         tx, result = self.hera.call_sc(
-            self.aergo_bridge, "validatorsUpdate",
+            self.aergo_oracle, "validatorsUpdate",
             args=[new_validators, validator_indexes, sigs]
         )
         if result.status != herapy.CommitStatus.TX_OK:
@@ -95,7 +95,7 @@ class AergoTx():
     ) -> bool:
         """Call contract_function with num"""
         tx, result = self.hera.call_sc(
-            self.aergo_bridge, contract_function,
+            self.aergo_oracle, contract_function,
             args=[num, validator_indexes, sigs]
         )
         if result.status != herapy.CommitStatus.TX_OK:

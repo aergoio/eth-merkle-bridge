@@ -90,6 +90,8 @@ class AergoProposerClient(threading.Thread):
                            [aergo_net]['addr'])
         self.aergo_bridge = (config_data['networks'][aergo_net]['bridges']
                              [eth_net]['addr'])
+        self.aergo_oracle = (config_data['networks'][aergo_net]['bridges']
+                             [eth_net]['oracle'])
 
         # get the current t_anchor and t_final for both sides of bridge
         self.t_anchor, self.t_final = query_aergo_tempo(
@@ -107,13 +109,13 @@ class AergoProposerClient(threading.Thread):
                                   "Password: ".format(privkey_name))
         sender_priv_key = config_data['wallet'][privkey_name]['priv_key']
         self.aergo_tx = AergoTx(
-            self.hera, sender_priv_key, privkey_pwd, self.aergo_bridge,
+            self.hera, sender_priv_key, privkey_pwd, self.aergo_oracle,
             aergo_gas_price, self.t_anchor, eth_block_time
         )
 
         logger.info("\"Connect to AergoValidators\"")
         self.val_connect = AergoValConnect(
-            config_data, self.hera, self.aergo_bridge)
+            config_data, self.hera, self.aergo_oracle)
 
     def wait_next_anchor(
         self,
@@ -146,19 +148,20 @@ class AergoProposerClient(threading.Thread):
         """
         while True:  # anchor a new root
             # Get last merge information
-            status = self.hera.query_sc_state(self.aergo_bridge,
-                                              ["_sv__anchorHeight",
-                                               "_sv__anchorRoot",
-                                               "_sv__nonce",
-                                               "_sv__tAnchor",
-                                               "_sv__tFinal"
-                                               ])
-            height_from, root_from, nonce_to, t_anchor, t_final = \
-                [proof.value for proof in status.var_proofs]
+            bridge_status = self.hera.query_sc_state(
+                self.aergo_bridge,
+                ["_sv__anchorHeight", "_sv__anchorRoot", "_sv__tAnchor",
+                 "_sv__tFinal"]
+            )
+            height_from, root_from, t_anchor, t_final = \
+                [proof.value for proof in bridge_status.var_proofs]
             merged_height_from = int(height_from)
-            nonce_to = int(nonce_to)
             self.t_anchor = int(t_anchor)
             self.t_final = int(t_final)
+            nonce_to = int(
+                self.hera.query_sc_state(
+                    self.aergo_oracle, ["_sv__nonce"]).var_proofs[0].value
+            )
 
             logger.info(
                 "\"Current Eth -> Aergo \u2693 anchor: "
@@ -182,9 +185,10 @@ class AergoProposerClient(threading.Thread):
                 "root: 0x%s, height: %s'\"", root, next_anchor_height
             )
 
-            nonce_to = int(self.hera.query_sc_state(
-                self.aergo_bridge, ["_sv__nonce"]
-            ).var_proofs[0].value)
+            nonce_to = int(
+                self.hera.query_sc_state(
+                    self.aergo_oracle, ["_sv__nonce"]).var_proofs[0].value
+            )
 
             try:
                 sigs, validator_indexes = \
@@ -200,9 +204,11 @@ class AergoProposerClient(threading.Thread):
                 continue
 
             # don't broadcast if somebody else already did
-            last_merge = self.hera.query_sc_state(self.aergo_bridge,
-                                                  ["_sv__anchorHeight"])
-            merged_height = int(last_merge.var_proofs[0].value)
+            merged_height = int(
+                self.hera.query_sc_state(
+                    self.aergo_bridge, ["_sv__anchorHeight"]
+                ).var_proofs[0].value
+            )
             if merged_height + self.t_anchor >= next_anchor_height:
                 logger.warning(
                     "\"Not yet anchor time, maybe another proposer already "
@@ -245,7 +251,7 @@ class AergoProposerClient(threading.Thread):
 
         """
         config_data = load_config_data(self.config_file_path)
-        validators = query_aergo_validators(self.hera, self.aergo_bridge)
+        validators = query_aergo_validators(self.hera, self.aergo_oracle)
         t_anchor, t_final = query_aergo_tempo(self.hera, self.aergo_bridge)
         unfreeze_fee = query_unfreeze_fee(self.hera, self.aergo_bridge)
         config_validators = [val['addr']

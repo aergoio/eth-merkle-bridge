@@ -19,8 +19,8 @@ class EthTx():
         web3: Web3,
         encrypted_key: str,
         privkey_pwd: str,
-        eth_bridge_address: str,
-        eth_abi: str,
+        oracle_addr: str,
+        oracle_abi: str,
         eth_gas_price: int,
         t_anchor: int,
     ):
@@ -28,9 +28,9 @@ class EthTx():
         self.t_anchor = t_anchor
         self.web3 = web3
 
-        self.eth_bridge = self.web3.eth.contract(
-            address=eth_bridge_address,
-            abi=eth_abi
+        self.eth_oracle = self.web3.eth.contract(
+            address=oracle_addr,
+            abi=oracle_abi
         )
 
         privkey = self.web3.eth.account.decrypt(encrypted_key, privkey_pwd)
@@ -47,7 +47,7 @@ class EthTx():
     ) -> None:
         """Anchor a new root on Ethereum"""
         vs, rs, ss = self.prepare_rsv(sigs)
-        construct_txn = self.eth_bridge.functions.newAnchor(
+        construct_txn = self.eth_oracle.functions.newAnchor(
             root, next_anchor_height, validator_indexes, vs, rs, ss
         ).buildTransaction({
             'chainId': self.web3.eth.chainId,
@@ -77,7 +77,7 @@ class EthTx():
     def set_validators(self, new_validators, validator_indexes, sigs):
         """Update validators on chain"""
         vs, rs, ss = self.prepare_rsv(sigs)
-        construct_txn = self.eth_bridge.functions.validatorsUpdate(
+        construct_txn = self.eth_oracle.functions.validatorsUpdate(
             new_validators, validator_indexes, vs, rs, ss
         ).buildTransaction({
             'chainId': self.web3.eth.chainId,
@@ -105,7 +105,7 @@ class EthTx():
     def set_t_anchor(self, t_anchor, validator_indexes, sigs):
         """Update t_anchor on chain"""
         vs, rs, ss = self.prepare_rsv(sigs)
-        construct_txn = self.eth_bridge.functions.tAnchorUpdate(
+        construct_txn = self.eth_oracle.functions.tAnchorUpdate(
             t_anchor, validator_indexes, vs, rs, ss
         ).buildTransaction({
             'chainId': self.web3.eth.chainId,
@@ -133,7 +133,7 @@ class EthTx():
     def set_t_final(self, t_final, validator_indexes, sigs):
         """Update t_final on chain"""
         vs, rs, ss = self.prepare_rsv(sigs)
-        construct_txn = self.eth_bridge.functions.tFinalUpdate(
+        construct_txn = self.eth_oracle.functions.tFinalUpdate(
             t_final, validator_indexes, vs, rs, ss
         ).buildTransaction({
             'chainId': self.web3.eth.chainId,

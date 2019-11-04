@@ -52,15 +52,15 @@ class AergoValConnect():
         self,
         config_data: Dict,
         hera: herapy.Aergo,
-        aergo_bridge: str,
+        aergo_oracle: str,
     ):
         self.hera = hera
         self.config_data = config_data
-        self.aergo_bridge = aergo_bridge
-        self.aergo_id = query_aergo_id(self.hera, self.aergo_bridge)
+        self.aergo_oracle = aergo_oracle
+        self.aergo_id = query_aergo_id(self.hera, self.aergo_oracle)
 
         current_validators = query_aergo_validators(
-            self.hera, self.aergo_bridge)
+            self.hera, self.aergo_oracle)
         logger.info("\"Validators: %s\"", current_validators)
 
         # create all channels with validators
@@ -122,7 +122,8 @@ class AergoValConnect():
         """ Get a validator's (index) signature and verify it"""
         try:
             approval = getattr(self.stubs[idx], rpc_service)(request)
-        except grpc.RpcError:
+        except grpc.RpcError as e:
+            print(e)
             logger.warning(
                 "\"Failed to connect to validator %s (RpcError)\"", idx)
             return None
@@ -166,7 +167,7 @@ class AergoValConnect():
         """Request approvals of validators for the new validator set."""
         nonce = int(
             self.hera.query_sc_state(
-                self.aergo_bridge, ["_sv__nonce"]).var_proofs[0].value
+                self.aergo_oracle, ["_sv__nonce"]).var_proofs[0].value
         )
         new_validators_msg = NewValidators(
             validators=validators, destination_nonce=nonce)
@@ -190,7 +191,7 @@ class AergoValConnect():
         """Request approvals of validators for the new t_anchor or t_final."""
         nonce = int(
             self.hera.query_sc_state(
-                self.aergo_bridge, ["_sv__nonce"]).var_proofs[0].value
+                self.aergo_oracle, ["_sv__nonce"]).var_proofs[0].value
         )
         new_tempo_msg = NewTempo(tempo=tempo, destination_nonce=nonce)
         msg = bytes(
@@ -211,7 +212,7 @@ class AergoValConnect():
         """Request approvals of validators for the new t_anchor or t_final."""
         nonce = int(
             self.hera.query_sc_state(
-                self.aergo_bridge, ["_sv__nonce"]).var_proofs[0].value
+                self.aergo_oracle, ["_sv__nonce"]).var_proofs[0].value
         )
         new_fee_msg = NewUnfreezeFee(fee=fee, destination_nonce=nonce)
         msg = bytes(
