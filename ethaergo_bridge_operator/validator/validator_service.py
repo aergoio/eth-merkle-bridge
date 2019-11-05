@@ -29,9 +29,9 @@ from ethaergo_bridge_operator.validator.aergo_signer import (
 from ethaergo_bridge_operator.op_utils import (
     load_config_data,
 )
-from ethaergo_bridge_operator.validator import (
-    logger,
-)
+import logging
+
+logger = logging.getLogger(__name__)
 
 log_template = \
     '{\"val_index\": %s, \"signed\": %s, \"type\": \"%s\", '\

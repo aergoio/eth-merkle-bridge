@@ -26,7 +26,7 @@ from ethaergo_bridge_operator.proposer.eth.transact import (
 )
 import logging
 
-logger = logging.getLogger("proposer.eth")
+logger = logging.getLogger(__name__)
 
 
 class EthProposerClient(threading.Thread):

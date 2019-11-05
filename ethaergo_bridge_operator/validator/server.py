@@ -19,9 +19,9 @@ from ethaergo_bridge_operator.bridge_operator_pb2_grpc import (
 from ethaergo_bridge_operator.validator.validator_service import (
     ValidatorService,
 )
-from ethaergo_bridge_operator.validator import (
-    logger,
-)
+import logging
+
+logger = logging.getLogger(__name__)
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 

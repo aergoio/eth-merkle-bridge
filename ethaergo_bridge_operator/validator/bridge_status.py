@@ -17,9 +17,9 @@ from ethaergo_bridge_operator.op_utils import (
     query_aergo_id,
     query_eth_id,
 )
-from ethaergo_bridge_operator.validator import (
-    logger,
-)
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def check_bridge_status(
