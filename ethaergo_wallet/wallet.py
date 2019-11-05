@@ -821,7 +821,7 @@ class EthAergoWallet(WalletConfig):
         w3 = self.get_web3(to_chain)
         account_ref_eth = \
             bytes.fromhex(receiver[2:]) + token_origin.encode('utf-8')
-        position = b'\x06'  # Mints
+        position = b'\x08'  # Mints
         eth_trie_key = keccak(account_ref_eth + position.rjust(32, b'\0'))
         aergo_storage_key = '_sv__locks-'.encode('utf-8') \
             + bytes.fromhex(receiver[2:]) + token_origin.encode('utf-8')
@@ -852,7 +852,7 @@ class EthAergoWallet(WalletConfig):
         hera = self.connect_aergo(from_chain)
         w3 = self.get_web3(to_chain)
         account_ref = receiver[2:] + token_origin[2:]
-        position = b'\x04'  # Unlocks
+        position = b'\x06'  # Unlocks
         eth_trie_key = keccak(
             bytes.fromhex(account_ref) + position.rjust(32, b'\0'))
         aergo_storage_key = '_sv__burns-'.encode('utf-8') \
@@ -1025,11 +1025,14 @@ class EthAergoWallet(WalletConfig):
                     privkey_pwd = getpass(
                         "Decrypt Ethereum keystore '{}'\nPassword: "
                         .format(privkey_name))
+                    privkey = w3.eth.account.decrypt(
+                        encrypted_key, privkey_pwd)
                 except ValueError:
                     logger.info("Wrong password, try again")
                     continue
                 break
+        else:
+            privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
 
-        privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
         signer_acct = w3.eth.account.from_key(privkey)
         return signer_acct
