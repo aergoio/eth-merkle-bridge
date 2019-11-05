@@ -117,7 +117,7 @@ end
 -- deploy new contract
 -- @type    internal
 -- @param   tokenOrigin (ethaddress) Ethereum address without 0x of token locked used as pegged token name
-local function _deployMinteableToken(tokenOrigin)
+local function _deployMintableToken(tokenOrigin)
     addr, success = contract.deploy(mintedTokenCode, tokenOrigin)
     assert(success, "failed to create peg token contract")
     return addr
@@ -260,7 +260,7 @@ function mint(receiver, balance, tokenOrigin, merkleProof)
     _typecheck(receiver, 'address')
     _typecheck(balance, 'ubig')
     _typecheck(tokenOrigin, 'ethaddress')
-    assert(balance > bignum.number(0), "minteable balance must be positive")
+    assert(balance > bignum.number(0), "mintable balance must be positive")
     tokenOriginBytes = _abiEncode(tokenOrigin)
     assert(tokenOriginBytes ~= _aergoErc20Bytes:get(), "Aergo cannot be minted, must be unfreezed")
 
@@ -282,8 +282,8 @@ function mint(receiver, balance, tokenOrigin, merkleProof)
     -- Deploy or get the minted token
     local mintAddress
     if _bridgeTokens[tokenOrigin] == nil then
-        -- Deploy new minteable token controlled by bridge
-        mintAddress = _deployMinteableToken(tokenOrigin)
+        -- Deploy new mintable token controlled by bridge
+        mintAddress = _deployMintableToken(tokenOrigin)
         _bridgeTokens[tokenOrigin] = mintAddress
         _mintedTokens[mintAddress] = tokenOrigin
     else
@@ -340,7 +340,7 @@ function unlock(receiver, balance, tokenAddress, merkleProof)
     _typecheck(receiver, 'address')
     _typecheck(tokenAddress, 'address')
     _typecheck(balance, 'ubig')
-    assert(balance > bignum.number(0), "unlockeable balance must be positive")
+    assert(balance > bignum.number(0), "unlockable balance must be positive")
 
     -- Verify merkle proof of burnt balance
     local accountRef = receiver .. tokenAddress
@@ -403,7 +403,7 @@ end
 function unfreeze(receiver, balance, merkleProof)
     _typecheck(receiver, 'address')
     _typecheck(balance, 'ubig')
-    assert(balance > bignum.number(0), "unlockeable balance must be positive")
+    assert(balance > bignum.number(0), "unlockable balance must be positive")
 
     -- Verify merkle proof of burnt balance
     local accountRef = receiver .. _aergoErc20Bytes:get()

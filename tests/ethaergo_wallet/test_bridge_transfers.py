@@ -171,11 +171,11 @@ def test_aergo_erc20_unfreeze_service(bridge_wallet):
         balance_destination_before_ser + 1000
 
 
-def test_aergo_unfreezeable(bridge_wallet):
+def test_aergo_unfreezable(bridge_wallet):
     eth_user = bridge_wallet.config_data('wallet-eth', 'default', 'addr')
     aergo_user = bridge_wallet.config_data('wallet', 'default', 'addr')
 
-    withdrawable, pending = bridge_wallet.unfreezeable(
+    withdrawable, pending = bridge_wallet.unfreezable(
         'eth-poa-local', 'aergo-local', aergo_user
     )
     before_transfer = withdrawable + pending
@@ -183,7 +183,7 @@ def test_aergo_unfreezeable(bridge_wallet):
         'eth-poa-local', 'aergo-local', 'aergo_erc20',
         5*10**18, aergo_user, privkey_pwd='1234'
     )
-    withdrawable, pending = bridge_wallet.unfreezeable(
+    withdrawable, pending = bridge_wallet.unfreezable(
         'eth-poa-local', 'aergo-local', aergo_user
     )
     assert withdrawable + pending - before_transfer == 5*10**18
@@ -207,7 +207,7 @@ def test_token_withdrawable(bridge_wallet):
     eth_user = bridge_wallet.config_data('wallet-eth', 'default', 'addr')
     aergo_user = bridge_wallet.config_data('wallet', 'default', 'addr')
 
-    withdrawable, pending = bridge_wallet.minteable_to_eth(
+    withdrawable, pending = bridge_wallet.mintable_to_eth(
         'aergo-local', 'eth-poa-local', 'token1', eth_user
     )
     before_transfer = withdrawable + pending
@@ -215,7 +215,7 @@ def test_token_withdrawable(bridge_wallet):
         'aergo-local', 'eth-poa-local', 'token1', 5*10**18,
         eth_user, privkey_pwd='1234'
     )
-    withdrawable, pending = bridge_wallet.minteable_to_eth(
+    withdrawable, pending = bridge_wallet.mintable_to_eth(
         'aergo-local', 'eth-poa-local', 'token1', eth_user
     )
     assert withdrawable + pending - before_transfer == 5*10**18
@@ -223,7 +223,7 @@ def test_token_withdrawable(bridge_wallet):
         'aergo-local', 'eth-poa-local', 'token1', eth_user,
         lock_height, privkey_pwd='1234'
     )
-    withdrawable, pending = bridge_wallet.unlockeable_to_aergo(
+    withdrawable, pending = bridge_wallet.unlockable_to_aergo(
         'eth-poa-local', 'aergo-local', 'token1', aergo_user
     )
     before_transfer = withdrawable + pending
@@ -231,7 +231,7 @@ def test_token_withdrawable(bridge_wallet):
         'eth-poa-local', 'aergo-local', 'token1',
         5*10**18, aergo_user, privkey_pwd='1234'
     )
-    withdrawable, pending = bridge_wallet.unlockeable_to_aergo(
+    withdrawable, pending = bridge_wallet.unlockable_to_aergo(
         'eth-poa-local', 'aergo-local', 'token1', aergo_user
     )
     assert withdrawable + pending - before_transfer == 5*10**18
@@ -245,7 +245,7 @@ def test_erc20_withdrawable(bridge_wallet):
     eth_user = bridge_wallet.config_data('wallet-eth', 'default', 'addr')
     aergo_user = bridge_wallet.config_data('wallet', 'default', 'addr')
 
-    withdrawable, pending = bridge_wallet.minteable_to_aergo(
+    withdrawable, pending = bridge_wallet.mintable_to_aergo(
         'eth-poa-local', 'aergo-local', 'test_erc20', aergo_user
     )
     before_transfer = withdrawable + pending
@@ -253,7 +253,7 @@ def test_erc20_withdrawable(bridge_wallet):
         'eth-poa-local', 'aergo-local', 'test_erc20',
         5*10**18, aergo_user, privkey_pwd='1234'
     )
-    withdrawable, pending = bridge_wallet.minteable_to_aergo(
+    withdrawable, pending = bridge_wallet.mintable_to_aergo(
         'eth-poa-local', 'aergo-local', 'test_erc20', aergo_user
     )
 
@@ -264,7 +264,7 @@ def test_erc20_withdrawable(bridge_wallet):
         privkey_pwd='1234'
     )
 
-    withdrawable, pending = bridge_wallet.unlockeable_to_eth(
+    withdrawable, pending = bridge_wallet.unlockable_to_eth(
         'aergo-local', 'eth-poa-local', 'test_erc20', eth_user,
     )
     before_transfer = withdrawable + pending
@@ -272,7 +272,7 @@ def test_erc20_withdrawable(bridge_wallet):
         'aergo-local', 'eth-poa-local', 'test_erc20', 5*10**18, eth_user,
         privkey_pwd='1234'
     )
-    withdrawable, pending = bridge_wallet.unlockeable_to_eth(
+    withdrawable, pending = bridge_wallet.unlockable_to_eth(
         'aergo-local', 'eth-poa-local', 'test_erc20', eth_user,
     )
     assert withdrawable + pending - before_transfer == 5*10**18

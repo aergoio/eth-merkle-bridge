@@ -29,5 +29,5 @@ from ethaergo_wallet.wallet import EthAergoWallet
 
 wallet = EthAergoWallet("./test_config.json")
 receiver = "AmNMFbiVsqy6vg4njsTjgy7bKPFHFYhLV4rzQyrENUS9AM1e3tw5"
-withdrawable_now, pending = wallet.unfreezeable('eth-poa-local', 'aergo-local', receiver)
+withdrawable_now, pending = wallet.unfreezable('eth-poa-local', 'aergo-local', receiver)
 ```
