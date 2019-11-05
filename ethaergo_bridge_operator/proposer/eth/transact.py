@@ -8,7 +8,7 @@ from web3 import (
 )
 import logging
 
-logger = logging.getLogger("proposer.eth")
+logger = logging.getLogger(__name__)
 
 
 class EthTx():

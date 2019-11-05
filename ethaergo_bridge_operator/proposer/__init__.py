@@ -1,7 +1,7 @@
 import logging
 import os
 
-logger = logging.getLogger("proposer")
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 file_formatter = logging.Formatter(

@@ -5,7 +5,7 @@ from typing import (
 import aergo.herapy as herapy
 import logging
 
-logger = logging.getLogger("proposer.aergo")
+logger = logging.getLogger(__name__)
 
 
 class AergoTx():

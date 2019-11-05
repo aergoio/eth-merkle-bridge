@@ -29,7 +29,7 @@ from ethaergo_bridge_operator.proposer.aergo.transact import (
 )
 import logging
 
-logger = logging.getLogger("proposer.aergo")
+logger = logging.getLogger(__name__)
 
 
 class AergoProposerClient(threading.Thread):

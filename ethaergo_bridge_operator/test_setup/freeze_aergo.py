@@ -24,9 +24,8 @@ def freeze_aergo(
     w = AergoWallet(config_file_path)
     aergo_bridge = w.config_data('networks', aergo_net, 'bridges', eth_net,
                                  'addr')
-    tx_hash = w.transfer(amount, aergo_bridge, 'aergo', aergo_net,
-                         privkey_name=bridge_vault, privkey_pwd=privkey_pwd)
-    print('\u2744 Freeze success: ', tx_hash)
+    w.transfer(amount, aergo_bridge, 'aergo', aergo_net,
+               privkey_name=bridge_vault, privkey_pwd=privkey_pwd)
 
 
 if __name__ == '__main__':

@@ -37,7 +37,7 @@ from ethaergo_bridge_operator.proposer.exceptions import (
 )
 import logging
 
-logger = logging.getLogger("proposer.eth")
+logger = logging.getLogger(__name__)
 
 
 class EthValConnect():
@@ -121,9 +121,10 @@ class EthValConnect():
         """ Get a validator's (index) signature and verify it"""
         try:
             approval = getattr(self.stubs[idx], rpc_service)(request)
-        except grpc.RpcError:
+        except grpc.RpcError as e:
             logger.warning(
                 "\"Failed to connect to validator %s (RpcError)\"", idx)
+            logger.warning(e)
             return None
         if approval.error:
             logger.warning("\"%s\"", approval.error)

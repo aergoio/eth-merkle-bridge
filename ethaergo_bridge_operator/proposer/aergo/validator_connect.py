@@ -40,7 +40,7 @@ from ethaergo_bridge_operator.proposer.exceptions import (
 )
 import logging
 
-logger = logging.getLogger("proposer.aergo")
+logger = logging.getLogger(__name__)
 
 
 class AergoValConnect():
@@ -124,9 +124,9 @@ class AergoValConnect():
         try:
             approval = getattr(self.stubs[idx], rpc_service)(request)
         except grpc.RpcError as e:
-            print(e)
             logger.warning(
                 "\"Failed to connect to validator %s (RpcError)\"", idx)
+            logger.warning(e)
             return None
         if approval.error:
             logger.warning("\"%s\"", approval.error)
