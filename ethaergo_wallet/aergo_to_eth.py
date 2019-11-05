@@ -18,6 +18,9 @@ from ethaergo_wallet.wallet_utils import (
     is_ethereum_address,
     is_aergo_address
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def lock(
@@ -133,7 +136,7 @@ def mint(
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
         raise TxError("Mint asset Tx execution failed: {}".format(receipt))
-    print("\u26fd Gas used: ", receipt.gasUsed)
+    logger.info("\u26fd Gas used: %s", receipt.gasUsed)
     events = eth_bridge.events.mintEvent().processReceipt(receipt)
     token_pegged = events[0]['args']['tokenAddress']
 
@@ -249,7 +252,7 @@ def unlock(
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
         raise TxError("Unlock asset Tx execution failed: {}".format(receipt))
-    print("\u26fd Gas used: ", receipt.gasUsed)
+    logger.info("\u26fd Gas used: %s", receipt.gasUsed)
     return tx_hash.hex()
 
 
@@ -307,12 +310,11 @@ def _build_deposit_proof(
         raise InvalidArgumentsError(e, bridge_to)
     # waite for anchor containing our transfer
     if last_merged_height_to < deposit_height:
-        print("\u23F0 deposit not recorded in current anchor, waiting new "
-              "anchor event... / "
-              "deposit height : {} / "
-              "last anchor height : {} / "
-              .format(deposit_height, last_merged_height_to)
-              )
+        logger.info(
+            "\u23F0 deposit not recorded in current anchor, waiting new "
+            "anchor event... / deposit height : %s / last anchor height : %s ",
+            deposit_height, last_merged_height_to
+        )
         while last_merged_height_to < deposit_height:
             time.sleep(1)
             last_merged_height_to = eth_bridge.functions._anchorHeight().call()

@@ -26,6 +26,9 @@ from ethaergo_wallet.eth_utils.merkle_proof import (
     verify_eth_getProof_inclusion,
     format_proof_for_lua
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def lock(
@@ -66,7 +69,7 @@ def lock(
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
         raise TxError("Lock asset Tx execution failed: {}".format(receipt))
-    print("\u26fd Gas used: ", receipt.gasUsed)
+    logger.info("\u26fd Gas used: %s", receipt.gasUsed)
     return receipt.blockNumber, tx_hash.hex()
 
 
@@ -175,7 +178,7 @@ def burn(
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
         raise TxError("Burn asset Tx execution failed: {}".format(receipt))
-    print("\u26fd Gas used: ", receipt.gasUsed)
+    logger.info("\u26fd Gas used: %s", receipt.gasUsed)
     return receipt.blockNumber, tx_hash.hex()
 
 
@@ -298,12 +301,11 @@ def _build_deposit_proof(
         bridge_to, "newAnchor", start_block_no=aergo_current_height
     )
     while last_merged_height_to < deposit_height:
-        print("\u23F0 deposit not recorded in current anchor, waiting new "
-              "anchor event... / "
-              "deposit height : {} / "
-              "last anchor height : {} "
-              .format(deposit_height, last_merged_height_to)
-              )
+        logger.info(
+            "\u23F0 deposit not recorded in current anchor, waiting new "
+            "anchor event... / deposit height : %s / last anchor height : %s ",
+            deposit_height, last_merged_height_to
+        )
         new_anchor_event = next(stream)
         last_merged_height_to = new_anchor_event.arguments[1]
     stream.stop()

@@ -1,6 +1,9 @@
 from web3 import (
     Web3,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def deploy_contract(
@@ -31,5 +34,5 @@ def deploy_contract(
     tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
-        print("Deployment failed", receipt)
+        logger.info("Deployment failed: %s", receipt)
     return receipt
