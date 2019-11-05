@@ -895,19 +895,19 @@ class EthMerkleBridgeCli():
         if self.wallet.config_data('networks',
                                    from_chain, 'type') == 'ethereum':
             if asset_name in from_assets:
-                # if native asset check minteable
+                # if native asset check mintable
                 if asset_name == 'aergo_erc20':
-                    withdrawable, pending = self.wallet.unfreezeable(
+                    withdrawable, pending = self.wallet.unfreezable(
                         from_chain, to_chain, receiver)
                 else:
-                    withdrawable, pending = self.wallet.minteable_to_aergo(
+                    withdrawable, pending = self.wallet.mintable_to_aergo(
                         from_chain, to_chain, asset_name, receiver
                     )
             elif (asset_name in to_assets and
                   from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
-                # if pegged asset check unlockeable
-                withdrawable, pending = self.wallet.unlockeable_to_aergo(
+                # if pegged asset check unlockable
+                withdrawable, pending = self.wallet.unlockable_to_aergo(
                     from_chain, to_chain, asset_name, receiver
                 )
             else:
@@ -916,20 +916,20 @@ class EthMerkleBridgeCli():
         elif self.wallet.config_data('networks',
                                      from_chain, 'type') == 'aergo':
             if asset_name == 'aergo':
-                withdrawable, pending = self.wallet.unlockeable_to_eth(
+                withdrawable, pending = self.wallet.unlockable_to_eth(
                     from_chain, to_chain, 'aergo_erc20', receiver
                 )
             elif asset_name in from_assets:
-                # if native asset check minteable
-                withdrawable, pending = self.wallet.minteable_to_eth(
+                # if native asset check mintable
+                withdrawable, pending = self.wallet.mintable_to_eth(
                     from_chain, to_chain, asset_name, receiver
                 )
             elif (asset_name in to_assets and
                   from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')
                   ):
-                # if pegged asset check unlockeable
-                withdrawable, pending = self.wallet.unlockeable_to_eth(
+                # if pegged asset check unlockable
+                withdrawable, pending = self.wallet.unlockable_to_eth(
                     from_chain, to_chain, asset_name, receiver
                 )
             else:

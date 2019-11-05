@@ -396,14 +396,14 @@ class EthAergoWallet(WalletConfig):
 
         return tx_hash
 
-    def minteable_to_aergo(
+    def mintable_to_aergo(
         self,
         from_chain: str,
         to_chain: str,
         asset_name: str,
         receiver: str,
     ) -> Tuple[int, int]:
-        """Check minteable balance on Aergo."""
+        """Check mintable balance on Aergo."""
         token_origin = self.get_asset_address(asset_name, from_chain)
         bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
         bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
@@ -428,14 +428,14 @@ class EthAergoWallet(WalletConfig):
             bridge_from, bridge_to, w3, hera, eth_trie_key, aergo_storage_key
         )
 
-    def unlockeable_to_aergo(
+    def unlockable_to_aergo(
         self,
         from_chain: str,
         to_chain: str,
         asset_name: str,
         receiver: str,
     ) -> Tuple[int, int]:
-        """Check unlockeable balance on Aergo."""
+        """Check unlockable balance on Aergo."""
         token_origin = self.get_asset_address(asset_name, to_chain)
         bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
         bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
@@ -459,13 +459,13 @@ class EthAergoWallet(WalletConfig):
             bridge_from, bridge_to, w3, hera, eth_trie_key, aergo_storage_key
         )
 
-    def unfreezeable(
+    def unfreezable(
         self,
         from_chain: str,
         to_chain: str,
         receiver: str,
     ) -> Tuple[int, int]:
-        """Check unfreezeable balance on Aergo."""
+        """Check unfreezable balance on Aergo."""
         token_origin = self.get_asset_address('aergo_erc20', from_chain)
         bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
         bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
@@ -798,14 +798,14 @@ class EthAergoWallet(WalletConfig):
         aergo_from.disconnect()
         return tx_hash
 
-    def minteable_to_eth(
+    def mintable_to_eth(
         self,
         from_chain: str,
         to_chain: str,
         asset_name: str,
         receiver: str,
     ) -> Tuple[int, int]:
-        """Check minteable balance on Ethereum."""
+        """Check mintable balance on Ethereum."""
         token_origin = self.get_asset_address(asset_name, from_chain)
         bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
         bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
@@ -829,14 +829,14 @@ class EthAergoWallet(WalletConfig):
             bridge_from, bridge_to, hera, w3, aergo_storage_key, eth_trie_key
         )
 
-    def unlockeable_to_eth(
+    def unlockable_to_eth(
         self,
         from_chain: str,
         to_chain: str,
         asset_name: str,
         receiver: str,
     ) -> Tuple[int, int]:
-        """Check unlockeable balance on Ethereum."""
+        """Check unlockable balance on Ethereum."""
         token_origin = self.get_asset_address(asset_name, to_chain)
         bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
         bridge_to = self.get_bridge_contract_address(to_chain, from_chain)
