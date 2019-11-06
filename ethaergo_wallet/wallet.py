@@ -644,7 +644,7 @@ class EthAergoWallet(WalletConfig):
             logger.info("Pegged token unknow by wallet")
             save_pegged_token_address = True
 
-        gas_limit = 1400000
+        gas_limit = 2000000
         eth_balance = eth_u.get_balance(tx_sender, 'ether', w3)
         if eth_balance*10**9 < gas_limit*self.eth_gas_price:
             err = "not enough aer balance to pay tx fee"
