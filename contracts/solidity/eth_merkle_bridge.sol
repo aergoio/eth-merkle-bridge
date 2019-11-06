@@ -177,7 +177,7 @@ contract EthMerkleBridge {
         MintedERC20 mintAddress = _bridgeTokens[tokenOrigin];
         if (mintAddress == MintedERC20(0)) {
             // first time bridging this token
-            mintAddress = new MintedERC20();
+            mintAddress = new MintedERC20(tokenOrigin);
             _bridgeTokens[tokenOrigin] = mintAddress;
             _mintedTokens[address(mintAddress)] = tokenOrigin;
             emit newMintedERC20(tokenOrigin, mintAddress);
