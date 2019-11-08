@@ -56,7 +56,7 @@ def deploy_oracle(
     print('aergo validators : ', aergo_validators)
     print('ethereum validators : ', eth_validators)
 
-    print("------ DEPLOY BRIDGE BETWEEN Aergo & Ethereum -----------")
+    print("------ DEPLOY ORACLE BETWEEN Aergo & Ethereum -----------")
 
     print("------ Connect AERGO -----------")
     aergo = herapy.Aergo()
@@ -137,7 +137,7 @@ def deploy_oracle(
     if result.status != herapy.CommitStatus.TX_OK:
         print("oracleUpdate Tx commit failed : {}".format(result))
 
-    # Check lock success
+    # Check oracle transfer success
     result = aergo.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         print("oracleUpdate Tx execution failed : {}".format(result))
