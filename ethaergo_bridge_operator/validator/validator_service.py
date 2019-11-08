@@ -35,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 log_template = \
     '{\"val_index\": %s, \"signed\": %s, \"type\": \"%s\", '\
-    '\"value\": %s, \"destination\": \"%s\"'
-success_log_template = log_template + ', \"nonce\": %s}'
+    '\"destination\": \"%s\"'
+success_log_template = log_template + ', \"value\": %s, \"nonce\": %s}'
 error_log_template = log_template + ', \"error\": \"%s\"}'
 
 
@@ -122,10 +122,10 @@ class ValidatorService(BridgeOperatorServicer):
             address=self.eth_signer.address, sig=bytes(sig.signature))
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\u2693 anchor",
+            "\u2693 anchor", self.eth_net,
             "{{\"root\": \"0x{}\", \"height\": {}}}"
             .format(anchor.root.hex(), anchor.height),
-            self.eth_net, anchor.destination_nonce
+            anchor.destination_nonce
         )
         return approval
 
@@ -158,10 +158,10 @@ class ValidatorService(BridgeOperatorServicer):
         approval = Approval(address=self.aergo_signer.address, sig=sig)
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\u2693 anchor",
+            "\u2693 anchor", self.aergo_net,
             "{{\"root\": \"0x{}\", \"height\": {}}}"
             .format(anchor.root.hex(), anchor.height),
-            self.aergo_net, anchor.destination_nonce
+            anchor.destination_nonce
         )
         return approval
 
@@ -210,7 +210,7 @@ class ValidatorService(BridgeOperatorServicer):
         approval = Approval(address=self.aergo_signer.address, sig=sig)
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\u231B " + tempo_str, tempo_msg.tempo, self.aergo_net,
+            "\u231B " + tempo_str, self.aergo_net, tempo_msg.tempo,
             tempo_msg.destination_nonce
         )
         return approval
@@ -259,7 +259,7 @@ class ValidatorService(BridgeOperatorServicer):
             address=self.eth_signer.address, sig=bytes(sig.signature))
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\u231B " + tempo_str, tempo_msg.tempo, self.eth_net,
+            "\u231B " + tempo_str, self.eth_net, tempo_msg.tempo,
             tempo_msg.destination_nonce
         )
         return approval
@@ -290,7 +290,7 @@ class ValidatorService(BridgeOperatorServicer):
         approval = Approval(address=self.aergo_signer.address, sig=sig)
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\U0001f58b validator set", val_msg.validators, self.aergo_net,
+            "\U0001f58b validator set", self.aergo_net, val_msg.validators,
             val_msg.destination_nonce
         )
         return approval
@@ -324,7 +324,7 @@ class ValidatorService(BridgeOperatorServicer):
             address=self.eth_signer.address, sig=bytes(sig.signature))
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\U0001f58b validator set", val_msg.validators, self.eth_net,
+            "\U0001f58b validator set", self.eth_net, val_msg.validators,
             val_msg.destination_nonce
         )
         return approval
@@ -354,7 +354,7 @@ class ValidatorService(BridgeOperatorServicer):
         approval = Approval(address=self.aergo_signer.address, sig=sig)
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\U0001f4a7 unfreeze fee", new_fee_msg.fee, self.aergo_net,
+            "\U0001f4a7 unfreeze fee", self.aergo_net, new_fee_msg.fee,
             new_fee_msg.destination_nonce
         )
         return approval
@@ -386,7 +386,7 @@ class ValidatorService(BridgeOperatorServicer):
             address=self.eth_signer.address, sig=bytes(sig.signature))
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\U0001f58b oracle change", oracle_msg.oracle, self.eth_net,
+            "\U0001f58b oracle change", self.eth_net, oracle_msg.oracle,
             oracle_msg.destination_nonce
         )
         return approval
@@ -415,7 +415,7 @@ class ValidatorService(BridgeOperatorServicer):
         approval = Approval(address=self.aergo_signer.address, sig=sig)
         logger.info(
             success_log_template, self.validator_index, "true",
-            "\U0001f58b oracle change", oracle_msg.oracle, self.aergo_net,
+            "\U0001f58b oracle change", self.aergo_net, oracle_msg.oracle,
             oracle_msg.destination_nonce
         )
         return approval

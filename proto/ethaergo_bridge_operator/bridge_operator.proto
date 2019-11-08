@@ -26,7 +26,7 @@ service BridgeOperator {
 
     // Get signature to update oracle of anchors from Ethereum
     rpc GetEthOracleSignature(NewOracle) returns (Approval) {}
-    // Get signature to update oralce of anchors from Aergo
+    // Get signature to update oracle of anchors from Aergo
     rpc GetAergoOracleSignature(NewOracle) returns (Approval) {}
 }
 

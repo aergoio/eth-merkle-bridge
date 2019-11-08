@@ -28,8 +28,14 @@ class DataSources():
         self.aergo_net = aergo_net
         self.eth_net = eth_net
         self.data_sources: List[SingleDataSource] = []
-        aergo_providers = config_data['networks'][aergo_net]['providers']
-        eth_providers = config_data['networks'][eth_net]['providers']
+        try:
+            aergo_providers = config_data['networks'][aergo_net]['providers']
+            eth_providers = config_data['networks'][eth_net]['providers']
+        except KeyError:
+            # if providers were not registered, use the ip
+            aergo_providers = [config_data['networks'][aergo_net]['ip']]
+            eth_providers = [config_data['networks'][eth_net]['ip']]
+
         for i, aergo_ip in enumerate(aergo_providers):
             eth_ip = eth_providers[i]
             self.data_sources.append(

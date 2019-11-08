@@ -76,6 +76,7 @@ end
 -- Create a new bridge contract
 -- @type    __init__
 -- @param   validators ([]address) array of Aergo addresses
+-- @param   bridge (address) address of already deployed bridge contract
 -- @return  (string) id of contract
 function constructor(validators, bridge)
     _nonce:set(0)
