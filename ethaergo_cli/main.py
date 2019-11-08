@@ -341,6 +341,7 @@ class EthMerkleBridgeCli():
         net1 = answers['name']
         net1_type = answers['type']
         new_config['networks'] = {net1: {'ip': answers['ip'],
+                                         'providers': answers['providers'],
                                          'type': net1_type,
                                          'tokens': {},
                                          'bridges': {}
@@ -352,6 +353,7 @@ class EthMerkleBridgeCli():
         net2 = answers['name']
         net2_type = answers['type']
         new_config['networks'][net2] = {'ip': answers['ip'],
+                                        'providers': answers['providers'],
                                         'type': net2_type,
                                         'tokens': {},
                                         'bridges': {}
@@ -537,18 +539,18 @@ class EthMerkleBridgeCli():
         net = answers['name']
         net_type = answers['type']
         ip = answers['ip']
+        providers = answers['providers']
         if net_type == 'ethereum':
             self.wallet.config_data(
-                'networks', net, value={'ip': ip,
-                                        'type': net_type,
-                                        'tokens': {},
-                                        'isPOA': answers['isPOA'],
-                                        'bridges': {}}
+                'networks', net,
+                value={'ip': ip, 'providers': providers, 'type': net_type,
+                       'tokens': {}, 'isPOA': answers['isPOA'], 'bridges': {}}
             )
         else:
             self.wallet.config_data(
-                'networks', net, value={'ip': ip, 'type': net_type,
-                                        'tokens': {}, 'bridges': {}}
+                'networks', net,
+                value={'ip': ip, 'providers': providers, 'type': net_type,
+                       'tokens': {}, 'bridges': {}}
             )
         self.wallet.save_config()
 

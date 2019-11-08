@@ -216,7 +216,50 @@ def prompt_new_network():
             'Is this an Ethereum POA network ?', 'Yes', 'No'
         )
         answers['isPOA'] = is_poa
+    add_providers = promptYN(
+        'Add redundant providers for validator data source security ?', 'Yes', 'No'
+    )
+    if add_providers:
+        answers['providers'] = prompt_providers()
+    else:
+        answers['providers'] = []
     return answers
+
+
+def prompt_providers():
+    """Prompt user to input provider ip.
+    If not registered, the validator will use the single 'ip' field in
+    config.json
+    """
+    providers = []
+    add_val = True
+    while add_val:
+        questions = [
+            {
+                'type': 'input',
+                'name': 'ip',
+                'message': 'Provider ip',
+            },
+            {
+                'type': 'list',
+                'name': 'add_val',
+                'message': 'Add next provider ?',
+                'choices': [
+                    {
+                        'name': 'Yes',
+                        'value': True
+                    },
+                    {
+                        'name': 'No',
+                        'value': False
+                    }
+                ]
+            }
+        ]
+        answers = inquirer.prompt(questions, style=aergo_style)
+        providers.append(answers['ip'])
+        add_val = answers['add_val']
+    return providers
 
 
 def prompt_eth_privkey():
