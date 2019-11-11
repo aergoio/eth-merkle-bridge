@@ -35,6 +35,7 @@ class ValidatorServer:
         privkey_name: str = None,
         privkey_pwd: str = None,
         validator_index: int = 0,
+        anchoring_on: bool = False,
         auto_update: bool = False,
         oracle_update: bool = False,
         root_path: str = './'
@@ -43,8 +44,8 @@ class ValidatorServer:
         add_BridgeOperatorServicer_to_server(
             ValidatorService(
                 config_file_path, aergo_net, eth_net, privkey_name,
-                privkey_pwd, validator_index, auto_update, oracle_update,
-                root_path
+                privkey_pwd, validator_index, anchoring_on, auto_update,
+                oracle_update, root_path
             ),
             self.server
         )
@@ -78,9 +79,10 @@ def _serve_all(config_file_path, aergo_net, eth_net,
     with open(config_file_path, "r") as f:
         config_data = json.load(f)
     validator_indexes = [i for i in range(len(config_data['validators']))]
-    servers = [ValidatorServer(config_file_path, aergo_net, eth_net,
-                               privkey_name, privkey_pwd, index, True, True)
-               for index in validator_indexes]
+    servers = \
+        [ValidatorServer(config_file_path, aergo_net, eth_net, privkey_name,
+                         privkey_pwd, index, True, True, True)
+         for index in validator_indexes]
     worker = partial(_serve_worker, servers)
     pool = Pool(len(validator_indexes))
     pool.map(worker, validator_indexes)
@@ -106,12 +108,24 @@ if __name__ == '__main__':
         '--privkey_name', type=str, help='Name of account in config file '
         'to sign anchors', required=False)
     parser.add_argument(
+        '--anchoring_on', dest='anchoring_on', action='store_true',
+        help='Enable anchoring (can be diseabled when wanting to only update '
+             'settings)'
+    )
+    parser.add_argument(
         '--auto_update', dest='auto_update', action='store_true',
         help='Update bridge contract when settings change in config file')
     parser.add_argument(
+        '--oracle_update', dest='oracle_update', action='store_true',
+        help='Update bridge contract when validators or oracle addr '
+             'change in config file'
+    )
+    parser.add_argument(
         '--local_test', dest='local_test', action='store_true',
         help='Start all validators locally for convenient testing')
+    parser.set_defaults(anchoring_on=False)
     parser.set_defaults(auto_update=False)
+    parser.set_defaults(oracle_update=False)
     parser.set_defaults(local_test=False)
     args = parser.parse_args()
 
@@ -123,6 +137,8 @@ if __name__ == '__main__':
             args.config_file_path, args.aergo, args.eth,
             privkey_name=args.privkey_name,
             validator_index=args.validator_index,
-            auto_update=args.auto_update
+            anchoring_on=args.anchoring_on,
+            auto_update=args.auto_update,
+            oracle_update=False  # diseabled by default for safety
         )
         validator.run()

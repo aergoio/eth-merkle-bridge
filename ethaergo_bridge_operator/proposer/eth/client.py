@@ -60,6 +60,7 @@ class EthProposerClient(threading.Thread):
         eth_net: str,
         privkey_name: str = None,
         privkey_pwd: str = None,
+        anchoring_on: bool = False,
         auto_update: bool = False,
         oracle_update: bool = False,
         root_path: str = './',
@@ -72,6 +73,7 @@ class EthProposerClient(threading.Thread):
         config_data = load_config_data(config_file_path)
         self.eth_net = eth_net
         self.aergo_net = aergo_net
+        self.anchoring_on = anchoring_on
         self.auto_update = auto_update
         self.oracle_update = oracle_update
         logger.info("\"Connect Aergo and Ethereum providers\"")
@@ -190,38 +192,40 @@ class EthProposerClient(threading.Thread):
                 time.sleep(5)
                 continue
 
-            logger.info(
-                "\"\U0001f58b Gathering validator signatures for: "
-                "root: 0x%s, height: %s'\"", root.hex(), next_anchor_height
-            )
-
-            try:
-                nonce_to = self.eth_oracle.functions._nonce().call()
-                sigs, validator_indexes = \
-                    self.val_connect.get_anchor_signatures(
-                        root, next_anchor_height, nonce_to)
-            except ValidatorMajorityError:
-                logger.warning(
-                    "\"Failed to gather 2/3 validators signatures, "
-                    "\u23F0 waiting for next anchor...\""
+            if self.anchoring_on:
+                logger.info(
+                    "\"\U0001f58b Gathering validator signatures for: "
+                    "root: 0x%s, height: %s'\"", root.hex(), next_anchor_height
                 )
-                self.monitor_settings_and_sleep(self.t_anchor)
-                continue
 
-            # don't broadcast if somebody else already did
-            merged_height = self.eth_bridge.functions._anchorHeight().call()
-            if merged_height + self.t_anchor >= next_anchor_height:
-                logger.warning(
-                    "\"Not yet anchor time, maybe another proposer already "
-                    "anchored\""
-                )
-                self.monitor_settings_and_sleep(
-                    merged_height + self.t_anchor - next_anchor_height)
-                continue
+                try:
+                    nonce_to = self.eth_oracle.functions._nonce().call()
+                    sigs, validator_indexes = \
+                        self.val_connect.get_anchor_signatures(
+                            root, next_anchor_height, nonce_to)
+                except ValidatorMajorityError:
+                    logger.warning(
+                        "\"Failed to gather 2/3 validators signatures, "
+                        "\u23F0 waiting for next anchor...\""
+                    )
+                    self.monitor_settings_and_sleep(self.t_anchor)
+                    continue
 
-            # Broadcast finalised AergoAnchor on Ethereum
-            self.eth_tx.new_anchor(
-                root, next_anchor_height, validator_indexes, sigs)
+                # don't broadcast if somebody else already did
+                merged_height = \
+                    self.eth_bridge.functions._anchorHeight().call()
+                if merged_height + self.t_anchor >= next_anchor_height:
+                    logger.warning(
+                        "\"Not yet anchor time, maybe another proposer "
+                        "already anchored\""
+                    )
+                    self.monitor_settings_and_sleep(
+                        merged_height + self.t_anchor - next_anchor_height)
+                    continue
+
+                # Broadcast finalised AergoAnchor on Ethereum
+                self.eth_tx.new_anchor(
+                    root, next_anchor_height, validator_indexes, sigs)
             self.monitor_settings_and_sleep(self.t_anchor)
 
     def monitor_settings_and_sleep(self, sleeping_time):
@@ -251,14 +255,6 @@ class EthProposerClient(threading.Thread):
 
         """
         config_data = load_config_data(self.config_file_path)
-        validators = self.eth_oracle.functions.getValidators().call()
-        config_validators = [val['eth-addr']
-                             for val in config_data['validators']]
-        if validators != config_validators:
-            logger.info(
-                '\"Validator set update requested: %s\"', config_validators)
-            if self.update_validators(config_validators):
-                self.val_connect.use_new_validators(config_data)
         t_anchor = self.eth_bridge.functions._tAnchor().call()
         config_t_anchor = (config_data['networks'][self.eth_net]['bridges']
                            [self.aergo_net]['t_anchor'])
@@ -273,6 +269,16 @@ class EthProposerClient(threading.Thread):
             logger.info('\"Finality update requested: %s\"', config_t_final)
             self.update_t_final(config_t_final)
         if self.oracle_update:
+            validators = self.eth_oracle.functions.getValidators().call()
+            config_validators = \
+                [val['eth-addr'] for val in config_data['validators']]
+            if validators != config_validators:
+                logger.info(
+                    '\"Validator set update requested: %s\"',
+                    config_validators
+                )
+                if self.update_validators(config_validators):
+                    self.val_connect.use_new_validators(config_data)
             oracle = self.eth_bridge.functions._oracle().call()
             config_oracle = (config_data['networks'][self.eth_net]['bridges']
                              [self.aergo_net]['oracle'])
@@ -355,18 +361,33 @@ if __name__ == '__main__':
         '--privkey_name', type=str, help='Name of account in config file '
         'to sign anchors', required=False)
     parser.add_argument(
+        '--anchoring_on', dest='anchoring_on', action='store_true',
+        help='Enable anchoring (can be diseabled when wanting to only update '
+             'settings)'
+    )
+    parser.add_argument(
         '--auto_update', dest='auto_update', action='store_true',
         help='Update bridge contract when settings change in config file')
     parser.add_argument(
+        '--oracle_update', dest='oracle_update', action='store_true',
+        help='Update bridge contract when validators or oracle addr '
+             'change in config file'
+    )
+    parser.add_argument(
         '--eth_gas_price', type=int,
         help='Gas price (gWei) to use in transactions', required=False)
+    parser.set_defaults(anchoring_on=False)
     parser.set_defaults(auto_update=False)
+    parser.set_defaults(oracle_update=False)
     parser.set_defaults(eth_gas_price=None)
     args = parser.parse_args()
 
     proposer = EthProposerClient(
         args.config_file_path, args.aergo, args.eth,
-        privkey_name=args.privkey_name, auto_update=args.auto_update,
+        privkey_name=args.privkey_name,
+        anchoring_on=args.anchoring_on,
+        auto_update=args.auto_update,
+        oracle_update=False,  # diseabled by default for safety
         eth_gas_price=args.eth_gas_price
     )
     proposer.run()
