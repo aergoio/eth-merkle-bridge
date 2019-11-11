@@ -15,7 +15,8 @@ Starting a Validator
     $ python3 -m ethaergo_bridge_operator.validator.server --help
 
         usage: server.py [-h] -c CONFIG_FILE_PATH -a AERGO -e ETH -i VALIDATOR_INDEX
-                 [--privkey_name PRIVKEY_NAME] [--auto_update] [--local_test]
+                        [--privkey_name PRIVKEY_NAME] [--anchoring_on]
+                        [--auto_update] [--oracle_update] [--local_test]
 
         Start a validator on Ethereum and Aergo.
 
@@ -31,8 +32,12 @@ Starting a Validator
                                 validators
         --privkey_name PRIVKEY_NAME
                                 Name of account in config file to sign anchors
+        --anchoring_on        Enable anchoring (can be diseabled when wanting to
+                                only update settings)
         --auto_update         Update bridge contract when settings change in config
                                 file
+        --oracle_update       Update bridge contract when validators or oracle addr
+                                change in config file
         --local_test          Start all validators locally for convenient testing
 
     $ python3 -m ethaergo_bridge_operator.validator.server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --auto_update

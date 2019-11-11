@@ -63,6 +63,7 @@ class AergoProposerClient(threading.Thread):
         eth_block_time: int,
         privkey_name: str = None,
         privkey_pwd: str = None,
+        anchoring_on: bool = False,
         auto_update: bool = False,
         oracle_update: bool = False,
         aergo_gas_price: int = None
@@ -76,6 +77,7 @@ class AergoProposerClient(threading.Thread):
         self.eth_block_time = eth_block_time
         self.eth_net = eth_net
         self.aergo_net = aergo_net
+        self.anchoring_on = anchoring_on
         self.auto_update = auto_update
         self.oracle_update = oracle_update
         logger.info("\"Connect Aergo and Ethereum providers\"")
@@ -183,47 +185,48 @@ class AergoProposerClient(threading.Thread):
                 time.sleep(5)
                 continue
 
-            logger.info(
-                "\"\U0001f58b Gathering validator signatures for: "
-                "root: 0x%s, height: %s'\"", root, next_anchor_height
-            )
-
-            nonce_to = int(
-                self.hera.query_sc_state(
-                    self.aergo_oracle, ["_sv__nonce"]).var_proofs[0].value
-            )
-
-            try:
-                sigs, validator_indexes = \
-                    self.val_connect.get_anchor_signatures(
-                        root, next_anchor_height, nonce_to)
-            except ValidatorMajorityError:
-                logger.warning(
-                    "\"Failed to gather 2/3 validators signatures, "
-                    "\u23F0 waiting for next anchor...\""
+            if self.anchoring_on:
+                logger.info(
+                    "\"\U0001f58b Gathering validator signatures for: "
+                    "root: 0x%s, height: %s'\"", root, next_anchor_height
                 )
-                self.monitor_settings_and_sleep(
-                    self.t_anchor * self.eth_block_time)
-                continue
 
-            # don't broadcast if somebody else already did
-            merged_height = int(
-                self.hera.query_sc_state(
-                    self.aergo_bridge, ["_sv__anchorHeight"]
-                ).var_proofs[0].value
-            )
-            if merged_height + self.t_anchor >= next_anchor_height:
-                logger.warning(
-                    "\"Not yet anchor time, maybe another proposer already "
-                    "anchored\""
+                nonce_to = int(
+                    self.hera.query_sc_state(
+                        self.aergo_oracle, ["_sv__nonce"]).var_proofs[0].value
                 )
-                wait = merged_height + self.t_anchor - next_anchor_height
-                self.monitor_settings_and_sleep(wait * self.eth_block_time)
-                continue
 
-            # Broadcast finalised merge block
-            self.aergo_tx.new_anchor(
-                root, next_anchor_height, validator_indexes, sigs)
+                try:
+                    sigs, validator_indexes = \
+                        self.val_connect.get_anchor_signatures(
+                            root, next_anchor_height, nonce_to)
+                except ValidatorMajorityError:
+                    logger.warning(
+                        "\"Failed to gather 2/3 validators signatures, "
+                        "\u23F0 waiting for next anchor...\""
+                    )
+                    self.monitor_settings_and_sleep(
+                        self.t_anchor * self.eth_block_time)
+                    continue
+
+                # don't broadcast if somebody else already did
+                merged_height = int(
+                    self.hera.query_sc_state(
+                        self.aergo_bridge, ["_sv__anchorHeight"]
+                    ).var_proofs[0].value
+                )
+                if merged_height + self.t_anchor >= next_anchor_height:
+                    logger.warning(
+                        "\"Not yet anchor time, maybe another proposer "
+                        "already anchored\""
+                    )
+                    wait = merged_height + self.t_anchor - next_anchor_height
+                    self.monitor_settings_and_sleep(wait * self.eth_block_time)
+                    continue
+
+                # Broadcast finalised merge block
+                self.aergo_tx.new_anchor(
+                    root, next_anchor_height, validator_indexes, sigs)
             self.monitor_settings_and_sleep(
                 self.t_anchor * self.eth_block_time)
 
@@ -254,16 +257,8 @@ class AergoProposerClient(threading.Thread):
 
         """
         config_data = load_config_data(self.config_file_path)
-        validators = query_aergo_validators(self.hera, self.aergo_oracle)
         t_anchor, t_final = query_aergo_tempo(self.hera, self.aergo_bridge)
         unfreeze_fee = query_unfreeze_fee(self.hera, self.aergo_bridge)
-        config_validators = [val['addr']
-                             for val in config_data['validators']]
-        if validators != config_validators:
-            logger.info(
-                '\"Validator set update requested: %s\"', config_validators)
-            if self.update_validators(config_validators):
-                self.val_connect.use_new_validators(config_data)
         config_t_anchor = (config_data['networks'][self.aergo_net]['bridges']
                            [self.eth_net]['t_anchor'])
         if t_anchor != config_t_anchor:
@@ -282,6 +277,16 @@ class AergoProposerClient(threading.Thread):
                 '\"Unfreeze fee update requested: %s\"', config_unfreeze_fee)
             self.update_unfreeze_fee(config_unfreeze_fee)
         if self.oracle_update:
+            validators = query_aergo_validators(self.hera, self.aergo_oracle)
+            config_validators = \
+                [val['addr'] for val in config_data['validators']]
+            if validators != config_validators:
+                logger.info(
+                    '\"Validator set update requested: %s\"',
+                    config_validators
+                )
+                if self.update_validators(config_validators):
+                    self.val_connect.use_new_validators(config_data)
             oracle = query_aergo_oracle(self.hera, self.aergo_bridge)
             config_oracle = (config_data['networks'][self.aergo_net]['bridges']
                              [self.eth_net]['oracle'])
@@ -385,18 +390,33 @@ if __name__ == '__main__':
         '--privkey_name', type=str, help='Name of account in config file '
         'to sign anchors', required=False)
     parser.add_argument(
+        '--anchoring_on', dest='anchoring_on', action='store_true',
+        help='Enable anchoring (can be diseabled when wanting to only update '
+             'settings)'
+    )
+    parser.add_argument(
         '--auto_update', dest='auto_update', action='store_true',
         help='Update bridge contract when settings change in config file')
     parser.add_argument(
+        '--oracle_update', dest='oracle_update', action='store_true',
+        help='Update bridge contract when validators or oracle addr '
+             'change in config file'
+    )
+    parser.add_argument(
         '--aergo_gas_price', type=int,
         help='Gas price to use in transactions', required=False)
+    parser.set_defaults(anchoring_on=False)
     parser.set_defaults(auto_update=False)
+    parser.set_defaults(oracle_update=False)
     parser.set_defaults(aergo_gas_price=None)
     args = parser.parse_args()
 
     proposer = AergoProposerClient(
         args.config_file_path, args.aergo, args.eth, args.eth_block_time,
-        privkey_name=args.privkey_name, auto_update=args.auto_update,
+        privkey_name=args.privkey_name,
+        anchoring_on=args.anchoring_on,
+        auto_update=args.auto_update,
+        oracle_update=False,  # diseabled by default for safety
         aergo_gas_price=args.aergo_gas_price
     )
     proposer.run()

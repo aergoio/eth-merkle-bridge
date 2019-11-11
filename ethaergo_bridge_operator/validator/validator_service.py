@@ -58,11 +58,13 @@ class ValidatorService(BridgeOperatorServicer):
         privkey_name: str = None,
         privkey_pwd: str = None,
         validator_index: int = 0,
+        anchoring_on: bool = False,
         auto_update: bool = False,
         oracle_update: bool = False,
         root_path: str = './'
     ) -> None:
         """ Initialize parameters of the bridge validator"""
+        self.anchoring_on = anchoring_on
         self.auto_update = auto_update
         self.oracle_update = oracle_update
         self.data_sources = DataSources(
@@ -103,6 +105,8 @@ class ValidatorService(BridgeOperatorServicer):
             may not be aware settings have changed.
             So the current onchain bridge settings are queried every time.
         """
+        if not self.anchoring_on:
+            return Approval(error="Anchoring not enabled")
         err_msg = self.data_sources.is_valid_aergo_anchor(anchor)
         if err_msg is not None:
             logger.warning(
@@ -140,6 +144,8 @@ class ValidatorService(BridgeOperatorServicer):
             So the current onchain bridge settings are queries every time.
 
         """
+        if not self.anchoring_on:
+            return Approval(error="Anchoring not enabled")
         err_msg = self.data_sources.is_valid_eth_anchor(anchor)
         if err_msg is not None:
             logger.warning(
@@ -269,8 +275,8 @@ class ValidatorService(BridgeOperatorServicer):
         validators in the Aergo bridge contract bridging to Ethereum
 
         """
-        if not self.auto_update:
-            return Approval(error="Setting update not enabled")
+        if not (self.auto_update and self.oracle_update):
+            return Approval(error="Validators update not enabled")
         err_msg = self.data_sources.is_valid_eth_validators(val_msg)
         if err_msg is not None:
             logger.warning(
@@ -300,8 +306,8 @@ class ValidatorService(BridgeOperatorServicer):
         validators in the Ethereum bridge contract bridging to Aergo
 
         """
-        if not self.auto_update:
-            return Approval(error="Setting update not enabled")
+        if not (self.auto_update and self.oracle_update):
+            return Approval(error="Validators update not enabled")
         err_msg = self.data_sources.is_valid_aergo_validators(val_msg)
         if err_msg is not None:
             logger.warning(
@@ -335,7 +341,7 @@ class ValidatorService(BridgeOperatorServicer):
 
         """
         if not self.auto_update:
-            return Approval(error="Setting update not enabled")
+            return Approval(error="Unfreeze fee update not enabled")
         err_msg = self.data_sources.is_valid_unfreeze_fee(new_fee_msg)
         if err_msg is not None:
             logger.warning(
@@ -364,7 +370,7 @@ class ValidatorService(BridgeOperatorServicer):
         oracle controlling the Ethereum bridge contract bridging to Aergo
 
         """
-        if not self.oracle_update:
+        if not (self.auto_update and self.oracle_update):
             return Approval(error="Oracle update not enabled")
         err_msg = self.data_sources.is_valid_aergo_oracle(oracle_msg)
         if err_msg is not None:
@@ -396,7 +402,7 @@ class ValidatorService(BridgeOperatorServicer):
         oracle controlling the Aergo bridge contract bridging to Ethereum
 
         """
-        if not self.oracle_update:
+        if not (self.auto_update and self.oracle_update):
             return Approval(error="Oracle update not enabled")
         err_msg = self.data_sources.is_valid_eth_oracle(oracle_msg)
         if err_msg is not None:

@@ -22,17 +22,20 @@ class ProposerClient:
         eth_gas_price: int,
         privkey_name: str = None,
         privkey_pwd: str = None,
+        anchoring_on: bool = False,
         auto_update: bool = False,
         oracle_update: bool = False,
         root_path: str = './'
     ) -> None:
         self.t_eth_client = EthProposerClient(
             config_file_path, aergo_net, eth_net, privkey_name,
-            privkey_pwd, auto_update, oracle_update, root_path, eth_gas_price
+            privkey_pwd, anchoring_on, auto_update, oracle_update, root_path,
+            eth_gas_price
         )
         self.t_aergo_client = AergoProposerClient(
             config_file_path, aergo_net, eth_net, eth_block_time, privkey_name,
-            privkey_pwd, auto_update, oracle_update, aergo_gas_price
+            privkey_pwd, anchoring_on, auto_update, oracle_update,
+            aergo_gas_price
         )
 
     def run(self):
@@ -60,8 +63,18 @@ if __name__ == '__main__':
         '--privkey_name', type=str, help='Name of account in config file '
         'to sign anchors', required=False)
     parser.add_argument(
+        '--anchoring_on', dest='anchoring_on', action='store_true',
+        help='Enable anchoring (can be diseabled when wanting to only update '
+             'settings)'
+    )
+    parser.add_argument(
         '--auto_update', dest='auto_update', action='store_true',
         help='Update bridge contract when settings change in config file')
+    parser.add_argument(
+        '--oracle_update', dest='oracle_update', action='store_true',
+        help='Update bridge contract when validators or oracle addr '
+             'change in config file'
+    )
     parser.add_argument(
         '--local_test', dest='local_test', action='store_true',
         help='Start proposer with password for testing')
@@ -71,7 +84,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '--aergo_gas_price', type=int,
         help='Gas price to use in transactions', required=False)
+    parser.set_defaults(anchoring_on=False)
     parser.set_defaults(auto_update=False)
+    parser.set_defaults(oracle_update=False)
     parser.set_defaults(local_test=False)
     parser.set_defaults(eth_gas_price=None)
     parser.set_defaults(aergo_gas_price=None)
@@ -82,7 +97,7 @@ if __name__ == '__main__':
             args.config_file_path, args.aergo, args.eth, args.eth_block_time,
             args.aergo_gas_price, args.eth_gas_price,
             privkey_name=args.privkey_name, privkey_pwd='1234',
-            auto_update=args.auto_update, oracle_update=True
+            anchoring_on=True, auto_update=True, oracle_update=True
         )
         proposer.run()
     else:
@@ -90,6 +105,9 @@ if __name__ == '__main__':
         proposer = ProposerClient(
             args.config_file_path, args.aergo, args.eth, args.eth_block_time,
             args.aergo_gas_price, args.eth_gas_price,
-            privkey_name=args.privkey_name, auto_update=args.auto_update
+            privkey_name=args.privkey_name,
+            anchoring_on=args.anchoring_on,
+            auto_update=args.auto_update,
+            oracle_update=False  # diseabled by default for safety
         )
         proposer.run()
