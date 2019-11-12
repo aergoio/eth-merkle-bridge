@@ -361,8 +361,8 @@ class EthMerkleBridgeCli():
         if net2_type == 'ethereum':
             new_config['networks'][net2]['isPOA'] = answers['isPOA']
         # Register bridge contracts on each network
-        if promptYN('Would you like to register a bridge ? '
-                    '(needed if already deployed)', 'Yes', 'No'):
+        if promptYN('Would you like to register a bridge ?',
+                    'Yes', 'No'):
             answers = prompt_new_bridge(net1, net2)
             new_config['networks'][net1]['bridges'] = {
                 net2: {'addr': answers['bridge1'],
@@ -403,6 +403,15 @@ class EthMerkleBridgeCli():
                     minted_abi
                 new_config['networks'][net1]['bridges'][net2]['unfreeze_fee'] = \
                     answers['unfreeze_fee']
+
+        # Register bridge validators
+        if promptYN('Would you like to register validators ? '
+                    '(not needed for bridge users)', 'Yes', 'No'):
+            validators = prompt_new_validators()
+            new_config['validators'] = validators
+        else:
+            new_config['validators'] = {}
+
         # Register a new private key for each network
         new_config['wallet-eth'] = {}
         new_config['wallet'] = {}
@@ -426,14 +435,6 @@ class EthMerkleBridgeCli():
             name, addr, privkey = prompt_aergo_privkey()
             new_config['wallet'][name] = {"addr": addr,
                                           "priv_key": privkey}
-
-        # Register bridge validators
-        if promptYN('Would you like to register validators ? '
-                    '(not needed for bridge users)', 'Yes', 'No'):
-            validators = prompt_new_validators()
-            new_config['validators'] = validators
-        else:
-            new_config['validators'] = {}
 
         questions = [
             {

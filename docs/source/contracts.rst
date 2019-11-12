@@ -1,9 +1,24 @@
 Deploying a new bridge
 ======================
 
-Before using the bridge deployer, a config file should be created to register network node connections, 
-bridge tempo (anchoring periode and finality of both chains), validators and the address of aergo_erc20 on ethereum.
-The aergo bridge contract must record the aergo_erc20 so that aergo can be unfroozen.
+Process
+-------
+1- Each Validator generates a private key and address to sign bridge messages (anchors, settings update...) and shares the address and validator ip with the bridge Proposer.
+
+2- Proposer creates a config.json file draft. (See `Create a new config file`_ below).
+
+3- Proposer deploys the eth-merkle-birdge.sol and eth-merkle-bridge.lua contracts (See `Deploy the bridge contracts`_ below).
+
+4- Proposer deploys the oracle.sol and oracle.lua and transfers bridge controle to oracles (See `Transfer control of the bridge to the multisig oracle`_ below).
+
+5- Proposer removes his private key registered in config.json, and shares config.json with Validators.
+
+6- Each Validator adds his private key to his config.json.
+
+7- The Validators start validating (see validator docs) with the correct validator index (see position of validator in config.json).
+
+8- Proposer starts operating the bridge (see proposer docs).
+
 
 Create a new config file
 ------------------------
@@ -11,12 +26,10 @@ A config file can be created with the cli tool or manually.
 
 .. image:: images/scratch.png
 
-.. image:: images/register_aergo_erc20.png
-
 
 Deploy the bridge contracts
 ---------------------------
-The sender of the deployment tx will be the bridge owner.
+The sender of the deployment tx will be the bridge owner. Ownership is then transfered to the multisig oracle.
 
 .. code-block:: bash
 
@@ -52,12 +65,6 @@ The sender of the deployment tx will be the bridge owner.
         > Bridge Address Aergo: AmhJjVxa7Yp8CiXpTXVhoDXiDa66SD6rsejbimPFNxzvPNbLzEg5
         ------ Store bridge addresses in test_config.json  -----------
 
-
-Send native aer to the bridge contract
---------------------------------------
-
-After deployment, the aer on the Aergo network should be sent (frozen) to the bridge contract so 
-that it can be unfrozen when users send their erc20 from the ethereum network.
 
 Transfer control of the bridge to the multisig oracle
 -----------------------------------------------------
@@ -104,3 +111,9 @@ and transfer ownership to the newly deployed contract.
         > Oracle Address Aergo: AmgwgSFDwtdxzdfa4kUxuYXMWkHN1MLZMVANBcm85rpsDSaAymFU
         ------ Store bridge addresses in test_config.json  -----------
         ------ Transfer bridge control to oracles -----------
+
+Send native aer to the bridge contract
+--------------------------------------
+
+After deployment, the aer on the Aergo network should be sent (frozen) to the bridge contract so 
+that it can be unfrozen when users send their erc20 from the ethereum network.

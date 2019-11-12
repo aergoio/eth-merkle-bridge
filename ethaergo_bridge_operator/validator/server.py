@@ -99,8 +99,9 @@ if __name__ == '__main__':
         '-a', '--aergo', type=str, help='Name of Aergo network in config file',
         required=True)
     parser.add_argument(
-        '-e', '--eth', type=str, help='Name of Ethereum network in config file',
-        required=True)
+        '-e', '--eth', type=str, required=True,
+        help='Name of Ethereum network in config file',
+    )
     parser.add_argument(
         '-i', '--validator_index', type=int, required=True,
         help='Index of the validator in the ordered list of validators')
