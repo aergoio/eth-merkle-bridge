@@ -138,7 +138,7 @@ class EthAergoWallet(WalletConfig):
         )
         logger.info("\u2b06 Increase approval success: %s", tx_hash)
 
-        lock_height, tx_hash = eth_to_aergo.lock(
+        lock_height, tx_hash, _ = eth_to_aergo.lock(
             w3, signer_acct, receiver, amount, bridge_from, bridge_from_abi,
             erc20_address, gas_limit, self.eth_gas_price, next_nonce
         )
@@ -202,7 +202,7 @@ class EthAergoWallet(WalletConfig):
         )
         logger.info("\u2699 Built lock proof")
 
-        token_pegged, tx_hash = eth_to_aergo.mint(
+        token_pegged, tx_hash, _ = eth_to_aergo.mint(
             aergo_to, receiver, lock_proof, asset_address, bridge_to,
             gas_limit, self.aergo_gas_price
         )
@@ -264,7 +264,7 @@ class EthAergoWallet(WalletConfig):
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
-        burn_height, tx_hash = eth_to_aergo.burn(
+        burn_height, tx_hash, _ = eth_to_aergo.burn(
             w3, signer_acct, receiver, amount, bridge_from, bridge_from_abi,
             token_pegged, gas_limit, self.eth_gas_price
         )
@@ -324,7 +324,7 @@ class EthAergoWallet(WalletConfig):
         )
         logger.info("\u2699 Built lock proof")
 
-        tx_hash = eth_to_aergo.unfreeze(
+        tx_hash, _ = eth_to_aergo.unfreeze(
             aergo_to, receiver, lock_proof, bridge_to, gas_limit,
             self.aergo_gas_price
         )
@@ -381,7 +381,7 @@ class EthAergoWallet(WalletConfig):
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
-        tx_hash = eth_to_aergo.unlock(
+        tx_hash, _ = eth_to_aergo.unlock(
             aergo_to, receiver, burn_proof, asset_address, bridge_to,
             gas_limit, self.aergo_gas_price
         )
@@ -526,7 +526,7 @@ class EthAergoWallet(WalletConfig):
             asset_name, balance/10**18
         )
 
-        freeze_height, tx_hash = aergo_to_eth.freeze(
+        freeze_height, tx_hash, _ = aergo_to_eth.freeze(
             aergo_from, bridge_from, receiver, amount, gas_limit,
             self.aergo_gas_price
         )
@@ -581,7 +581,7 @@ class EthAergoWallet(WalletConfig):
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
-        lock_height, tx_hash = aergo_to_eth.lock(
+        lock_height, tx_hash, _ = aergo_to_eth.lock(
             aergo_from, bridge_from, receiver, amount,
             asset_address, gas_limit, self.aergo_gas_price
         )
@@ -656,7 +656,7 @@ class EthAergoWallet(WalletConfig):
         )
         logger.info("\u2699 Built lock proof")
 
-        token_pegged, tx_hash = aergo_to_eth.mint(
+        token_pegged, tx_hash, _ = aergo_to_eth.mint(
             w3, signer_acct, receiver, lock_proof, asset_address, bridge_to,
             bridge_to_abi, gas_limit, self.eth_gas_price
         )
@@ -717,7 +717,7 @@ class EthAergoWallet(WalletConfig):
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
-        burn_height, tx_hash = aergo_to_eth.burn(
+        burn_height, tx_hash, _ = aergo_to_eth.burn(
             aergo_from, bridge_from, receiver, amount, token_pegged,
             gas_limit, self.aergo_gas_price
         )
@@ -742,7 +742,7 @@ class EthAergoWallet(WalletConfig):
         burn_height: int = 0,
         privkey_name: str = 'default',
         privkey_pwd: str = None,
-    ) -> Tuple[str, str]:
+    ) -> str:
         """ Finalize ERC20 or Eth transfer back to Ethereum origin """
         logger.info(from_chain + ' -> ' + to_chain)
         bridge_to_abi = self.load_bridge_abi(to_chain, from_chain)
@@ -781,7 +781,7 @@ class EthAergoWallet(WalletConfig):
         )
         logger.info("\u2699 Built burn proof")
 
-        tx_hash = aergo_to_eth.unlock(
+        tx_hash, _ = aergo_to_eth.unlock(
             w3, signer_acct, receiver, burn_proof, asset_address, bridge_to,
             bridge_to_abi, gas_limit, self.eth_gas_price
         )

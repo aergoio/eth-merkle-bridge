@@ -8,7 +8,13 @@ from web3 import (
 from web3.exceptions import (
     BadFunctionCallOutput,
 )
+from web3.datastructures import (
+    AttributeDict,
+)
 import aergo.herapy as herapy
+from aergo.herapy.obj.transaction import (
+    Transaction
+)
 from aergo_wallet.exceptions import (
     InvalidMerkleProofError,
     TxError,
@@ -31,7 +37,7 @@ def lock(
     asset: str,
     gas_limit: int,
     gas_price: int,
-) -> Tuple[int, str]:
+) -> Tuple[int, str, Transaction]:
     """ Lock can be called to lock aer or tokens.
         it supports delegated transfers when tx broadcaster is not
         the same as the token owner
@@ -58,7 +64,8 @@ def lock(
     # get precise lock height
     tx_detail = aergo_from.get_tx(tx.tx_hash)
     lock_height = tx_detail.block.height
-    return lock_height, str(tx.tx_hash)
+
+    return lock_height, str(tx.tx_hash), tx_detail
 
 
 def build_lock_proof(
@@ -100,7 +107,7 @@ def mint(
     bridge_to_abi: str,
     gas_limit: int,
     gas_price: int
-) -> Tuple[str, str]:
+) -> Tuple[str, str, AttributeDict]:
     """ Mint the receiver's deposit balance on aergo_to. """
     if not is_ethereum_address(receiver):
         raise InvalidArgumentsError(
@@ -140,7 +147,7 @@ def mint(
     events = eth_bridge.events.mintEvent().processReceipt(receipt)
     token_pegged = events[0]['args']['tokenAddress']
 
-    return token_pegged, tx_hash.hex()
+    return token_pegged, tx_hash.hex(), receipt
 
 
 def burn(
@@ -151,7 +158,7 @@ def burn(
     token_pegged: str,
     gas_limit: int,
     gas_price: int,
-) -> Tuple[int, str]:
+) -> Tuple[int, str, Transaction]:
     """ Burn a minted token on a sidechain. """
     if not is_ethereum_address(receiver):
         raise InvalidArgumentsError(
@@ -174,7 +181,7 @@ def burn(
     # get precise burn height
     tx_detail = aergo_from.get_tx(tx.tx_hash)
     burn_height = tx_detail.block.height
-    return burn_height, str(tx.tx_hash)
+    return burn_height, str(tx.tx_hash), tx_detail
 
 
 def build_burn_proof(
@@ -216,7 +223,7 @@ def unlock(
     bridge_to_abi: str,
     gas_limit: int,
     gas_price: int
-) -> Tuple[str, str]:
+) -> Tuple[str, AttributeDict]:
     """ Unlock the receiver's burnt balance on aergo_to. """
     if not is_ethereum_address(receiver):
         raise InvalidArgumentsError(
@@ -253,7 +260,7 @@ def unlock(
     if receipt.status != 1:
         raise TxError("Unlock asset Tx execution failed: {}".format(receipt))
     logger.info("\u26fd Gas used: %s", receipt.gasUsed)
-    return tx_hash.hex()
+    return tx_hash.hex(), receipt
 
 
 def freeze(
@@ -263,7 +270,7 @@ def freeze(
     value: int,
     gas_limit: int,
     gas_price: int,
-) -> Tuple[int, str]:
+) -> Tuple[int, str, Transaction]:
     """ Freeze aergo native """
     if not is_ethereum_address(receiver):
         raise InvalidArgumentsError(
@@ -284,7 +291,7 @@ def freeze(
     # get precise burn height
     tx_detail = aergo_from.get_tx(tx.tx_hash)
     freeze_height = tx_detail.block.height
-    return freeze_height, str(tx.tx_hash)
+    return freeze_height, str(tx.tx_hash), tx_detail
 
 
 def _build_deposit_proof(

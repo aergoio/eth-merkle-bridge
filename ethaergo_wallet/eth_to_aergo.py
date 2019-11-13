@@ -13,6 +13,9 @@ from web3 import (
     Web3,
 )
 import aergo.herapy as herapy
+from aergo.herapy.obj.transaction import (
+    Transaction
+)
 from aergo_wallet.exceptions import (
     InvalidMerkleProofError,
     TxError,
@@ -42,7 +45,7 @@ def lock(
     gas_limit: int,
     gas_price: int,
     next_nonce: int = None
-):
+) -> Tuple[int, str, AttributeDict]:
     """ Lock an Ethereum ERC20 token. """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
@@ -70,7 +73,7 @@ def lock(
     if receipt.status != 1:
         raise TxError("Lock asset Tx execution failed: {}".format(receipt))
     logger.info("\u26fd Gas used: %s", receipt.gasUsed)
-    return receipt.blockNumber, tx_hash.hex()
+    return receipt.blockNumber, tx_hash.hex(), receipt
 
 
 def build_lock_proof(
@@ -110,7 +113,7 @@ def mint(
     bridge_to: str,
     gas_limit: int,
     gas_price: int
-) -> Tuple[str, str]:
+) -> Tuple[str, str, Transaction]:
     """ Unlock the receiver's deposit balance on aergo_to. """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
@@ -134,7 +137,7 @@ def mint(
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Mint asset Tx execution failed : {}".format(result))
     token_pegged = json.loads(result.detail)[0]
-    return token_pegged, str(tx.tx_hash)
+    return token_pegged, str(tx.tx_hash), result
 
 
 def burn(
@@ -147,7 +150,7 @@ def burn(
     token_pegged: str,
     gas_limit: int,
     gas_price: int
-):
+) -> Tuple[int, str, AttributeDict]:
     """ Burn a token that was minted on ethereum. """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
@@ -179,7 +182,7 @@ def burn(
     if receipt.status != 1:
         raise TxError("Burn asset Tx execution failed: {}".format(receipt))
     logger.info("\u26fd Gas used: %s", receipt.gasUsed)
-    return receipt.blockNumber, tx_hash.hex()
+    return receipt.blockNumber, tx_hash.hex(), receipt
 
 
 def build_burn_proof(
@@ -219,7 +222,7 @@ def unlock(
     bridge_to: str,
     gas_limit: int,
     gas_price: int
-) -> str:
+) -> Tuple[str, Transaction]:
     """ Unlock the receiver's deposit balance on aergo_to. """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
@@ -242,7 +245,7 @@ def unlock(
     result = aergo_to.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Unlock asset Tx execution failed : {}".format(result))
-    return str(tx.tx_hash)
+    return str(tx.tx_hash), result
 
 
 def unfreeze(
@@ -252,7 +255,7 @@ def unfreeze(
     bridge_to: str,
     gas_limit: int,
     gas_price: int
-) -> str:
+) -> Tuple[str, Transaction]:
     """ Unlock the receiver's deposit balance on aergo_to. """
     if not is_aergo_address(receiver):
         raise InvalidArgumentsError(
@@ -270,7 +273,8 @@ def unfreeze(
     result = aergo_to.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Unfreeze asset Tx execution failed : {}".format(result))
-    return str(tx.tx_hash)
+    logger.info("\u26fd Unfreeze tx fee paid: %s", result.fee_used)
+    return str(tx.tx_hash), result
 
 
 def _build_deposit_proof(
