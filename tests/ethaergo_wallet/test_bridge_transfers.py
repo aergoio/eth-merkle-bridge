@@ -116,14 +116,18 @@ def test_aergo_erc20_unfreeze(bridge_wallet):
         'aergo_erc20', 'aergo-local', 'eth-poa-local', account_addr=aergo_user
     )
     # Aergo => Eth
-    freeze_height, _ = bridge_wallet.freeze(
+    freeze_height, freeze_hash = bridge_wallet.freeze(
         'aergo-local', 'eth-poa-local', 5*10**18, eth_user,
         privkey_pwd='1234'
     )
     balance_origin_after2, _ = bridge_wallet.get_balance_aergo(
         'aergo_erc20', 'aergo-local', 'eth-poa-local', account_addr=aergo_user
     )
-    assert balance_origin_after2 == balance_destination_after - 5*10**18
+
+    hera = bridge_wallet.get_aergo('aergo-local', 'default', '1234')
+    freeze_fee = int(hera.get_tx_result(freeze_hash).fee_used)
+    assert balance_origin_after2 == \
+        balance_destination_after - 5*10**18 - freeze_fee
     bridge_wallet.unlock_to_eth(
         'aergo-local', 'eth-poa-local', 'aergo_erc20',
         eth_user, freeze_height,
@@ -132,14 +136,14 @@ def test_aergo_erc20_unfreeze(bridge_wallet):
     balance_destination_after2, _ = bridge_wallet.get_balance_eth(
         'aergo_erc20', 'eth-poa-local', account_addr=eth_user
     )
-    assert balance_origin_after2 == balance_destination_after - 5*10**18
+    assert balance_origin_after2 == \
+        balance_destination_after - 5*10**18 - freeze_fee
     assert balance_destination_after2 == balance_origin_before
 
 
 def test_aergo_erc20_unfreeze_service(bridge_wallet):
     aergo_receiver = bridge_wallet.config_data('wallet', 'receiver', 'addr')
     aergo_service = bridge_wallet.config_data('wallet', 'default', 'addr')
-    # Eth => Aergo
     lock_height, _ = bridge_wallet.lock_to_aergo(
         'eth-poa-local', 'aergo-local', 'aergo_erc20',
         5*10**18, aergo_receiver, privkey_pwd='1234'
@@ -152,10 +156,13 @@ def test_aergo_erc20_unfreeze_service(bridge_wallet):
         'aergo_erc20', 'aergo-local', 'eth-poa-local',
         account_addr=aergo_service
     )
-    bridge_wallet.unfreeze(
+    tx_hash = bridge_wallet.unfreeze(
         'eth-poa-local', 'aergo-local', aergo_receiver, lock_height,
         privkey_pwd='1234'
     )
+    hera = bridge_wallet.get_aergo('aergo-local', 'default', '1234')
+    tx_fee = int(hera.get_tx_result(tx_hash).fee_used)
+    # Eth => Aergo
     balance_destination_after_rec, _ = bridge_wallet.get_balance_aergo(
         'aergo_erc20', 'aergo-local', 'eth-poa-local',
         account_addr=aergo_receiver
@@ -168,7 +175,7 @@ def test_aergo_erc20_unfreeze_service(bridge_wallet):
     assert balance_destination_after_rec == \
         balance_destination_before_rec + 5*10**18 - 1000
     assert balance_destination_after_ser == \
-        balance_destination_before_ser + 1000
+        balance_destination_before_ser + 1000 - tx_fee
 
 
 def test_aergo_unfreezable(bridge_wallet):
