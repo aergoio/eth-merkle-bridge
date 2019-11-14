@@ -31,12 +31,16 @@ before_script:
   - make proposer&
   - proposer_pid=$!
 
+  - make unfreeze_service&
+  - unfreeze_service_pid=$!
+
 script:
   - make tests
 
 after_script: 
   - kill $proposer_pid
   - kill $validator_pid
+  - kill $unfreeze_service_pid
   - kill $aergo_docker_pid
   - kill $eth_docker_pid
   - make clean

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+service UnfreezeService {
+    // Request unfreezing
+    rpc RequestUnfreeze(AccountRef) returns (Status) {}
+}
+
+message AccountRef {
+    // Receiver Aergo Address
+    string receiver = 1;
+}
+
+message Status {
+    // Hash of unfreeze tx
+    string txHash = 1;
+    // error message why the requested unfreeze cannot be made
+    string error = 2;
+}

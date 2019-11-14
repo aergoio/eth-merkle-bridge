@@ -146,7 +146,7 @@ class BridgeOperatorServicer(object):
     raise NotImplementedError('Method not implemented!')
 
   def GetAergoOracleSignature(self, request, context):
-    """Get signature to update oralce of anchors from Aergo
+    """Get signature to update oracle of anchors from Aergo
     """
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
