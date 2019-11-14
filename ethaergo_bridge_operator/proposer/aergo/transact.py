@@ -60,6 +60,7 @@ class AergoTx():
                 "time: %ss...\"",
                 self.t_anchor * self.eth_block_time
             )
+            logger.info("\"\u26fd Aergo Fee: %s\"", result.fee_used)
 
     def set_validators(self, new_validators, validator_indexes, sigs):
         """Update validators on chain"""

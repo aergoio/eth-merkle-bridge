@@ -194,9 +194,6 @@ if __name__ == '__main__':
     lua_bytecode_path = "contracts/lua/oracle_bytecode.txt"
     sol_bytecode_path = "contracts/solidity/oracle_bytecode.txt"
 
-    # NOTE t_final is the minimum time to get lib : only informative (not
-    # actually used in code except for Eth bridge because Eth doesn't have LIB)
-
     if args.local_test:
         deploy_oracle(
             args.config_file_path, lua_bytecode_path, sol_bytecode_path,
