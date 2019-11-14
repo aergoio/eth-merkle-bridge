@@ -31,6 +31,7 @@ it is possible use a large number of validators for best safety and sensorship r
    validator
    contracts
    config
+   unfreeze
    
 
 .. toctree::
@@ -40,6 +41,7 @@ it is possible use a large number of validators for best safety and sensorship r
    ethaergo_operator
    ethaergo_wallet
    ethaergo_cli
+   unfreeze_service
 
 
 

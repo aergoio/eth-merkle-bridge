@@ -60,6 +60,10 @@ In a new terminal : start validator
 ```sh
 $ make validator
 ```
+In a new terminal : start unfreeze service
+```sh
+$ make unfreeze_service
+```
 
 In a new terminal : test wallet transfers, bridge transfers and the bridge multisig
 ```sh

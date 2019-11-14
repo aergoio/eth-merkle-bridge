@@ -1,4 +1,4 @@
-.PHONY: docker-aergo docker-eth deploy_test_bridge proposer validator tests clean compile_bridge compile_token protoc 
+.PHONY: docker-aergo docker-eth deploy_test_bridge proposer validator unfreeze_service tests clean compile_bridge compile_token protoc 
 
 # Shortcuts for development and testing
 
@@ -36,6 +36,9 @@ proposer:
 validator:
 	python3 -m ethaergo_bridge_operator.validator.server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --local_test
 
+unfreeze_service:
+	python3 -m unfreeze_service.server -ip 'localhost:7891' -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --privkey_name "broadcaster" --local_test
+
 tests:
 	python3 -m pytest -s tests/
 
@@ -59,3 +62,8 @@ protoc:
 		--python_out=. \
 		--grpc_python_out=. \
 		./proto/ethaergo_bridge_operator/*.proto
+	python3 -m grpc_tools.protoc \
+		-I proto \
+		--python_out=. \
+		--grpc_python_out=. \
+		./proto/unfreeze_service/*.proto
