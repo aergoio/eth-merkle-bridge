@@ -37,7 +37,8 @@ validator:
 	python3 -m ethaergo_bridge_operator.validator.server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --local_test
 
 unfreeze_service:
-	python3 -m unfreeze_service.server -ip 'localhost:7891' -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --privkey_name "broadcaster" --local_test
+	python3 -m unfreeze_service.server -ip 'localhost:7891' -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --privkey_name "broadcaster" --local_test &
+	docker run --rm --name=proxy -p 8080:8080 -v $(PWD)/unfreeze_service//envoy/envoy.yaml:/etc/envoy/envoy.yaml envoyproxy/envoy:latest
 
 tests:
 	python3 -m pytest -s tests/
