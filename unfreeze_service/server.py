@@ -247,7 +247,7 @@ if __name__ == '__main__':
         'to sign anchors', required=True)
     parser.add_argument(
         '--local_test', dest='local_test', action='store_true',
-        help='Start all validators locally for convenient testing')
+        help='Start service for running tests')
     parser.set_defaults(local_test=False)
     args = parser.parse_args()
 
