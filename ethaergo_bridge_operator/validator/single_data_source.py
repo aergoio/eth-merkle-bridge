@@ -373,7 +373,7 @@ class SingleDataSource():
         # check new oracle is different from current one to prevent
         # update spamming
         current_oracle = query_aergo_oracle(
-            self.hera, self.aergo_oracle)
+            self.hera, self.aergo_bridge)
         if current_oracle == config_oracle:
             return "Not voting for a new validator set"
         # check oracle is same in config file
