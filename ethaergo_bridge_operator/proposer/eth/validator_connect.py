@@ -88,7 +88,7 @@ class EthValConnect():
         root: bytes,
         merge_height: int,
         nonce: int,
-    ) -> Tuple[List[str], List[int]]:
+    ) -> Tuple[List[bytes], List[int]]:
         """ Query all validators and gather 2/3 of their signatures. """
         # messages to get signed
         msg_bytes = root + merge_height.to_bytes(32, byteorder='big') \
@@ -147,7 +147,7 @@ class EthValConnect():
     def extract_signatures(
         self,
         approvals: List[Any]
-    ) -> Tuple[List[str], List[int]]:
+    ) -> Tuple[List[bytes], List[int]]:
         """Keep 2/3 of validator signatures (minimum to anchor)"""
         sigs, validator_indexes = [], []
         for i, approval in enumerate(approvals):

@@ -190,14 +190,14 @@ end
 
 -- Register a new anchor
 -- @type    call
--- @param   root (ethaddress) Ethereum storage root
+-- @param   root (0x hex string) Ethereum storage root
 -- @param   height (uint) block height of root
 -- @event   newAnchor(proposer, height, root)
 function newAnchor(root, height)
     _onlyOracle()
     -- check Height to prevent spamming and leave minimum time for users to make transfers.
     assert(height > _anchorHeight:get() + _tAnchor:get(), "Next anchor height not reached")
-    _anchorRoot:set(root)
+    _anchorRoot:set(string.sub(root, 3))
     _anchorHeight:set(height)
     contract.event("newAnchor", system.getSender(), height, root)
 end

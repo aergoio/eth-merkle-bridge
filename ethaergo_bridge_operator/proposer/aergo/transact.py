@@ -31,17 +31,54 @@ class AergoTx():
         logger.info(
             "\"Proposer Address: %s\"", self.hera.account.address)
 
-    def new_anchor(
+    def new_state_anchor(
         self,
         root: str,
         next_anchor_height: int,
         validator_indexes: List[int],
         sigs: List[str],
     ) -> None:
-        """Anchor a new root on chain"""
+        """Anchor a new state root on chain"""
         tx, result = self.hera.call_sc(
-            self.aergo_oracle, "newAnchor",
+            self.aergo_oracle, "newStateAnchor",
             args=[root, next_anchor_height, validator_indexes, sigs]
+        )
+        if result.status != herapy.CommitStatus.TX_OK:
+            logger.warning(
+                "\"Anchor on aergo Tx commit failed : %s\"", result.json())
+            return
+
+        result = self.hera.wait_tx_result(tx.tx_hash)
+        if result.status != herapy.TxResultStatus.SUCCESS:
+            logger.warning(
+                "\"Anchor failed: already anchored, or invalid "
+                "signature: %s\"", result.json()
+            )
+        else:
+            logger.info(
+                "\"\u2693 Anchor success, \u23F0 wait until next anchor "
+                "time: %ss...\"",
+                self.t_anchor * self.eth_block_time
+            )
+            logger.info("\"\u26fd Aergo Fee: %s\"", result.fee_used)
+
+    def new_state_and_bridge_anchor(
+        self,
+        stateRoot: str,
+        next_anchor_height: int,
+        validator_indexes: List[int],
+        sigs: List[str],
+        bridge_contract_state: List[str],
+        merkle_proof: List[str]
+    ) -> None:
+        """Anchor a new state root and update bridge anchor on chain"""
+        bridge_nonce, bridge_balance, bridge_root, bridge_code_hash = \
+            bridge_contract_state
+        tx, result = self.hera.call_sc(
+            self.aergo_oracle, "newStateAndBridgeAnchor",
+            args=[stateRoot, next_anchor_height, validator_indexes, sigs,
+                  bridge_nonce, bridge_balance, bridge_root, bridge_code_hash,
+                  merkle_proof]
         )
         if result.status != herapy.CommitStatus.TX_OK:
             logger.warning(
