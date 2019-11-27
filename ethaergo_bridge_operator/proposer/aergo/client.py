@@ -2,6 +2,10 @@ import argparse
 from getpass import getpass
 import time
 import threading
+from typing import (
+    Tuple,
+    List,
+)
 
 import aergo.herapy as herapy
 
@@ -66,7 +70,8 @@ class AergoProposerClient(threading.Thread):
         anchoring_on: bool = False,
         auto_update: bool = False,
         oracle_update: bool = False,
-        aergo_gas_price: int = None
+        aergo_gas_price: int = None,
+        bridge_anchoring: bool = True
     ) -> None:
         threading.Thread.__init__(self, name="AergoProposerClient")
         if aergo_gas_price is None:
@@ -80,6 +85,7 @@ class AergoProposerClient(threading.Thread):
         self.anchoring_on = anchoring_on
         self.auto_update = auto_update
         self.oracle_update = oracle_update
+        self.bridge_anchoring = bridge_anchoring
         logger.info("\"Connect Aergo and Ethereum providers\"")
         self.hera = herapy.Aergo()
         self.hera.connect(config_data['networks'][aergo_net]['ip'])
@@ -154,7 +160,7 @@ class AergoProposerClient(threading.Thread):
         while True:  # anchor a new root
             # Get last merge information
             bridge_status = self.hera.query_sc_state(
-                self.aergo_bridge,
+                self.aergo_oracle,
                 ["_sv__anchorHeight", "_sv__anchorRoot", "_sv__tAnchor",
                  "_sv__tFinal"]
             )
@@ -177,9 +183,7 @@ class AergoProposerClient(threading.Thread):
             # Wait for the next anchor time
             next_anchor_height = self.wait_next_anchor(merged_height_from)
             # Get root of next anchor to broadcast
-            state = self.web3.eth.getProof(
-                self.eth_bridge, [], next_anchor_height)
-            root = state.storageHash.hex()[2:]
+            root = self.web3.eth.getBlock(next_anchor_height).stateRoot.hex()
             if len(root) == 0:
                 logger.info("\"waiting deployment finalization...\"")
                 time.sleep(5)
@@ -188,7 +192,7 @@ class AergoProposerClient(threading.Thread):
             if self.anchoring_on:
                 logger.info(
                     "\"\U0001f58b Gathering validator signatures for: "
-                    "root: 0x%s, height: %s'\"", root, next_anchor_height
+                    "root: %s, height: %s'\"", root, next_anchor_height
                 )
 
                 nonce_to = int(
@@ -199,7 +203,7 @@ class AergoProposerClient(threading.Thread):
                 try:
                     sigs, validator_indexes = \
                         self.val_connect.get_anchor_signatures(
-                            root, next_anchor_height, nonce_to)
+                            root[2:], next_anchor_height, nonce_to)
                 except ValidatorMajorityError:
                     logger.warning(
                         "\"Failed to gather 2/3 validators signatures, "
@@ -224,9 +228,22 @@ class AergoProposerClient(threading.Thread):
                     self.monitor_settings_and_sleep(wait * self.eth_block_time)
                     continue
 
-                # Broadcast finalised merge block
-                self.aergo_tx.new_anchor(
-                    root, next_anchor_height, validator_indexes, sigs)
+                # TODO change when Lua verify proof update
+                self.bridge_anchoring = False
+                if self.bridge_anchoring:
+                    # broadcast the general state root and relay the bridge
+                    # root with a merkle proof
+                    bridge_contract_state, merkle_proof = \
+                        self.buildBridgeAnchorArgs(next_anchor_height)
+                    self.aergo_tx.new_state_and_bridge_anchor(
+                        root, next_anchor_height, validator_indexes, sigs,
+                        bridge_contract_state, merkle_proof
+                    )
+                else:
+                    # only broadcast the general state root
+                    self.aergo_tx.new_state_anchor(
+                        root, next_anchor_height, validator_indexes, sigs)
+
             self.monitor_settings_and_sleep(
                 self.t_anchor * self.eth_block_time)
 
@@ -368,6 +385,24 @@ class AergoProposerClient(threading.Thread):
             return
         # broadcast transaction
         self.aergo_tx.set_oracle(oracle, validator_indexes, sigs)
+
+    def buildBridgeAnchorArgs(
+        self,
+        next_anchor_height
+    ) -> Tuple[List[str], List[str]]:
+        """Build arguments to derive bridge storage root from the anchored
+        state root with a merkle proof
+        """
+        state = self.web3.eth.getProof(
+            self.eth_bridge, [], next_anchor_height)
+        bridge_nonce = hex(state.nonce)
+        bridge_balance = hex(state.balance)
+        bridge_root = state.storageHash.hex()
+        bridge_code_hash = state.codeHash.hex()
+        bridge_contract_state = \
+            [bridge_nonce, bridge_balance, bridge_root, bridge_code_hash]
+        merkle_proof = [node.hex() for node in state.accountProof]
+        return bridge_contract_state, merkle_proof
 
 
 if __name__ == '__main__':

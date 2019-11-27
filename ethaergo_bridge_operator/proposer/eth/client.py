@@ -2,6 +2,9 @@ import argparse
 from getpass import getpass
 import threading
 import time
+from typing import (
+    Tuple,
+)
 
 
 import aergo.herapy as herapy
@@ -64,7 +67,8 @@ class EthProposerClient(threading.Thread):
         auto_update: bool = False,
         oracle_update: bool = False,
         root_path: str = './',
-        eth_gas_price: int = None
+        eth_gas_price: int = None,
+        bridge_anchoring: bool = True
     ) -> None:
         threading.Thread.__init__(self, name="EthProposerClient")
         if eth_gas_price is None:
@@ -76,6 +80,7 @@ class EthProposerClient(threading.Thread):
         self.anchoring_on = anchoring_on
         self.auto_update = auto_update
         self.oracle_update = oracle_update
+        self.bridge_anchoring = bridge_anchoring
         logger.info("\"Connect Aergo and Ethereum providers\"")
         self.hera = herapy.Aergo()
         self.hera.connect(config_data['networks'][aergo_net]['ip'])
@@ -167,10 +172,10 @@ class EthProposerClient(threading.Thread):
         while True:  # anchor a new root
             # Get last merge information
             merged_height_from = \
-                self.eth_bridge.functions._anchorHeight().call()
-            merged_root_from = self.eth_bridge.functions._anchorRoot().call()
+                self.eth_oracle.functions._anchorHeight().call()
+            merged_root_from = self.eth_oracle.functions._anchorRoot().call()
             nonce_to = self.eth_oracle.functions._nonce().call()
-            self.t_anchor = self.eth_bridge.functions._tAnchor().call()
+            self.t_anchor = self.eth_oracle.functions._tAnchor().call()
 
             logger.info(
                 "\"Current Aergo -> Eth \u2693 anchor: "
@@ -182,11 +187,7 @@ class EthProposerClient(threading.Thread):
             next_anchor_height = self.wait_next_anchor(merged_height_from)
             # Get root of next anchor to broadcast
             block = self.hera.get_block(block_height=next_anchor_height)
-            contract = self.hera.get_account(
-                address=self.aergo_bridge, proof=True,
-                root=block.blocks_root_hash
-            )
-            root = contract.state_proof.state.storageRoot
+            root = block.blocks_root_hash
             if len(root) == 0:
                 logger.info("\"waiting deployment finalization...\"")
                 time.sleep(5)
@@ -213,7 +214,7 @@ class EthProposerClient(threading.Thread):
 
                 # don't broadcast if somebody else already did
                 merged_height = \
-                    self.eth_bridge.functions._anchorHeight().call()
+                    self.eth_oracle.functions._anchorHeight().call()
                 if merged_height + self.t_anchor >= next_anchor_height:
                     logger.warning(
                         "\"Not yet anchor time, maybe another proposer "
@@ -223,9 +224,20 @@ class EthProposerClient(threading.Thread):
                         merged_height + self.t_anchor - next_anchor_height)
                     continue
 
-                # Broadcast finalised AergoAnchor on Ethereum
-                self.eth_tx.new_anchor(
-                    root, next_anchor_height, validator_indexes, sigs)
+                if self.bridge_anchoring:
+                    # broadcast the general state root and relay the bridge
+                    # root with a merkle proof
+                    bridge_state_proto, merkle_proof, bitmap, leaf_height = \
+                        self.buildBridgeAnchorArgs(root)
+                    self.eth_tx.new_state_and_bridge_anchor(
+                        root, next_anchor_height, validator_indexes, sigs,
+                        bridge_state_proto, merkle_proof, bitmap, leaf_height
+                    )
+                else:
+                    # only broadcast the general state root
+                    self.eth_tx.new_state_anchor(
+                        root, next_anchor_height, validator_indexes, sigs)
+
             self.monitor_settings_and_sleep(self.t_anchor)
 
     def monitor_settings_and_sleep(self, sleeping_time):
@@ -255,14 +267,14 @@ class EthProposerClient(threading.Thread):
 
         """
         config_data = load_config_data(self.config_file_path)
-        t_anchor = self.eth_bridge.functions._tAnchor().call()
+        t_anchor = self.eth_oracle.functions._tAnchor().call()
         config_t_anchor = (config_data['networks'][self.eth_net]['bridges']
                            [self.aergo_net]['t_anchor'])
         if t_anchor != config_t_anchor:
             logger.info(
                 '\"Anchoring periode update requested: %s\"', config_t_anchor)
             self.update_t_anchor(config_t_anchor)
-        t_final = self.eth_bridge.functions._tFinal().call()
+        t_final = self.eth_oracle.functions._tFinal().call()
         config_t_final = (config_data['networks'][self.eth_net]['bridges']
                           [self.aergo_net]['t_final'])
         if t_final != config_t_final:
@@ -339,6 +351,21 @@ class EthProposerClient(threading.Thread):
             return
         # broadcast transaction
         self.eth_tx.set_oracle(oracle, validator_indexes, sigs)
+
+    def buildBridgeAnchorArgs(
+        self,
+        root: bytes
+    ) -> Tuple[bytes, Tuple[bytes], bytes, int]:
+        """Build arguments to derive bridge storage root from the anchored
+        state root with a merkle proof
+        """
+        state = self.hera.get_account(
+            address=self.aergo_bridge, proof=True, root=root, compressed=True)
+        ap = state.state_proof.auditPath
+        bitmap = state.state_proof.bitmap
+        leaf_height = state.state_proof.height
+        proto = state.state_proof.state.SerializeToString()
+        return proto, ap, bitmap, leaf_height
 
 
 if __name__ == '__main__':

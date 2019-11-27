@@ -38,17 +38,58 @@ class EthTx():
 
         logger.info("\"Proposer Address: %s\"", self.proposer_acct.address)
 
-    def new_anchor(
+    def new_state_anchor(
         self,
         root: bytes,
         next_anchor_height: int,
         validator_indexes: List[int],
-        sigs: List[str],
+        sigs: List[bytes],
     ) -> None:
         """Anchor a new root on Ethereum"""
         vs, rs, ss = self.prepare_rsv(sigs)
-        construct_txn = self.eth_oracle.functions.newAnchor(
+        construct_txn = self.eth_oracle.functions.newStateAnchor(
             root, next_anchor_height, validator_indexes, vs, rs, ss
+        ).buildTransaction({
+            'chainId': self.web3.eth.chainId,
+            'from': self.proposer_acct.address,
+            'nonce': self.web3.eth.getTransactionCount(
+                self.proposer_acct.address
+            ),
+            'gas': 500000,
+            'gasPrice': self.web3.toWei(self.eth_gas_price, 'gwei')
+        })
+        signed = self.proposer_acct.sign_transaction(construct_txn)
+        tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
+        receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
+
+        if receipt.status == 1:
+            logger.info(
+                "\"\u2693 Anchor success, \u23F0 wait until next anchor "
+                "time: %ss...\"", self.t_anchor
+            )
+            logger.info("\"\u26fd Gas used: %s\"", receipt.gasUsed)
+        else:
+            logger.warning(
+                "\"Anchor failed: already anchored, or invalid "
+                "signature: %s\"", receipt
+            )
+
+    def new_state_and_bridge_anchor(
+        self,
+        root: bytes,
+        next_anchor_height: int,
+        validator_indexes: List[int],
+        sigs: List[bytes],
+        bridge_contract_proto: bytes,
+        merkle_proof: List[bytes],
+        bitmap: bytes,
+        leaf_height: int
+    ) -> None:
+        """Anchor a new root on Ethereum"""
+        vs, rs, ss = self.prepare_rsv(sigs)
+        construct_txn = self.eth_oracle.functions.newStateAndBridgeAnchor(
+            root, next_anchor_height, validator_indexes, vs, rs, ss,
+            bridge_contract_proto, merkle_proof, bitmap, leaf_height
         ).buildTransaction({
             'chainId': self.web3.eth.chainId,
             'from': self.proposer_acct.address,
@@ -160,7 +201,7 @@ class EthTx():
 
     def prepare_rsv(
         self,
-        sigs: List[str]
+        sigs: List[bytes]
     ) -> Tuple[List[int], List[str], List[str]]:
         """ Format signature for solidity ecrecover """
         vs, rs, ss = [], [], []

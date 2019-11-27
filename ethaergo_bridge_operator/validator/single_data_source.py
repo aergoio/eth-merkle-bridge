@@ -51,10 +51,10 @@ class SingleDataSource():
                            [aergo_net]['bridge_abi'])
         with open(root_path + bridge_abi_path, "r") as f:
             bridge_abi = f.read()
-        self.eth_bridge_addr = (config_data['networks'][eth_net]['bridges']
+        eth_bridge_addr = (config_data['networks'][eth_net]['bridges']
                                 [aergo_net]['addr'])
         self.eth_bridge = self.web3.eth.contract(
-            address=self.eth_bridge_addr,
+            address=eth_bridge_addr,
             abi=bridge_abi
         )
         # eth oracle contract
@@ -92,12 +92,10 @@ class SingleDataSource():
             return ("anchor height not finalized, got: {}, expected: {}"
                     .format(anchor.height, lib))
 
-        # 2- get contract state root at origin_height
+        # 2- get blocks state root at origin_height
         # and check equals anchor root
         block = self.hera.get_block(block_height=int(anchor.height))
-        contract = self.hera.get_account(address=self.aergo_bridge, proof=True,
-                                         root=block.blocks_root_hash)
-        root = contract.state_proof.state.storageRoot
+        root = block.blocks_root_hash
         if root != anchor.root:
             return ("root doesn't match height {}, got: {}, expected: {}"
                     .format(lib, anchor.root.hex(), root.hex()))
@@ -110,9 +108,9 @@ class SingleDataSource():
 
         # 4- check anchored height comes after the previous one and t_anchor is
         # passed
-        t_anchor = self.eth_bridge.functions._tAnchor().call()
+        t_anchor = self.eth_oracle.functions._tAnchor().call()
         last_merged_height_from = \
-            self.eth_bridge.functions._anchorHeight().call()
+            self.eth_oracle.functions._anchorHeight().call()
         if last_merged_height_from + t_anchor > anchor.height:
             return ("anchor height too soon, got: {}, expected: {}"
                     .format(anchor.height, last_merged_height_from + t_anchor))
@@ -128,7 +126,7 @@ class SingleDataSource():
             3- it's nonce is correct
             4- it's height is higher than previous anchored height + t_anchor
         """
-        t_anchor, t_final = query_aergo_tempo(self.hera, self.aergo_bridge)
+        t_anchor, t_final = query_aergo_tempo(self.hera, self.aergo_oracle)
         # 1- get the last block height and check anchor height > LIB
         # lib = best_height - finalized_from
         best_height = self.web3.eth.blockNumber
@@ -139,13 +137,10 @@ class SingleDataSource():
 
         # 2- get contract state root at origin_height
         # and check equals anchor root
-        root = bytes(
-            self.web3.eth.getProof(self.eth_bridge_addr, [], anchor.height)
-            .storageHash
-        )
+        root = self.web3.eth.getBlock(anchor.height).stateRoot
         if root != anchor.root:
             return ("root doesn't match height {}, got: {}, expected: {}"
-                    .format(lib, anchor.root.hex(), root.hex()))
+                    .format(lib, anchor.root.hex(), root))
 
         # 3- check merkle bridge nonces are correct
         last_nonce_to = int(
@@ -160,7 +155,7 @@ class SingleDataSource():
         # passed
         last_merged_height_from = int(
             self.hera.query_sc_state(
-                self.aergo_bridge, ["_sv__anchorHeight"]).var_proofs[0].value
+                self.aergo_oracle, ["_sv__anchorHeight"]).var_proofs[0].value
         )
         if last_merged_height_from + t_anchor > anchor.height:
             return ("anchor height too soon, got: {}, expected: {}"
@@ -178,7 +173,7 @@ class SingleDataSource():
         """
         current_tempo = int(
             self.hera.query_sc_state(
-                self.aergo_bridge, ["_sv__tAnchor"]).var_proofs[0].value
+                self.aergo_oracle, ["_sv__tAnchor"]).var_proofs[0].value
         )
         return self.is_valid_eth_tempo(
             config_tempo, tempo_msg, "t_anchor", current_tempo)
@@ -194,7 +189,7 @@ class SingleDataSource():
         """
         current_tempo = int(
             self.hera.query_sc_state(
-                self.aergo_bridge, ["_sv__tFinal"]).var_proofs[0].value
+                self.aergo_oracle, ["_sv__tFinal"]).var_proofs[0].value
         )
         return self.is_valid_eth_tempo(
             config_tempo, tempo_msg, "t_final", current_tempo)
@@ -233,7 +228,7 @@ class SingleDataSource():
         validator setting.
 
         """
-        current_tempo = self.eth_bridge.functions._tAnchor().call()
+        current_tempo = self.eth_oracle.functions._tAnchor().call()
         return self.is_valid_aergo_tempo(
             config_tempo, tempo_msg, 't_anchor', current_tempo)
 
@@ -246,7 +241,7 @@ class SingleDataSource():
         validator setting.
 
         """
-        current_tempo = self.eth_bridge.functions._tFinal().call()
+        current_tempo = self.eth_oracle.functions._tFinal().call()
         return self.is_valid_aergo_tempo(
             config_tempo, tempo_msg, 't_final', current_tempo)
 

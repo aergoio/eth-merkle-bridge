@@ -1,5 +1,41 @@
 [
 	{
+		"constant": true,
+		"inputs": [],
+		"name": "_anchorRoot",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "proto",
+				"type": "bytes"
+			}
+		],
+		"name": "parseRootFromProto",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
 		"constant": false,
 		"inputs": [
 			{
@@ -32,6 +68,32 @@
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "bits",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint8",
+				"name": "i",
+				"type": "uint8"
+			}
+		],
+		"name": "bitIsSet",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "pure",
 		"type": "function"
 	},
 	{
@@ -88,6 +150,66 @@
 		"constant": false,
 		"inputs": [
 			{
+				"internalType": "bytes32",
+				"name": "stateRoot",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint256",
+				"name": "height",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "ss",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes",
+				"name": "proto",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "mp",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "bitmap",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint8",
+				"name": "leafHeight",
+				"type": "uint8"
+			}
+		],
+		"name": "newStateAndBridgeAnchor",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
 				"internalType": "address",
 				"name": "oracle",
 				"type": "address"
@@ -117,6 +239,121 @@
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "_destinationBridgeKey",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "root",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint256",
+				"name": "height",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "signers",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "vs",
+				"type": "uint8[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "rs",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "ss",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "newStateAnchor",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "_tFinal",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "proto",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "mp",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "bitmap",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint8",
+				"name": "leafHeight",
+				"type": "uint8"
+			}
+		],
+		"name": "newBridgeAnchor",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "_anchorHeight",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -152,6 +389,47 @@
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "trieKey",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "trieValue",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32[]",
+				"name": "mp",
+				"type": "bytes32[]"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "bitmap",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint8",
+				"name": "leafHeight",
+				"type": "uint8"
+			}
+		],
+		"name": "verifyMp",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -241,43 +519,18 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "root",
-				"type": "bytes32"
-			},
+		"constant": true,
+		"inputs": [],
+		"name": "_tAnchor",
+		"outputs": [
 			{
 				"internalType": "uint256",
-				"name": "height",
+				"name": "",
 				"type": "uint256"
-			},
-			{
-				"internalType": "uint256[]",
-				"name": "signers",
-				"type": "uint256[]"
-			},
-			{
-				"internalType": "uint8[]",
-				"name": "vs",
-				"type": "uint8[]"
-			},
-			{
-				"internalType": "bytes32[]",
-				"name": "rs",
-				"type": "bytes32[]"
-			},
-			{
-				"internalType": "bytes32[]",
-				"name": "ss",
-				"type": "bytes32[]"
 			}
 		],
-		"name": "newAnchor",
-		"outputs": [],
 		"payable": false,
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -312,6 +565,21 @@
 				"internalType": "contract EthMerkleBridge",
 				"name": "bridge",
 				"type": "address"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "destinationBridgeKey",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tAnchor",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tFinal",
+				"type": "uint256"
 			}
 		],
 		"payable": false,
@@ -329,6 +597,25 @@
 			}
 		],
 		"name": "newValidatorsEvent",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "root",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "height",
+				"type": "uint256"
+			}
+		],
+		"name": "anchorEvent",
 		"type": "event"
 	}
 ]

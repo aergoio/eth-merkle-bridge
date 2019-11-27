@@ -1,14 +1,22 @@
 import argparse
 from getpass import getpass
+import hashlib
 import json
 
 import aergo.herapy as herapy
+
+from aergo.herapy.utils.encoding import (
+    decode_address,
+)
 
 from web3 import (
     Web3,
 )
 from web3.middleware import (
     geth_poa_middleware,
+)
+from eth_utils import (
+    keccak,
 )
 
 from ethaergo_wallet.eth_utils.contract_deployer import (
@@ -41,6 +49,20 @@ def deploy_oracle(
         config_data['networks'][eth_net]['bridges'][aergo_net]['addr']
     bridge_aergo_addr = \
         config_data['networks'][aergo_net]['bridges'][eth_net]['addr']
+    t_anchor_aergo = \
+        config_data['networks'][aergo_net]['bridges'][eth_net]['t_anchor']
+    t_final_aergo = \
+        config_data['networks'][aergo_net]['bridges'][eth_net]['t_final']
+    t_anchor_eth = \
+        config_data['networks'][eth_net]['bridges'][aergo_net]['t_anchor']
+    t_final_eth = \
+        config_data['networks'][eth_net]['bridges'][aergo_net]['t_final']
+    bridge_aergo_trie_key = \
+        hashlib.sha256(decode_address(bridge_aergo_addr)).digest()
+    print("bridge key aergo: ", bridge_aergo_trie_key)
+    bridge_eth_trie_key = \
+        "0x" + keccak(bytes.fromhex(bridge_eth_addr[2:])).hex()
+    print("bridge key eth: ", bridge_eth_trie_key)
     with open(bridge_abi_path, "r") as f:
         bridge_abi = f.read()
     with open(oracle_abi_path, "r") as f:
@@ -90,7 +112,8 @@ def deploy_oracle(
 
     print("------ Deploy Aergo SC -----------")
     payload = herapy.utils.decode_address(lua_bytecode)
-    args = [aergo_validators, bridge_aergo_addr]
+    args = [aergo_validators, bridge_aergo_addr, bridge_eth_trie_key,
+            t_anchor_aergo, t_final_aergo]
     tx, result = aergo.deploy_sc(amount=0,
                                  payload=payload,
                                  args=args)
@@ -114,7 +137,8 @@ def deploy_oracle(
     print("------ Deploy Ethereum SC -----------")
     receipt = deploy_contract(
         sol_bytecode, oracle_abi, w3, 8000000, 20, privkey,
-        eth_validators, bridge_eth_addr
+        eth_validators, bridge_eth_addr, bridge_aergo_trie_key, t_anchor_eth,
+        t_final_eth
     )
     eth_oracle = receipt.contractAddress
 

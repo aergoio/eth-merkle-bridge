@@ -254,7 +254,7 @@ contract EthMerkleBridge {
         return bits[i/8]&bytes1(uint8(1)<<uint8(7-i%8)) != 0;
     }
 
-    // Lua contract don't store real bytes of uin so converting to string in necessary
+    // Lua contracts don't store real bytes of uint so converting to string in necessary
     // @param   num - convert uint to string type : 1234 -> "1234"
     function uintToString(uint num) public pure returns(string memory) {
         // https://github.com/oraclize/ethereum-api/blob/6fb6e887e7b95c496fd723a7c62ce40551f8028a/oraclizeAPI_0.5.sol#L1041

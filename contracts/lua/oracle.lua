@@ -21,6 +21,22 @@ local function _typecheck(x, t)
 end
 
 state.var {
+    -- Global State root included in block headers
+    -- (hex string without 0x prefix)
+    _anchorRoot = state.value(),
+    -- Height of the last block anchored
+    -- (uint)
+    _anchorHeight = state.value(),
+
+    -- _tAnchor is the anchoring periode: sets a minimal delay between anchors to prevent spamming
+    -- and give time to applications to build merkle proof for their data.
+    -- (uint)
+    _tAnchor = state.value(),
+    -- _tFinal is the time after which the validators considere a block finalised
+    -- this value is only useful if the anchored chain doesn't have LIB
+    -- Since Aergo has LIB it is a simple indicator for wallets.
+    -- (uint)
+    _tFinal = state.value(),
     -- _validators contains the addresses and 2/3 of them must sign a root update
     -- The index of validators starts at 1.
     -- (uint) -> (address) 
@@ -37,6 +53,10 @@ state.var {
     _contractId = state.value(),
     -- address of the bridge contract being controlled by oracle
     _bridge = state.value(),
+    -- address of the bridge contract being controlled by oracle
+    -- General Ethereum patricia trie key of the bridge contract on Ethereum blockchain
+    -- (hex string with 0x prefix)
+    _destinationBridgeKey = state.value(),
 }
 
 --------------------- Utility Functions -------------------------
@@ -73,12 +93,13 @@ local function _join(array)
     return str
 end
 
--- Create a new bridge contract
+-- Create a new oracle contract
 -- @type    __init__
 -- @param   validators ([]address) array of Aergo addresses
 -- @param   bridge (address) address of already deployed bridge contract
+-- @param   destinationBridgeKey (0x hex string) trie key of destination bridge contract in Ethereum state trie
 -- @return  (string) id of contract
-function constructor(validators, bridge)
+function constructor(validators, bridge, destinationBridgeKey, tAnchor, tFinal)
     _nonce:set(0)
     _validatorsCount:set(#validators)
     for i, addr in ipairs(validators) do
@@ -86,6 +107,11 @@ function constructor(validators, bridge)
         _validators[i] = addr
     end
     _bridge:set(bridge)
+    _destinationBridgeKey:set(destinationBridgeKey)
+    _tAnchor:set(tAnchor)
+    _tFinal:set(tFinal)
+    _anchorRoot:set("constructor")
+    _anchorHeight:set(0)
     -- contractID is the hash of system.getContractID (prevent replay between contracts on the same chain) and system.getPrevBlockHash (prevent replay between sidechains).
     -- take the first 16 bytes
     local id = crypto.sha256(system.getContractID()..system.getPrevBlockHash())
@@ -93,6 +119,7 @@ function constructor(validators, bridge)
     _contractId:set(id)
     return id
 end
+
 
 -- Register a new set of validators
 -- @type    call
@@ -134,20 +161,6 @@ function oracleUpdate(newOracle, signers, signatures)
     contract.call(_bridge:get(), "oracleUpdate", newOracle)
 end
 
--- Register a new anchor
--- @type    call
--- @param   root (ethaddress) Ethereum storage root
--- @param   height (uint) block height of root
--- @param   signers ([]uint) array of signer indexes
--- @param   signatures ([]0x hex string) array of signatures matching signers indexes
-function newAnchor(root, height, signers, signatures)
-    oldNonce = _nonce:get()
-    message = crypto.sha256(root..','..tostring(height)..tostring(oldNonce).._contractId:get().."R")
-    assert(_validateSignatures(message, signers, signatures), "Failed signature validation")
-    _nonce:set(oldNonce + 1)
-    contract.call(_bridge:get(), "newAnchor", root, height)
-end
-
 -- Register new anchoring periode
 -- @type    call
 -- @param   tAnchor (uint) new anchoring periode
@@ -158,6 +171,7 @@ function tAnchorUpdate(tAnchor, signers, signatures)
     message = crypto.sha256(tostring(tAnchor)..tostring(oldNonce).._contractId:get().."A")
     assert(_validateSignatures(message, signers, signatures), "Failed tAnchor signature validation")
     _nonce:set(oldNonce + 1)
+    _tAnchor:set(tAnchor)
     contract.call(_bridge:get(), "tAnchorUpdate", tAnchor)
 end
 
@@ -171,6 +185,7 @@ function tFinalUpdate(tFinal, signers, signatures)
     message = crypto.sha256(tostring(tFinal)..tostring(oldNonce).._contractId:get().."F")
     assert(_validateSignatures(message, signers, signatures), "Failed tFinal signature validation")
     _nonce:set(oldNonce + 1)
+    _tFinal:set(tFinal)
     contract.call(_bridge:get(), "tFinalUpdate", tFinal)
 end
 
@@ -187,4 +202,54 @@ function unfreezeFeeUpdate(fee, signers, signatures)
     contract.call(_bridge:get(), "unfreezeFeeUpdate", fee)
 end
 
-abi.register(oracleUpdate, newAnchor, validatorsUpdate, tAnchorUpdate, tFinalUpdate, unfreezeFeeUpdate)
+-- Register a new state anchor
+-- @type    call
+-- @param   root (0x hex string) Ethereum state root
+-- @param   height (uint) block height of root
+-- @param   signers ([]uint) array of signer indexes
+-- @param   signatures ([]0x hex string) array of signatures matching signers indexes
+function newStateAnchor(root, height, signers, signatures)
+    assert(height > _anchorHeight:get() + _tAnchor:get(), "Next anchor height not reached")
+    root = string.sub(root, 3)
+    oldNonce = _nonce:get()
+    message = crypto.sha256(root..','..tostring(height)..tostring(oldNonce).._contractId:get().."R")
+    assert(_validateSignatures(message, signers, signatures), "Failed signature validation")
+    _nonce:set(oldNonce + 1)
+    _anchorRoot:set(root)
+    _anchorHeight:set(height)
+    contract.event("newAnchor", system.getSender(), height, root)
+end
+
+-- Register a new bridge anchor
+-- @type    call
+-- @param   nonce (0x hex string) Bridge contract nonce
+-- @param   balance (0x hex string) Bridge contract balance
+-- @param   root (0x hex string) Bridge contract storage root
+-- @param   codeHash (0x hex string) Bridge contract code hash
+-- @param   mp - merkle proof of inclusion of proto serialized account in general trie
+-- @param   merkleProof ([]0x hex string) merkle proof of inclusion of RLP serialized account in general trie
+function newBridgeAnchor(nonce, balance, root, codeHash, merkleProof)
+    local accountState = {nonce, balance, root, codeHash}
+    if not crypto.verifyProof(_destinationBridgeKey:get(), accountState, "0x" .. _anchorRoot:get(), unpack(merkleProof)) then
+        error("Failed to verify bridge state inside general state:" .. _destinationBridgeKey:get() ..  rawRlpBytes .. _anchorRoot:get())
+    end
+    contract.call(_bridge:get(), "newAnchor", root, _anchorHeight:get())
+end
+
+-- Register a new state anchor and update the bridge anchor
+-- @type    call
+-- @param   stateRoot (0x hex string) Ethereum state root
+-- @param   height (uint) block height of root
+-- @param   signers ([]uint) array of signer indexes
+-- @param   signatures ([]0x hex string) array of signatures matching signers indexes
+-- @param   bridgeNonce (0x hex string) Bridge contract nonce
+-- @param   bridgeBalance (0x hex string) Bridge contract balance
+-- @param   bridgeRoot (0x hex string) Bridge contract storage root
+-- @param   bridgeCodeHash (0x hex string) Bridge contract code hash
+-- @param   merkleProof ([]0x hex string) merkle proof of inclusion of RLP serialized account in general trie
+function newStateAndBridgeAnchor(stateRoot, height, signers, signatures, bridgeNonce, bridgeBalance, bridgeRoot, bridgeCodeHash, merkleProof)
+    newStateAnchor(stateRoot, height, signers, signatures)
+    newBridgeAnchor(bridgeNonce, bridgeBalance, bridgeRoot, bridgeCodeHash, merkleProof)
+end
+
+abi.register(oracleUpdate, newStateAnchor, newBridgeAnchor, newStateAndBridgeAnchor, validatorsUpdate, tAnchorUpdate, tFinalUpdate, unfreezeFeeUpdate)

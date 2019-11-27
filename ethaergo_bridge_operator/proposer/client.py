@@ -25,17 +25,18 @@ class ProposerClient:
         anchoring_on: bool = False,
         auto_update: bool = False,
         oracle_update: bool = False,
+        bridge_anchoring: bool = True,
         root_path: str = './'
     ) -> None:
         self.t_eth_client = EthProposerClient(
             config_file_path, aergo_net, eth_net, privkey_name,
-            privkey_pwd, anchoring_on, auto_update, oracle_update, root_path,
-            eth_gas_price
+            privkey_pwd, anchoring_on, auto_update, oracle_update,
+            root_path, eth_gas_price, bridge_anchoring
         )
         self.t_aergo_client = AergoProposerClient(
             config_file_path, aergo_net, eth_net, eth_block_time, privkey_name,
             privkey_pwd, anchoring_on, auto_update, oracle_update,
-            aergo_gas_price
+            aergo_gas_price, bridge_anchoring
         )
 
     def run(self):
