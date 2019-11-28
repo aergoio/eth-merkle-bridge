@@ -120,6 +120,23 @@ function constructor(validators, bridge, destinationBridgeKey, tAnchor, tFinal)
     return id
 end
 
+-- Getter for validators
+-- @type    query
+-- @return  ([]string) array or validator addresses
+function getValidators()
+    local validators = {}
+    for i=1, _validatorsCount:get() do
+        validators[i] = _validators[i]
+    end
+    return validators
+end
+
+-- Getter for anchored state root and height
+-- @type    query
+-- @return  (0x hex string, int) state root, height of the anchored blockchain
+function getForeignBlockchainState()
+    return _anchorRoot:get(), _anchorHeight:get()
+end
 
 -- Register a new set of validators
 -- @type    call
@@ -252,4 +269,4 @@ function newStateAndBridgeAnchor(stateRoot, height, signers, signatures, bridgeN
     newBridgeAnchor(bridgeNonce, bridgeBalance, bridgeRoot, bridgeCodeHash, merkleProof)
 end
 
-abi.register(oracleUpdate, newStateAnchor, newBridgeAnchor, newStateAndBridgeAnchor, validatorsUpdate, tAnchorUpdate, tFinalUpdate, unfreezeFeeUpdate)
+abi.register(oracleUpdate, newStateAnchor, newBridgeAnchor, newStateAndBridgeAnchor, validatorsUpdate, tAnchorUpdate, tFinalUpdate, unfreezeFeeUpdate, getValidators, getForeignBlockchainState)
