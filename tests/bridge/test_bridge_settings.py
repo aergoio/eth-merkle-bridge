@@ -1,3 +1,4 @@
+import json
 import time
 
 import aergo.herapy as herapy
@@ -255,6 +256,26 @@ def test_validators_update(bridge_wallet):
 
     assert aergo_validators == aergo_validators_before
     assert eth_validators == eth_validators_before
+
+
+def test_getters(bridge_wallet):
+    hera = bridge_wallet.get_aergo('aergo-local', 'default', '1234')
+    aergo_oracle_addr = bridge_wallet.config_data(
+        'networks', 'aergo-local', 'bridges', 'eth-poa-local', 'oracle'
+    )
+    # query validators
+    aergo_validators = query_aergo_validators(hera, aergo_oracle_addr)
+    tx, _ = hera.call_sc(aergo_oracle_addr, "getValidators")
+    result = hera.wait_tx_result(tx.tx_hash)
+    getter_validators = json.loads(result.detail)
+    assert getter_validators == aergo_validators
+
+    # query anchored state
+    tx, _ = hera.call_sc(aergo_oracle_addr, "getForeignBlockchainState")
+    result = hera.wait_tx_result(tx.tx_hash)
+    root, height = json.loads(result.detail)
+    assert len(root) == 64
+    assert type(height) == int
 
 
 def test_unfreeze_fee_update(bridge_wallet):

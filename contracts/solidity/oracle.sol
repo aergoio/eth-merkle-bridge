@@ -290,7 +290,6 @@ contract Oracle {
         // parse uint64 nonce = 1
         if (proto[index] == 0x08) {
             index++;
-            // TODO instead of proto.length use the max varint bytes used to encode a uint64
             for (index; index<proto.length;) {
                 // 0x80 = 128 => check if the first bit is 0 or 1.
                 // The first bit of the last byte of the varint nb is 0
@@ -315,13 +314,13 @@ contract Oracle {
         // parse bytes codeHash = 3
         require(proto[index] == 0x1a, "Invalid codeHash proto tag");
         index++;
-        require(proto[index] == 0x20, "Invalid hash length");
+        require(proto[index] == 0x20, "Invalid codeHash length");
         index += 33;
 
         // parse bytes storageRoot = 4
         require(proto[index] == 0x22, "Invalid storageRoot proto tag");
         index++;
-        require(proto[index] == 0x20, "Invalid hash length");
+        require(proto[index] == 0x20, "Invalid storageRoot length");
         index++; // start of storageRoot bytes
         // extrack storageRoot
         bytes32 storageRoot;
