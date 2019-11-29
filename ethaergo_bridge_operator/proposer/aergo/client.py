@@ -176,7 +176,7 @@ class AergoProposerClient(threading.Thread):
 
             logger.info(
                 "\"Current Eth -> Aergo \u2693 anchor: "
-                "height: %s, root: 0x%s, nonce: %s\"",
+                "height: %s, root: %s, nonce: %s\"",
                 merged_height_from, root_from.decode('utf-8')[1:-1], nonce_to
             )
 

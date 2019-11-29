@@ -37,7 +37,7 @@ end
 state.var {
     -- Trie root of the opposit side bridge contract. _mints and _unlocks require a merkle proof
     -- of state inclusion in this last Root.
-    -- (hex string without 0x prefix)
+    -- (0x hex string)
     _anchorRoot = state.value(),
     -- Height of the last block anchored
     -- (uint)
@@ -111,7 +111,7 @@ local function _verifyDepositProof(mapKey, mapPosition, value, merkleProof)
     -- map key is always >= 32 bytes so no padding needed
     paddedPosition = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" .. string.char(mapPosition)
     key = crypto.keccak256(mapKey..paddedPosition)
-    return crypto.verifyProof(key, value, "0x" .. _anchorRoot:get(), unpack(merkleProof))
+    return crypto.verifyProof(key, value, _anchorRoot:get(), unpack(merkleProof))
 end
 
 -- deploy new contract
@@ -197,7 +197,7 @@ function newAnchor(root, height)
     _onlyOracle()
     -- check Height to prevent spamming and leave minimum time for users to make transfers.
     assert(height > _anchorHeight:get() + _tAnchor:get(), "Next anchor height not reached")
-    _anchorRoot:set(string.sub(root, 3))
+    _anchorRoot:set(root)
     _anchorHeight:set(height)
     contract.event("newAnchor", system.getSender(), height, root)
 end

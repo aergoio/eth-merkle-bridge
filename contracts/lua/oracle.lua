@@ -22,7 +22,7 @@ end
 
 state.var {
     -- Global State root included in block headers
-    -- (hex string without 0x prefix)
+    -- (0x hex string)
     _anchorRoot = state.value(),
     -- Height of the last block anchored
     -- (uint)
@@ -227,9 +227,8 @@ end
 -- @param   signatures ([]0x hex string) array of signatures matching signers indexes
 function newStateAnchor(root, height, signers, signatures)
     assert(height > _anchorHeight:get() + _tAnchor:get(), "Next anchor height not reached")
-    root = string.sub(root, 3)
     oldNonce = _nonce:get()
-    message = crypto.sha256(root..','..tostring(height)..tostring(oldNonce).._contractId:get().."R")
+    message = crypto.sha256(string.sub(root, 3)..','..tostring(height)..tostring(oldNonce).._contractId:get().."R")
     assert(_validateSignatures(message, signers, signatures), "Failed signature validation")
     _nonce:set(oldNonce + 1)
     _anchorRoot:set(root)
@@ -247,7 +246,7 @@ end
 -- @param   merkleProof ([]0x hex string) merkle proof of inclusion of RLP serialized account in general trie
 function newBridgeAnchor(nonce, balance, root, codeHash, merkleProof)
     local accountState = {nonce, balance, root, codeHash}
-    if not crypto.verifyProof(_destinationBridgeKey:get(), accountState, "0x" .. _anchorRoot:get(), unpack(merkleProof)) then
+    if not crypto.verifyProof(_destinationBridgeKey:get(), accountState, _anchorRoot:get(), unpack(merkleProof)) then
         error("Failed to verify bridge state inside general state:" .. _destinationBridgeKey:get() ..  rawRlpBytes .. _anchorRoot:get())
     end
     contract.call(_bridge:get(), "newAnchor", root, _anchorHeight:get())
