@@ -228,8 +228,6 @@ class AergoProposerClient(threading.Thread):
                     self.monitor_settings_and_sleep(wait * self.eth_block_time)
                     continue
 
-                # TODO change when Lua verify proof update
-                self.bridge_anchoring = False
                 if self.bridge_anchoring:
                     # broadcast the general state root and relay the bridge
                     # root with a merkle proof
