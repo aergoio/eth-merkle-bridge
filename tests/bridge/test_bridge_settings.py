@@ -274,7 +274,7 @@ def test_getters(bridge_wallet):
     tx, _ = hera.call_sc(aergo_oracle_addr, "getForeignBlockchainState")
     result = hera.wait_tx_result(tx.tx_hash)
     root, height = json.loads(result.detail)
-    assert len(root) == 64
+    assert len(root) == 66
     assert type(height) == int
 
 

@@ -1,7 +1,3 @@
-def test_aer_transfer():
-    assert True
-
-
 def test_standard_token_transfer(bridge_wallet):
     eth_user = bridge_wallet.config_data('wallet-eth', 'default', 'addr')
     aergo_user = bridge_wallet.config_data('wallet', 'default', 'addr')

@@ -55,7 +55,7 @@ state.var {
     _bridge = state.value(),
     -- address of the bridge contract being controlled by oracle
     -- General Ethereum patricia trie key of the bridge contract on Ethereum blockchain
-    -- (hex string with 0x prefix)
+    -- (0x hex string)
     _destinationBridgeKey = state.value(),
 }
 
@@ -246,9 +246,11 @@ end
 -- @param   merkleProof ([]0x hex string) merkle proof of inclusion of RLP serialized account in general trie
 function newBridgeAnchor(nonce, balance, root, codeHash, merkleProof)
     local accountState = {nonce, balance, root, codeHash}
+    -- TODO : uncomment when lua update
+    --[[
     if not crypto.verifyProof(_destinationBridgeKey:get(), accountState, _anchorRoot:get(), unpack(merkleProof)) then
         error("Failed to verify bridge state inside general state:" .. _destinationBridgeKey:get() ..  rawRlpBytes .. _anchorRoot:get())
-    end
+    end]]
     contract.call(_bridge:get(), "newAnchor", root, _anchorHeight:get())
 end
 
