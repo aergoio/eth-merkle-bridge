@@ -15,9 +15,6 @@ from web3 import (
 from web3.middleware import (
     geth_poa_middleware,
 )
-from eth_utils import (
-    keccak,
-)
 
 from ethaergo_wallet.eth_utils.contract_deployer import (
     deploy_contract,
@@ -60,9 +57,11 @@ def deploy_oracle(
     bridge_aergo_trie_key = \
         hashlib.sha256(decode_address(bridge_aergo_addr)).digest()
     print("bridge key aergo: ", bridge_aergo_trie_key)
-    bridge_eth_trie_key = \
-        "0x" + keccak(bytes.fromhex(bridge_eth_addr[2:])).hex()
-    print("bridge key eth: ", bridge_eth_trie_key)
+    # bridge_eth_address is used instead of bridge_eth_trie_key because
+    # crypto.verifyProof() already hashes the key
+    # bridge_eth_trie_key = \
+    #    "0x" + keccak(bytes.fromhex(bridge_eth_addr[2:])).hex()
+    # print("bridge key eth: ", bridge_eth_trie_key)
     with open(bridge_abi_path, "r") as f:
         bridge_abi = f.read()
     with open(oracle_abi_path, "r") as f:
@@ -112,7 +111,7 @@ def deploy_oracle(
 
     print("------ Deploy Aergo SC -----------")
     payload = herapy.utils.decode_address(lua_bytecode)
-    args = [aergo_validators, bridge_aergo_addr, bridge_eth_trie_key,
+    args = [aergo_validators, bridge_aergo_addr, bridge_eth_addr,
             t_anchor_aergo, t_final_aergo]
     tx, result = aergo.deploy_sc(amount=0,
                                  payload=payload,
