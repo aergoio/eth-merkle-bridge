@@ -265,15 +265,13 @@ def test_getters(bridge_wallet):
     )
     # query validators
     aergo_validators = query_aergo_validators(hera, aergo_oracle_addr)
-    tx, _ = hera.call_sc(aergo_oracle_addr, "getValidators")
-    result = hera.wait_tx_result(tx.tx_hash)
-    getter_validators = json.loads(result.detail)
+    getter_validators = json.loads(
+        hera.query_sc(aergo_oracle_addr, "getValidators"))
     assert getter_validators == aergo_validators
 
     # query anchored state
-    tx, _ = hera.call_sc(aergo_oracle_addr, "getForeignBlockchainState")
-    result = hera.wait_tx_result(tx.tx_hash)
-    root, height = json.loads(result.detail)
+    root, height = json.loads(
+        hera.query_sc(aergo_oracle_addr, "getForeignBlockchainState"))
     assert len(root) == 66
     assert type(height) == int
 
