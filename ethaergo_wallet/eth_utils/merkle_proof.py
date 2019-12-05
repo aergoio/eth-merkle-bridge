@@ -15,10 +15,7 @@ from web3._utils.encoding import (
 
 
 def format_proof_for_lua(proof):
-    proof_hex = []
-    for p in proof:
-        proof_hex.append(p.hex())
-    return proof_hex
+    return [p.hex() for p in proof]
 
 
 def format_proof_nodes(proof):

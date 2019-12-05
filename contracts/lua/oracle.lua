@@ -53,10 +53,9 @@ state.var {
     _contractId = state.value(),
     -- address of the bridge contract being controlled by oracle
     _bridge = state.value(),
-    -- address of the bridge contract being controlled by oracle
-    -- General Ethereum patricia trie key of the bridge contract on Ethereum blockchain
+    -- Address of bridge contract on Ethereum: used to relay the Eth bridge contract storage root on Aergo.
     -- (0x hex string)
-    _destinationBridgeKey = state.value(),
+    _destinationBridgeAddr = state.value(),
 }
 
 --------------------- Utility Functions -------------------------
@@ -97,9 +96,11 @@ end
 -- @type    __init__
 -- @param   validators ([]address) array of Aergo addresses
 -- @param   bridge (address) address of already deployed bridge contract
--- @param   destinationBridgeKey (0x hex string) trie key of destination bridge contract in Ethereum state trie
+-- @param   destinationBridgeAddr (0x hex string) trie key of destination bridge contract in Ethereum state trie
+-- @param   tAnchor (uint) anchoring periode on this contract
+-- @param   tFinal (uint) finality of anchored chain
 -- @return  (string) id of contract
-function constructor(validators, bridge, destinationBridgeKey, tAnchor, tFinal)
+function constructor(validators, bridge, destinationBridgeAddr, tAnchor, tFinal)
     _nonce:set(0)
     _validatorsCount:set(#validators)
     for i, addr in ipairs(validators) do
@@ -107,7 +108,7 @@ function constructor(validators, bridge, destinationBridgeKey, tAnchor, tFinal)
         _validators[i] = addr
     end
     _bridge:set(bridge)
-    _destinationBridgeKey:set(destinationBridgeKey)
+    _destinationBridgeAddr:set(destinationBridgeAddr)
     _tAnchor:set(tAnchor)
     _tFinal:set(tFinal)
     _anchorRoot:set("constructor")
@@ -246,11 +247,9 @@ end
 -- @param   merkleProof ([]0x hex string) merkle proof of inclusion of RLP serialized account in general trie
 function newBridgeAnchor(nonce, balance, root, codeHash, merkleProof)
     local accountState = {nonce, balance, root, codeHash}
-    -- TODO : uncomment when lua update
-    --[[
-    if not crypto.verifyProof(_destinationBridgeKey:get(), accountState, _anchorRoot:get(), unpack(merkleProof)) then
-        error("Failed to verify bridge state inside general state:" .. _destinationBridgeKey:get() ..  rawRlpBytes .. _anchorRoot:get())
-    end]]
+    if not crypto.verifyProof(_destinationBridgeAddr:get(), accountState, _anchorRoot:get(), unpack(merkleProof)) then
+        error("Failed to verify bridge state inside general state")
+    end
     contract.call(_bridge:get(), "newAnchor", root, _anchorHeight:get())
 end
 

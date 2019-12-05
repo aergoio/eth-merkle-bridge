@@ -393,13 +393,62 @@ class AergoProposerClient(threading.Thread):
         """
         state = self.web3.eth.getProof(
             self.eth_bridge, [], next_anchor_height)
-        bridge_nonce = hex(state.nonce)
-        bridge_balance = hex(state.balance)
+        bridge_nonce = \
+            "0x" if state.nonce == 0 else "0x{:02x}".format(state.nonce)
+        bridge_balance = \
+            "0x" if state.balance == 0 else "0x{:02x}".format(state.balance)
         bridge_root = state.storageHash.hex()
         bridge_code_hash = state.codeHash.hex()
         bridge_contract_state = \
             [bridge_nonce, bridge_balance, bridge_root, bridge_code_hash]
         merkle_proof = [node.hex() for node in state.accountProof]
+
+        '''
+        # test
+        import rlp
+        from rlp.sedes import (
+            Binary,
+            big_endian_int,
+        )
+        from eth_utils import (
+            keccak,
+        )
+        from trie import (
+            HexaryTrie,
+        )
+        def format_proof_nodes(proof):
+            trie_proof = []
+            for rlp_node in proof:
+                trie_proof.append(rlp.decode(bytes(rlp_node)))
+            return trie_proof
+
+        trie_root = Binary.fixed_length(32, allow_empty=True)
+        hash32 = Binary.fixed_length(32)
+
+        class _Account(rlp.Serializable):
+            fields = [
+                        ('nonce', big_endian_int),
+                        ('balance', big_endian_int),
+                        ('storage', trie_root),
+                        ('code_hash', hash32)
+                    ]
+        acc = _Account(
+            state.nonce, state.balance, state.storageHash, state.codeHash
+        )
+        rlp_account = rlp.encode(acc)
+        print("0x" + rlp_account.hex())
+        print(bridge_contract_state)
+        trie_key = keccak(bytes.fromhex(state.address[2:]))
+        print("key:", self.eth_bridge)
+        root = keccak(state.accountProof[0])
+        print("root1:", root.hex())
+        print(merkle_proof)
+        print(state.accountProof)
+
+        assert rlp_account == HexaryTrie.get_from_proof(
+            root, trie_key, format_proof_nodes(state.accountProof)
+        ), "Failed to verify account proof {}".format(state.address)
+        '''
         return bridge_contract_state, merkle_proof
 
 
