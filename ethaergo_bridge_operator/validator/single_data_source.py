@@ -94,8 +94,9 @@ class SingleDataSource():
 
         # 2- get blocks state root at origin_height
         # and check equals anchor root
-        block = self.hera.get_block(block_height=int(anchor.height))
-        root = block.blocks_root_hash
+        block = self.hera.get_block_headers(
+            block_height=int(anchor.height), list_size=1)
+        root = block[0].blocks_root_hash
         if root != anchor.root:
             return ("root doesn't match height {}, got: {}, expected: {}"
                     .format(lib, anchor.root.hex(), root.hex()))

@@ -402,6 +402,7 @@ def test_oracle_update(bridge_wallet):
             aergo_oracle_addr, ["_sv__nonce"]
         ).var_proofs[0].value
     )
+    eth_nonce_before = eth_oracle.functions._nonce().call()
     new_oracle_aergo = bridge_wallet.config_data('wallet', 'default', 'addr')
     new_oracle_eth = bridge_wallet.config_data('wallet-eth', 'default', 'addr')
     bridge_wallet.config_data(
@@ -415,7 +416,6 @@ def test_oracle_update(bridge_wallet):
     bridge_wallet.save_config()
 
     # wait for changes to be reflected
-    eth_nonce_before = eth_oracle.functions._nonce().call()
     nonce = aergo_nonce_before
     while nonce <= aergo_nonce_before + 1:
         time.sleep(t_anchor_aergo * eth_block_time)
@@ -427,6 +427,7 @@ def test_oracle_update(bridge_wallet):
     while nonce <= eth_nonce_before + 1:
         time.sleep(t_anchor_eth)
         nonce = eth_oracle.functions._nonce().call()
+    time.sleep(2)
 
     oracle_aergo = query_aergo_oracle(hera, aergo_bridge)
     oracle_eth = eth_bridge.functions._oracle().call()
@@ -445,7 +446,7 @@ def test_oracle_update(bridge_wallet):
     bridge_wallet.save_config()
 
     # reset to original oracle by calling oracleUpdate from 'default'
-    hera.call_sc(
+    aergo_tx, _ = hera.call_sc(
         aergo_bridge, "oracleUpdate", args=[aergo_oracle_addr]
     )
     construct_txn = eth_bridge.functions.oracleUpdate(
@@ -460,8 +461,10 @@ def test_oracle_update(bridge_wallet):
         'gasPrice': w3.toWei(9, 'gwei')
     })
     signed = signer_acct.sign_transaction(construct_txn)
-    w3.eth.sendRawTransaction(signed.rawTransaction)
-    time.sleep(2)
+    eth_tx_hash = w3.eth.sendRawTransaction(signed.rawTransaction)
+
+    w3.eth.waitForTransactionReceipt(eth_tx_hash)
+    hera.wait_tx_result(aergo_tx.tx_hash)
 
     oracle_aergo = query_aergo_oracle(hera, aergo_bridge)
     oracle_eth = eth_bridge.functions._oracle().call()

@@ -326,12 +326,14 @@ def _build_deposit_proof(
             time.sleep(1)
             last_merged_height_to = eth_bridge.functions._anchorHeight().call()
     # get inclusion proof of lock in last merged block
-    merge_block_from = aergo_from.get_block(block_height=last_merged_height_to)
+    merge_block_from = aergo_from.get_block_headers(
+        block_height=last_merged_height_to, list_size=1)
+    root_from = merge_block_from[0].blocks_root_hash
     proof = aergo_from.query_sc_state(
         bridge_from, [trie_key],
-        root=merge_block_from.blocks_root_hash, compressed=True
+        root=root_from, compressed=True
     )
-    if not proof.verify_proof(merge_block_from.blocks_root_hash):
+    if not proof.verify_proof(root_from):
         raise InvalidMerkleProofError("Unable to verify deposit proof",
                                       proof)
     if not proof.account.state_proof.inclusion:
@@ -355,12 +357,12 @@ def withdrawable(
 ) -> Tuple[int, int]:
     # total_deposit : total latest deposit including pending
     _, block_height = hera.get_blockchain_status()
-    block_from = hera.get_block(
-        block_height=block_height
-    )
+    block_from = hera.get_block_headers(
+        block_height=block_height, list_size=1)
+    root_from = block_from[0].blocks_root_hash
     deposit_proof = hera.query_sc_state(
         bridge_from, [aergo_storage_key],
-        root=block_from.blocks_root_hash, compressed=False
+        root=root_from, compressed=False
     )
     if not deposit_proof.account.state_proof.inclusion:
         raise InvalidArgumentsError(
@@ -380,12 +382,12 @@ def withdrawable(
     last_anchor_height = int.from_bytes(storage_value, "big")
 
     # get anchored deposit : total deposit before the last anchor
-    block_from = hera.get_block(
-        block_height=last_anchor_height
-    )
+    block_from = hera.get_block_headers(
+        block_height=last_anchor_height, list_size=1)
+    root_from = block_from[0].blocks_root_hash
     deposit_proof = hera.query_sc_state(
         bridge_from, [aergo_storage_key],
-        root=block_from.blocks_root_hash, compressed=False
+        root=root_from, compressed=False
     )
     if not deposit_proof.account.state_proof.inclusion:
         raise InvalidArgumentsError(

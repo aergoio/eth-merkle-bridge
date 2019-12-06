@@ -186,8 +186,9 @@ class EthProposerClient(threading.Thread):
             # Wait for the next anchor time
             next_anchor_height = self.wait_next_anchor(merged_height_from)
             # Get root of next anchor to broadcast
-            block = self.hera.get_block(block_height=next_anchor_height)
-            root = block.blocks_root_hash
+            block = self.hera.get_block_headers(
+                block_height=next_anchor_height, list_size=1)
+            root = block[0].blocks_root_hash
             if len(root) == 0:
                 logger.info("\"waiting deployment finalization...\"")
                 time.sleep(5)
