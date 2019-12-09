@@ -60,7 +60,7 @@ class AergoTx():
                 "time: %ss...\"",
                 self.t_anchor * self.eth_block_time
             )
-            logger.info("\"\u26fd Aergo Fee: %s\"", result.fee_used)
+            logger.info("\"\u26fd Aergo gas used: %s\"", result.gas_used)
 
     def new_state_and_bridge_anchor(
         self,
@@ -97,7 +97,7 @@ class AergoTx():
                 "time: %ss...\"",
                 self.t_anchor * self.eth_block_time
             )
-            logger.info("\"\u26fd Aergo Fee: %s\"", result.fee_used)
+            logger.info("\"\u26fd Aergo gas used: %s\"", result.gas_used)
 
     def set_validators(self, new_validators, validator_indexes, sigs):
         """Update validators on chain"""

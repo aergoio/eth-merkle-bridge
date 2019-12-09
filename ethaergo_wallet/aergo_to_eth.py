@@ -61,6 +61,7 @@ def lock(
     result = aergo_from.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Lock asset Tx execution failed : {}".format(result))
+    logger.info("\u26fd Aergo gas used: %s", result.gas_used)
     # get precise lock height
     tx_detail = aergo_from.get_tx(tx.tx_hash)
     lock_height = tx_detail.block.height
@@ -143,7 +144,7 @@ def mint(
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
         raise TxError("Mint asset Tx execution failed: {}".format(receipt))
-    logger.info("\u26fd Gas used: %s", receipt.gasUsed)
+    logger.info("\u26fd Eth Gas used: %s", receipt.gasUsed)
     events = eth_bridge.events.mintEvent().processReceipt(receipt)
     token_pegged = events[0]['args']['tokenAddress']
 
@@ -178,6 +179,7 @@ def burn(
     result = aergo_from.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Burn asset Tx execution failed : {}".format(result))
+    logger.info("\u26fd Aergo gas used: %s", result.gas_used)
     # get precise burn height
     tx_detail = aergo_from.get_tx(tx.tx_hash)
     burn_height = tx_detail.block.height
@@ -259,7 +261,7 @@ def unlock(
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
         raise TxError("Unlock asset Tx execution failed: {}".format(receipt))
-    logger.info("\u26fd Gas used: %s", receipt.gasUsed)
+    logger.info("\u26fd Eth Gas used: %s", receipt.gasUsed)
     return tx_hash.hex(), receipt
 
 
@@ -288,6 +290,7 @@ def freeze(
     result = aergo_from.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Freeze Aer Tx execution failed : {}".format(result))
+    logger.info("\u26fd Aergo gas used: %s", result.gas_used)
     # get precise burn height
     tx_detail = aergo_from.get_tx(tx.tx_hash)
     freeze_height = tx_detail.block.height

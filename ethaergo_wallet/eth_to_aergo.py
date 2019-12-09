@@ -72,7 +72,7 @@ def lock(
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
         raise TxError("Lock asset Tx execution failed: {}".format(receipt))
-    logger.info("\u26fd Gas used: %s", receipt.gasUsed)
+    logger.info("\u26fd Eth Gas used: %s", receipt.gasUsed)
     return receipt.blockNumber, tx_hash.hex(), receipt
 
 
@@ -136,6 +136,7 @@ def mint(
     result = aergo_to.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Mint asset Tx execution failed : {}".format(result))
+    logger.info("\u26fd Aergo gas used: %s", result.gas_used)
     token_pegged = json.loads(result.detail)[0]
     return token_pegged, str(tx.tx_hash), result
 
@@ -181,7 +182,7 @@ def burn(
     receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     if receipt.status != 1:
         raise TxError("Burn asset Tx execution failed: {}".format(receipt))
-    logger.info("\u26fd Gas used: %s", receipt.gasUsed)
+    logger.info("\u26fd Eth Gas used: %s", receipt.gasUsed)
     return receipt.blockNumber, tx_hash.hex(), receipt
 
 
@@ -245,6 +246,7 @@ def unlock(
     result = aergo_to.wait_tx_result(tx.tx_hash)
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Unlock asset Tx execution failed : {}".format(result))
+    logger.info("\u26fd Aergo gas used: %s", result.gas_used)
     return str(tx.tx_hash), result
 
 
@@ -274,6 +276,7 @@ def unfreeze(
     if result.status != herapy.TxResultStatus.SUCCESS:
         raise TxError("Unfreeze asset Tx execution failed : {}".format(result))
     logger.info("\u26fd Unfreeze tx fee paid: %s", result.fee_used)
+    logger.info("\u26fd Aergo gas used: %s", result.gas_used)
     return str(tx.tx_hash), result
 
 

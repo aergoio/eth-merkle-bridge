@@ -56,7 +56,7 @@ def deploy_oracle(
         config_data['networks'][eth_net]['bridges'][aergo_net]['t_final']
     bridge_aergo_trie_key = \
         hashlib.sha256(decode_address(bridge_aergo_addr)).digest()
-    print("bridge key aergo: ", bridge_aergo_trie_key)
+    print("bridge key aergo: 0x{}".format(bridge_aergo_trie_key.hex()))
     # bridge_eth_address is used instead of bridge_eth_trie_key because
     # crypto.verifyProof() already hashes the key
     # bridge_eth_trie_key = \
