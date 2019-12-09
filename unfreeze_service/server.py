@@ -182,6 +182,11 @@ class UnfreezeService(UnfreezeServiceServicer):
 
         # all went well
         logger.info("\"Unfreeze success for: %s\"", account_ref.receiver)
+
+        # Test unfreeze fee used
+        # result = self.hera.wait_tx_result(tx.tx_hash)
+        # logger.info("\"\u26fd Unfreeze tx fee paid: %s\"", result.fee_used)
+
         return Status(txHash=str(tx.tx_hash))
 
     def load_config_data(self) -> Dict:

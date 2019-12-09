@@ -10,6 +10,9 @@ are different, if will transfer _unfreezeFee to the tx sender and send the rest 
 The RequestUnfreeze service will check the receiver address is valid and that the amount to unfreeze is higher
 than the _unfreezeFee.
 
+In initial tests, the minimum unfreeze fee is about 7359000000000000 aer (0.007359 aergo) which we can expect to increase
+with larger Merkle proofs.
+
 Starting the unfreeze grpc service
 ----------------------------------
 
