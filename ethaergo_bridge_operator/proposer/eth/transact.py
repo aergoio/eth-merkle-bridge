@@ -67,7 +67,7 @@ class EthTx():
                 "\"\u2693 Anchor success, \u23F0 wait until next anchor "
                 "time: %ss...\"", self.t_anchor
             )
-            logger.info("\"\u26fd Gas used: %s\"", receipt.gasUsed)
+            logger.info("\"\u26fd Eth gas used: %s\"", receipt.gasUsed)
         else:
             logger.warning(
                 "\"Anchor failed: already anchored, or invalid "
@@ -108,7 +108,7 @@ class EthTx():
                 "\"\u2693 Anchor success, \u23F0 wait until next anchor "
                 "time: %ss...\"", self.t_anchor
             )
-            logger.info("\"\u26fd Gas used: %s\"", receipt.gasUsed)
+            logger.info("\"\u26fd Eth gas used: %s\"", receipt.gasUsed)
         else:
             logger.warning(
                 "\"Anchor failed: already anchored, or invalid "
