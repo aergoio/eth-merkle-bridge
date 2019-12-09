@@ -34,11 +34,13 @@ logger = logging.getLogger(__name__)
 
 class EthProposerClient(threading.Thread):
     """The ethereum bridge proposer periodically (every t_anchor) broadcasts
-    the finalized Aergo trie state root (after lib) of the bridge contract
+    the finalized Aergo trie state root (after lib)
     onto the ethereum bridge contract after validation by the Validators.
     It first checks the last merged height and waits until
     now > lib + t_anchor is reached, then merges the current finalised
-    block (lib). Start again after waiting t_anchor.
+    block (lib). If bridge_anchoring is True(default), then the proposer will
+    create a Merkle proof of the bridge storage root to anchor both roots in
+    the same transaction. Start again after waiting t_anchor.
     EthProposerClient anchors an Aergo state root onto Ethereum.
 
     Note on config_data:

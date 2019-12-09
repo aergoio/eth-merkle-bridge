@@ -37,12 +37,14 @@ logger = logging.getLogger(__name__)
 
 
 class AergoProposerClient(threading.Thread):
-    """The bridge proposer periodically (every t_anchor) broadcasts
-    the finalized trie state root (after lib) of the bridge contract
-    on both sides of the bridge after validation by the Validator servers.
+    """The aergo bridge proposer periodically (every t_anchor) broadcasts
+    the finalized trie state root (after lib)
+    onto the aergo bridge contract after validation by the Validator servers.
     It first checks the last merged height and waits until
     now > lib + t_anchor is reached, then merges the current finalised
-    block (lib). Start again after waiting t_anchor.
+    block (lib). If bridge_anchoring is True(default), then the proposer will
+    create a Merkle proof of the bridge storage root to anchor both roots in
+    the same transaction. Start again after waiting t_anchor.
 
     Note on config_data:
         - config_data is used to store current validators and their ip when the
