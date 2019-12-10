@@ -142,7 +142,7 @@ contract EthMerkleBridge {
     ) public returns(bool) {
         require(balance>0, "Balance must be positive");
         bytes memory accountRef = abi.encodePacked(receiver, address(token));
-        require(verifyMp("_sv__burns-", accountRef, balance, mp, bitmap, leafHeight), "Failed to verify lock proof");
+        require(verifyDepositProof("_sv__burns-", accountRef, balance, mp, bitmap, leafHeight), "Failed to verify lock proof");
         uint unlockedSoFar = _unlocks[accountRef];
         uint amountToTransfer = balance - unlockedSoFar;
         require(amountToTransfer>0, "Burn tokens before unlocking");
@@ -170,7 +170,7 @@ contract EthMerkleBridge {
     ) public returns(bool) {
         require(balance>0, "Balance must be positive");
         bytes memory accountRef = abi.encodePacked(receiver, tokenOrigin);
-        require(verifyMp("_sv__locks-", accountRef, balance, mp, bitmap, leafHeight), "Failed to verify lock proof");
+        require(verifyDepositProof("_sv__locks-", accountRef, balance, mp, bitmap, leafHeight), "Failed to verify lock proof");
         uint mintedSoFar = _mints[accountRef];
         uint amountToTransfer = balance - mintedSoFar;
         require(amountToTransfer>0, "Lock tokens before minting");
@@ -216,7 +216,7 @@ contract EthMerkleBridge {
     // @param   mp - merkle proof of inclusion of accountRef, balance in _anchorRoot
     // @param   bitmap - bitmap of non default nodes in the merkle proof
     // @param   leafHeight - height of leaf containing the value in the state SMT
-    function verifyMp(
+    function verifyDepositProof(
         string memory mapName,
         bytes memory accountRef,
         uint balance,

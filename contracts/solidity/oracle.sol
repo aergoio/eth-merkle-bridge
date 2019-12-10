@@ -167,7 +167,7 @@ contract Oracle {
     ) public {
         bytes32 root = parseRootFromProto(proto);
         bytes32 accountHash = sha256(proto);
-        require(verifyMp(_destinationBridgeKey, accountHash, mp, bitmap, leafHeight), "Failed to verify bridge state inside general state");
+        require(verifyAergoStateProof(_destinationBridgeKey, accountHash, mp, bitmap, leafHeight), "Failed to verify bridge state inside general state");
         _bridge.newAnchor(root, _anchorHeight);
     }
 
@@ -202,7 +202,7 @@ contract Oracle {
     // @param   mp - merkle proof of inclusion of accountRef, balance in _anchorRoot
     // @param   bitmap - bitmap of non default nodes in the merkle proof
     // @param   leafHeight - height of leaf containing the value in the state SMT
-    function verifyMp(
+    function verifyAergoStateProof(
         bytes32 trieKey,
         bytes32 trieValue,
         bytes32[] memory mp, // bytes[] is not yet supported so we use a bitmap of proof elements

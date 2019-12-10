@@ -60,12 +60,12 @@ state.var {
 
 --------------------- Utility Functions -------------------------
 -- Check 2/3 validators signed message hash
--- @type    internal
+-- @type    query
 -- @param   hash (0x hex string)
 -- @param   signers ([]uint) array of signer indexes
 -- @param   signatures ([]0x hex string) array of signatures matching signers indexes
 -- @return  (bool) 2/3 signarures are valid
-local function _validateSignatures(hash, signers, signatures)
+function validateSignatures(hash, signers, signatures)
     -- 2/3 of Validators must sign for the hash to be valid
     nb = _validatorsCount:get()
     assert(nb*2 <= #signers*3, "2/3 validators must sign")
@@ -80,16 +80,30 @@ local function _validateSignatures(hash, signers, signatures)
 end
 
 -- Concatenate strings in array
--- @type    internal
+-- @type    query
 -- @param   array ([]string)
 -- @return  (string)
-local function _join(array)
+function join(array)
     -- not using a separator is safe for signing if the length of items is checked with isValidAddress for example
     str = ""
     for i, data in ipairs(array) do
         str = str..data
     end
     return str
+end
+
+-- Verify a Merkle proof of Eth state object inside anchored root
+-- @type    query
+-- @param   nonce (0x hex string) Bridge contract nonce
+-- @param   balance (0x hex string) Bridge contract balance
+-- @param   root (0x hex string) Bridge contract storage root
+-- @param   codeHash (0x hex string) Bridge contract code hash
+-- @param   mp - merkle proof of inclusion of proto serialized account in general trie
+-- @param   merkleProof ([]0x hex string) merkle proof of inclusion of RLP serialized account in general trie
+-- @returns (bool) True if the proof is valid
+function verifyEthStateProof(nonce, balance, root, codeHash, merkleProof)
+    local accountState = {nonce, balance, root, codeHash}
+    return crypto.verifyProof(_destinationBridgeAddr:get(), accountState, _anchorRoot:get(), unpack(merkleProof))
 end
 
 -- Create a new oracle contract
@@ -148,8 +162,8 @@ end
 function validatorsUpdate(validators, signers, signatures)
     oldNonce = _nonce:get()
     -- it is safe to join validators without a ',' because the validators length is checked in _typecheck
-    message = crypto.sha256(_join(validators)..tostring(oldNonce).._contractId:get().."V")
-    assert(_validateSignatures(message, signers, signatures), "Failed new validators signature validation")
+    message = crypto.sha256(join(validators)..tostring(oldNonce).._contractId:get().."V")
+    assert(validateSignatures(message, signers, signatures), "Failed new validators signature validation")
     oldCount = _validatorsCount:get()
     if #validators < oldCount then
         diff = oldCount - #validators
@@ -174,7 +188,7 @@ end
 function oracleUpdate(newOracle, signers, signatures)
     oldNonce = _nonce:get()
     message = crypto.sha256(newOracle..tostring(oldNonce).._contractId:get().."O")
-    assert(_validateSignatures(message, signers, signatures), "Failed new oracle signature validation")
+    assert(validateSignatures(message, signers, signatures), "Failed new oracle signature validation")
     _nonce:set(oldNonce + 1)
     contract.call(_bridge:get(), "oracleUpdate", newOracle)
 end
@@ -187,7 +201,7 @@ end
 function tAnchorUpdate(tAnchor, signers, signatures)
     oldNonce = _nonce:get()
     message = crypto.sha256(tostring(tAnchor)..tostring(oldNonce).._contractId:get().."A")
-    assert(_validateSignatures(message, signers, signatures), "Failed tAnchor signature validation")
+    assert(validateSignatures(message, signers, signatures), "Failed tAnchor signature validation")
     _nonce:set(oldNonce + 1)
     _tAnchor:set(tAnchor)
     contract.call(_bridge:get(), "tAnchorUpdate", tAnchor)
@@ -201,7 +215,7 @@ end
 function tFinalUpdate(tFinal, signers, signatures)
     oldNonce = _nonce:get()
     message = crypto.sha256(tostring(tFinal)..tostring(oldNonce).._contractId:get().."F")
-    assert(_validateSignatures(message, signers, signatures), "Failed tFinal signature validation")
+    assert(validateSignatures(message, signers, signatures), "Failed tFinal signature validation")
     _nonce:set(oldNonce + 1)
     _tFinal:set(tFinal)
     contract.call(_bridge:get(), "tFinalUpdate", tFinal)
@@ -215,7 +229,7 @@ end
 function unfreezeFeeUpdate(fee, signers, signatures)
     oldNonce = _nonce:get()
     message = crypto.sha256(bignum.tostring(fee)..tostring(oldNonce).._contractId:get().."UF")
-    assert(_validateSignatures(message, signers, signatures), "Failed unfreeze fee signature validation")
+    assert(validateSignatures(message, signers, signatures), "Failed unfreeze fee signature validation")
     _nonce:set(oldNonce + 1)
     contract.call(_bridge:get(), "unfreezeFeeUpdate", fee)
 end
@@ -230,7 +244,7 @@ function newStateAnchor(root, height, signers, signatures)
     assert(height > _anchorHeight:get() + _tAnchor:get(), "Next anchor height not reached")
     oldNonce = _nonce:get()
     message = crypto.sha256(string.sub(root, 3)..','..tostring(height)..tostring(oldNonce).._contractId:get().."R")
-    assert(_validateSignatures(message, signers, signatures), "Failed signature validation")
+    assert(validateSignatures(message, signers, signatures), "Failed signature validation")
     _nonce:set(oldNonce + 1)
     _anchorRoot:set(root)
     _anchorHeight:set(height)
@@ -246,8 +260,7 @@ end
 -- @param   mp - merkle proof of inclusion of proto serialized account in general trie
 -- @param   merkleProof ([]0x hex string) merkle proof of inclusion of RLP serialized account in general trie
 function newBridgeAnchor(nonce, balance, root, codeHash, merkleProof)
-    local accountState = {nonce, balance, root, codeHash}
-    if not crypto.verifyProof(_destinationBridgeAddr:get(), accountState, _anchorRoot:get(), unpack(merkleProof)) then
+    if not verifyEthStateProof(nonce, balance, root, codeHash, merkleProof) then
         error("Failed to verify bridge state inside general state")
     end
     contract.call(_bridge:get(), "newAnchor", root, _anchorHeight:get())
@@ -269,4 +282,4 @@ function newStateAndBridgeAnchor(stateRoot, height, signers, signatures, bridgeN
     newBridgeAnchor(bridgeNonce, bridgeBalance, bridgeRoot, bridgeCodeHash, merkleProof)
 end
 
-abi.register(oracleUpdate, newStateAnchor, newBridgeAnchor, newStateAndBridgeAnchor, validatorsUpdate, tAnchorUpdate, tFinalUpdate, unfreezeFeeUpdate, getValidators, getForeignBlockchainState)
+abi.register(validateSignatures, join, verifyEthStateProof, getValidators, getForeignBlockchainState, validatorsUpdate, oracleUpdate, tAnchorUpdate, tFinalUpdate, unfreezeFeeUpdate, newStateAnchor, newBridgeAnchor, newStateAndBridgeAnchor)

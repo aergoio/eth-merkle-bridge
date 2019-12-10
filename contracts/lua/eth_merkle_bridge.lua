@@ -101,13 +101,13 @@ local function _abiEncode(hexString)
 end
 
 -- Ethereum Patricia State Trie Merkle proof verification
--- @type    internal
+-- @type    query
 -- @param   mapKey (string bytes) key in solidity map
 -- @param   mapPosition (uint) position of mapping state var in solidity contract
 -- @param   value (string bytes) value of mapKey in solidity map at mapPosition
 -- @param   merkleProof ([]0x hex string) merkle proof of inclusion of mapKey, value in _anchorRoot
 -- @return  (bool) merkle proof of inclusion is valid
-local function _verifyDepositProof(mapKey, mapPosition, value, merkleProof)
+function verifyDepositProof(mapKey, mapPosition, value, merkleProof)
     -- map key is always >= 32 bytes so no padding needed
     paddedPosition = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" .. string.char(mapPosition)
     key = crypto.keccak256(mapKey..paddedPosition)
@@ -267,7 +267,7 @@ function mint(receiver, balance, tokenOrigin, merkleProof)
     -- Verify merkle proof of locked balance
     local accountRef = receiver .. tokenOriginBytes
     -- Locks is the 6th variable of eth_merkle_bridge.col so mapPosition = 5
-    if not _verifyDepositProof(accountRef, 5, bignum.tobyte(balance), merkleProof) then
+    if not verifyDepositProof(accountRef, 5, bignum.tobyte(balance), merkleProof) then
         error("failed to verify deposit balance merkle proof")
     end
     -- Calculate amount to mint
@@ -345,7 +345,7 @@ function unlock(receiver, balance, tokenAddress, merkleProof)
     -- Verify merkle proof of burnt balance
     local accountRef = receiver .. tokenAddress
     -- Burns is the 8th variable of eth_merkle_bridge.col so mapPosition = 7
-    if not _verifyDepositProof(accountRef, 7, bignum.tobyte(balance), merkleProof) then
+    if not verifyDepositProof(accountRef, 7, bignum.tobyte(balance), merkleProof) then
         error("failed to verify burnt balance merkle proof")
     end
     -- Calculate amount to unlock
@@ -408,7 +408,7 @@ function unfreeze(receiver, balance, merkleProof)
     -- Verify merkle proof of burnt balance
     local accountRef = receiver .. _aergoErc20Bytes:get()
     -- Locks is the 6th variable of eth_merkle_bridge.col so mapPosition = 5
-    if not _verifyDepositProof(accountRef, 5, bignum.tobyte(balance), merkleProof) then
+    if not verifyDepositProof(accountRef, 5, bignum.tobyte(balance), merkleProof) then
         error("failed to verify locked balance merkle proof")
     end
     -- Calculate amount to unfreeze
@@ -658,5 +658,5 @@ abi.register(transfer, transferFrom, setApprovalForAll, mint, burn)
 abi.register_view(name, symbol, decimals, totalSupply, balanceOf, isApprovedForAll)
 ]]
 
-abi.register(oracleUpdate, newAnchor, tAnchorUpdate, tFinalUpdate, unfreezeFeeUpdate, tokensReceived, unlock, mint, burn, unfreeze)
+abi.register(verifyDepositProof, oracleUpdate, newAnchor, tAnchorUpdate, tFinalUpdate, unfreezeFeeUpdate, tokensReceived, mint, burn, unlock, unfreeze)
 abi.payable(freeze, default)
