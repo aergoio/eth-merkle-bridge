@@ -17,7 +17,7 @@ setuptools.setup(
         "aergo-herapy==2.0.0",
         "web3==5.4.0",
         "merkle-bridge @ git+git://github.com/aergoio/merkle-bridge.git@v0.3.0#egg=merkle-bridge",
-        "trie=1.4.0",
+        "trie==1.4.0",
         "PyInquirer",
         "pyfiglet"
     ],
