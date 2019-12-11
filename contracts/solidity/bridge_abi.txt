@@ -20,6 +20,12 @@
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
 				"indexed": false,
 				"internalType": "bytes32",
 				"name": "root",
@@ -38,6 +44,12 @@
 	{
 		"anonymous": false,
 		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
 			{
 				"indexed": true,
 				"internalType": "contract MintedERC20",
@@ -65,6 +77,12 @@
 		"inputs": [
 			{
 				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": true,
 				"internalType": "contract IERC20",
 				"name": "tokenAddress",
 				"type": "address"
@@ -88,6 +106,12 @@
 	{
 		"anonymous": false,
 		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
 			{
 				"indexed": true,
 				"internalType": "contract MintedERC20",
@@ -133,6 +157,12 @@
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
 				"indexed": false,
 				"internalType": "address",
 				"name": "newOracle",
@@ -145,6 +175,12 @@
 	{
 		"anonymous": false,
 		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
@@ -159,6 +195,12 @@
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
 				"indexed": false,
 				"internalType": "uint256",
 				"name": "tFinal",
@@ -171,6 +213,12 @@
 	{
 		"anonymous": false,
 		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
 			{
 				"indexed": true,
 				"internalType": "contract IERC20",

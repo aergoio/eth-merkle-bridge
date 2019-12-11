@@ -32,14 +32,14 @@ contract EthMerkleBridge {
     mapping(address => string) public _mintedTokens;
 
     event newMintedERC20(string indexed origin, MintedERC20 indexed addr);
-    event lockEvent(IERC20 indexed tokenAddress, string indexed receiver, uint amount);
-    event unlockEvent(IERC20 indexed tokenAddress, address indexed receiver, uint amount);
-    event mintEvent(MintedERC20 indexed tokenAddress, address indexed receiver, uint amount);
-    event burnEvent(MintedERC20 indexed tokenAddress, string indexed receiver, uint amount);
-    event anchorEvent(bytes32 root, uint height);
-    event newTAnchorEvent(uint tAnchor);
-    event newTFinalEvent(uint tFinal);
-    event newOracleEvent(address newOracle);
+    event lockEvent(address indexed sender, IERC20 indexed tokenAddress, string indexed receiver, uint amount);
+    event unlockEvent(address indexed sender, IERC20 indexed tokenAddress, address indexed receiver, uint amount);
+    event mintEvent(address indexed sender, MintedERC20 indexed tokenAddress, address indexed receiver, uint amount);
+    event burnEvent(address indexed sender, MintedERC20 indexed tokenAddress, string indexed receiver, uint amount);
+    event anchorEvent(address indexed sender, bytes32 root, uint height);
+    event newTAnchorEvent(address indexed sender, uint tAnchor);
+    event newTFinalEvent(address indexed sender, uint tFinal);
+    event newOracleEvent(address indexed sender, address newOracle);
 
     constructor(
         uint tAnchor,
@@ -66,7 +66,7 @@ contract EthMerkleBridge {
     ) public onlyOracle {
         require(newOracle != address(0), "Don't burn the oracle");
         _oracle = newOracle;
-        emit newOracleEvent(newOracle);
+        emit newOracleEvent(msg.sender, newOracle);
     }
 
     // Register new anchoring periode
@@ -75,7 +75,7 @@ contract EthMerkleBridge {
         uint tAnchor
     ) public onlyOracle {
         _tAnchor = tAnchor;
-        emit newTAnchorEvent(tAnchor);
+        emit newTAnchorEvent(msg.sender, tAnchor);
     }
 
     // Register new finality of anchored chain
@@ -84,7 +84,7 @@ contract EthMerkleBridge {
         uint tFinal
     ) public onlyOracle {
         _tFinal = tFinal;
-        emit newTFinalEvent(tFinal);
+        emit newTFinalEvent(msg.sender, tFinal);
     }
 
     // Register a new anchor
@@ -97,7 +97,7 @@ contract EthMerkleBridge {
         require(height > _anchorHeight + _tAnchor, "Next anchor height not reached");
         _anchorRoot = root;
         _anchorHeight = height;
-        emit anchorEvent(root, height);
+        emit anchorEvent(msg.sender, root, height);
     }
 
 
@@ -120,7 +120,7 @@ contract EthMerkleBridge {
         // using msg.sender, the owner must call lock, but we can make delegated transfers with sender
         // address as parameter.
         require(token.transferFrom(msg.sender, address(this), amount), "Failed to lock");
-        emit lockEvent(token, receiver, amount);
+        emit lockEvent(msg.sender, token, receiver, amount);
         return true;
     }
 
@@ -148,7 +148,7 @@ contract EthMerkleBridge {
         require(amountToTransfer>0, "Burn tokens before unlocking");
         _unlocks[accountRef] = balance;
         require(token.transfer(receiver, amountToTransfer), "Failed to transfer unlock");
-        emit unlockEvent(token, receiver, amountToTransfer);
+        emit unlockEvent(msg.sender, token, receiver, amountToTransfer);
         return true;
     }
 
@@ -184,7 +184,7 @@ contract EthMerkleBridge {
         }
         _mints[accountRef] = balance;
         require(mintAddress.mint(receiver, amountToTransfer), "Failed to mint");
-        emit mintEvent(mintAddress, receiver, amountToTransfer);
+        emit mintEvent(msg.sender, mintAddress, receiver, amountToTransfer);
         return true;
     }
 
@@ -205,7 +205,7 @@ contract EthMerkleBridge {
         require(_burns[accountRef] >= amount, "total _burns overflow");
         // Burn token
         require(mintAddress.burn(msg.sender, amount), "Failed to burn");
-        emit burnEvent(mintAddress, receiver, amount);
+        emit burnEvent(msg.sender, mintAddress, receiver, amount);
         return true;
     }
 

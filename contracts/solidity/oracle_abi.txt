@@ -35,6 +35,12 @@
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
 				"indexed": false,
 				"internalType": "bytes32",
 				"name": "root",
@@ -53,6 +59,12 @@
 	{
 		"anonymous": false,
 		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
 			{
 				"indexed": false,
 				"internalType": "address[]",

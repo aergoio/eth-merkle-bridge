@@ -179,7 +179,7 @@ function validatorsUpdate(validators, signers, signatures)
         _validators[i] = addr
     end
     _nonce:set(oldNonce + 1)
-    contract.event("validatorsUpdate", system.getSender())
+    contract.event("validatorsUpdate", system.getSender(), unpack(validators))
 end
 
 -- Replace the oracle with another one

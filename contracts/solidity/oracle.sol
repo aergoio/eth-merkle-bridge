@@ -26,8 +26,8 @@ contract Oracle {
     // General Aergo state trie key of the bridge contract on Aergo blockchain
     bytes32 public _destinationBridgeKey;
 
-    event newValidatorsEvent(address[] validators);
-    event anchorEvent(bytes32 root, uint height);
+    event newValidatorsEvent(address indexed sender, address[] validators);
+    event anchorEvent(address indexed sender, bytes32 root, uint height);
 
     // Create a new oracle contract
     // @param   validators - array of Ethereum addresses
@@ -69,7 +69,7 @@ contract Oracle {
         validateSignatures(message, signers, vs, rs, ss);
         _validators = validators;
         _nonce += 1;
-        emit newValidatorsEvent(validators);
+        emit newValidatorsEvent(msg.sender, validators);
     }
 
     // Replace the oracle of the bridge
@@ -151,7 +151,7 @@ contract Oracle {
         _nonce += 1;
         _anchorRoot = root;
         _anchorHeight = height;
-        emit anchorEvent(root, height);
+        emit anchorEvent(msg.sender, root, height);
     }
 
     // Register a new bridge anchor

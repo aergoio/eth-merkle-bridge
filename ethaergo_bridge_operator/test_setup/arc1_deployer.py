@@ -8,6 +8,7 @@ if __name__ == '__main__':
     total_supply = 500*10**6*10**18
     with open("./contracts/lua/std_token_bytecode.txt", "r") as f:
         payload_str = f.read()[:-1]
-    wallet.deploy_token(
+    addr = wallet.deploy_token(
         payload_str, "token1", total_supply, "aergo-local", privkey_pwd='1234'
     )
+    print("ARC1 token address: " + addr)
