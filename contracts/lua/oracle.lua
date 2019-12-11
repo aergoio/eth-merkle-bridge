@@ -158,7 +158,7 @@ end
 -- @param   validators ([]address) array of Aergo addresses
 -- @param   signers ([]uint) array of signer indexes
 -- @param   signatures ([]0x hex string) array of signatures matching signers indexes
--- @event   validatorsUpdate(proposer)
+-- @event   validatorsUpdate(proposer, new validators)
 function validatorsUpdate(validators, signers, signatures)
     oldNonce = _nonce:get()
     -- it is safe to join validators without a ',' because the validators length is checked in _typecheck
