@@ -1,5 +1,6 @@
 import argparse
 from getpass import getpass
+import requests
 import time
 import threading
 from typing import (
@@ -160,92 +161,104 @@ class AergoProposerClient(threading.Thread):
         is acquired, set the new anchored root in aergo_bridge.
         """
         while True:  # anchor a new root
-            # Get last merge information
-            bridge_status = self.hera.query_sc_state(
-                self.aergo_oracle,
-                ["_sv__anchorHeight", "_sv__anchorRoot", "_sv__tAnchor",
-                 "_sv__tFinal"]
-            )
-            height_from, root_from, t_anchor, t_final = \
-                [proof.value for proof in bridge_status.var_proofs]
-            merged_height_from = int(height_from)
-            self.t_anchor = int(t_anchor)
-            self.t_final = int(t_final)
-            nonce_to = int(
-                self.hera.query_sc_state(
-                    self.aergo_oracle, ["_sv__nonce"]).var_proofs[0].value
-            )
-
-            logger.info(
-                "\"Current Eth -> Aergo \u2693 anchor: "
-                "height: %s, root: %s, nonce: %s\"",
-                merged_height_from, root_from.decode('utf-8')[1:-1], nonce_to
-            )
-
-            # Wait for the next anchor time
-            next_anchor_height = self.wait_next_anchor(merged_height_from)
-            # Get root of next anchor to broadcast
-            root = self.web3.eth.getBlock(next_anchor_height).stateRoot.hex()
-            if len(root) == 0:
-                logger.info("\"waiting deployment finalization...\"")
-                time.sleep(5)
-                continue
-
-            if self.anchoring_on:
-                logger.info(
-                    "\"\U0001f58b Gathering validator signatures for: "
-                    "root: %s, height: %s'\"", root, next_anchor_height
+            try:
+                # Get last merge information
+                bridge_status = self.hera.query_sc_state(
+                    self.aergo_oracle,
+                    ["_sv__anchorHeight", "_sv__anchorRoot", "_sv__tAnchor",
+                     "_sv__tFinal"]
                 )
-
+                height_from, root_from, t_anchor, t_final = \
+                    [proof.value for proof in bridge_status.var_proofs]
+                merged_height_from = int(height_from)
+                self.t_anchor = int(t_anchor)
+                self.t_final = int(t_final)
                 nonce_to = int(
                     self.hera.query_sc_state(
                         self.aergo_oracle, ["_sv__nonce"]).var_proofs[0].value
                 )
 
-                try:
-                    sigs, validator_indexes = \
-                        self.val_connect.get_anchor_signatures(
-                            root[2:], next_anchor_height, nonce_to)
-                except ValidatorMajorityError:
-                    logger.warning(
-                        "\"Failed to gather 2/3 validators signatures, "
-                        "\u23F0 waiting for next anchor...\""
-                    )
-                    self.monitor_settings_and_sleep(
-                        self.t_anchor * self.eth_block_time)
-                    continue
-
-                # don't broadcast if somebody else already did
-                merged_height = int(
-                    self.hera.query_sc_state(
-                        self.aergo_bridge, ["_sv__anchorHeight"]
-                    ).var_proofs[0].value
+                logger.info(
+                    "\"Current Eth -> Aergo \u2693 anchor: "
+                    "height: %s, root: %s, nonce: %s\"",
+                    merged_height_from, root_from.decode('utf-8')[1:-1],
+                    nonce_to
                 )
-                if merged_height + self.t_anchor >= next_anchor_height:
-                    logger.warning(
-                        "\"Not yet anchor time, maybe another proposer "
-                        "already anchored\""
-                    )
-                    wait = merged_height + self.t_anchor - next_anchor_height
-                    self.monitor_settings_and_sleep(wait * self.eth_block_time)
+
+                # Wait for the next anchor time
+                next_anchor_height = self.wait_next_anchor(merged_height_from)
+                # Get root of next anchor to broadcast
+                root = \
+                    self.web3.eth.getBlock(next_anchor_height).stateRoot.hex()
+                if len(root) == 0:
+                    logger.info("\"waiting deployment finalization...\"")
+                    time.sleep(5)
                     continue
 
-                if self.bridge_anchoring:
-                    # broadcast the general state root and relay the bridge
-                    # root with a merkle proof
-                    bridge_contract_state, merkle_proof = \
-                        self.buildBridgeAnchorArgs(next_anchor_height)
-                    self.aergo_tx.new_state_and_bridge_anchor(
-                        root, next_anchor_height, validator_indexes, sigs,
-                        bridge_contract_state, merkle_proof
+                if self.anchoring_on:
+                    logger.info(
+                        "\"\U0001f58b Gathering validator signatures for: "
+                        "root: %s, height: %s'\"", root, next_anchor_height
                     )
-                else:
-                    # only broadcast the general state root
-                    self.aergo_tx.new_state_anchor(
-                        root, next_anchor_height, validator_indexes, sigs)
 
-            self.monitor_settings_and_sleep(
-                self.t_anchor * self.eth_block_time)
+                    nonce_to = int(
+                        self.hera.query_sc_state(
+                            self.aergo_oracle, ["_sv__nonce"]
+                        ).var_proofs[0].value
+                    )
+
+                    try:
+                        sigs, validator_indexes = \
+                            self.val_connect.get_anchor_signatures(
+                                root[2:], next_anchor_height, nonce_to)
+                    except ValidatorMajorityError:
+                        logger.warning(
+                            "\"Failed to gather 2/3 validators signatures, "
+                            "\u23F0 waiting for next anchor...\""
+                        )
+                        self.monitor_settings_and_sleep(
+                            self.t_anchor * self.eth_block_time)
+                        continue
+
+                    # don't broadcast if somebody else already did
+                    merged_height = int(
+                        self.hera.query_sc_state(
+                            self.aergo_bridge, ["_sv__anchorHeight"]
+                        ).var_proofs[0].value
+                    )
+                    if merged_height + self.t_anchor >= next_anchor_height:
+                        logger.warning(
+                            "\"Not yet anchor time, maybe another proposer "
+                            "already anchored\""
+                        )
+                        wait = \
+                            merged_height + self.t_anchor - next_anchor_height
+                        self.monitor_settings_and_sleep(
+                            wait * self.eth_block_time)
+                        continue
+
+                    if self.bridge_anchoring:
+                        # broadcast the general state root and relay the bridge
+                        # root with a merkle proof
+                        bridge_contract_state, merkle_proof = \
+                            self.buildBridgeAnchorArgs(next_anchor_height)
+                        self.aergo_tx.new_state_and_bridge_anchor(
+                            root, next_anchor_height, validator_indexes, sigs,
+                            bridge_contract_state, merkle_proof
+                        )
+                    else:
+                        # only broadcast the general state root
+                        self.aergo_tx.new_state_anchor(
+                            root, next_anchor_height, validator_indexes, sigs)
+
+                self.monitor_settings_and_sleep(
+                    self.t_anchor * self.eth_block_time)
+            except requests.exceptions.ConnectionError as e:
+                logger.warning("\"%s\"", e)
+                time.sleep(10)
+            except herapy.errors.exception.CommunicationException as e:
+                logger.warning("\"%s\"", e)
+                time.sleep(10)
 
     def monitor_settings_and_sleep(self, sleeping_time):
         """While sleeping, periodicaly check changes to the config

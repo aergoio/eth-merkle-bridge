@@ -1,9 +1,11 @@
 import argparse
 from getpass import getpass
+import requests
 import threading
 import time
 from typing import (
     Tuple,
+    List,
 )
 
 
@@ -172,76 +174,86 @@ class EthProposerClient(threading.Thread):
         """
         logger.info("\"Start Eth proposer\"")
         while True:  # anchor a new root
-            # Get last merge information
-            merged_height_from = \
-                self.eth_oracle.functions._anchorHeight().call()
-            merged_root_from = self.eth_oracle.functions._anchorRoot().call()
-            nonce_to = self.eth_oracle.functions._nonce().call()
-            self.t_anchor = self.eth_oracle.functions._tAnchor().call()
+            try:
+                # Get last merge information
+                merged_height_from = \
+                    self.eth_oracle.functions._anchorHeight().call()
+                merged_root_from = \
+                    self.eth_oracle.functions._anchorRoot().call()
+                nonce_to = self.eth_oracle.functions._nonce().call()
+                self.t_anchor = self.eth_oracle.functions._tAnchor().call()
 
-            logger.info(
-                "\"Current Aergo -> Eth \u2693 anchor: "
-                "height: %s, root: 0x%s, nonce: %s\"",
-                merged_height_from, merged_root_from.hex(), nonce_to
-            )
-
-            # Wait for the next anchor time
-            next_anchor_height = self.wait_next_anchor(merged_height_from)
-            # Get root of next anchor to broadcast
-            block = self.hera.get_block_headers(
-                block_height=next_anchor_height, list_size=1)
-            root = block[0].blocks_root_hash
-            if len(root) == 0:
-                logger.info("\"waiting deployment finalization...\"")
-                time.sleep(5)
-                continue
-
-            if self.anchoring_on:
                 logger.info(
-                    "\"\U0001f58b Gathering validator signatures for: "
-                    "root: 0x%s, height: %s'\"", root.hex(), next_anchor_height
+                    "\"Current Aergo -> Eth \u2693 anchor: "
+                    "height: %s, root: 0x%s, nonce: %s\"",
+                    merged_height_from, merged_root_from.hex(), nonce_to
                 )
 
-                try:
-                    nonce_to = self.eth_oracle.functions._nonce().call()
-                    sigs, validator_indexes = \
-                        self.val_connect.get_anchor_signatures(
-                            root, next_anchor_height, nonce_to)
-                except ValidatorMajorityError:
-                    logger.warning(
-                        "\"Failed to gather 2/3 validators signatures, "
-                        "\u23F0 waiting for next anchor...\""
-                    )
-                    self.monitor_settings_and_sleep(self.t_anchor)
+                # Wait for the next anchor time
+                next_anchor_height = self.wait_next_anchor(merged_height_from)
+                # Get root of next anchor to broadcast
+                block = self.hera.get_block_headers(
+                    block_height=next_anchor_height, list_size=1)
+                root = block[0].blocks_root_hash
+                if len(root) == 0:
+                    logger.info("\"waiting deployment finalization...\"")
+                    time.sleep(5)
                     continue
 
-                # don't broadcast if somebody else already did
-                merged_height = \
-                    self.eth_oracle.functions._anchorHeight().call()
-                if merged_height + self.t_anchor >= next_anchor_height:
-                    logger.warning(
-                        "\"Not yet anchor time, maybe another proposer "
-                        "already anchored\""
+                if self.anchoring_on:
+                    logger.info(
+                        "\"\U0001f58b Gathering validator signatures for: "
+                        "root: 0x%s, height: %s'\"", root.hex(),
+                        next_anchor_height
                     )
-                    self.monitor_settings_and_sleep(
-                        merged_height + self.t_anchor - next_anchor_height)
-                    continue
 
-                if self.bridge_anchoring:
-                    # broadcast the general state root and relay the bridge
-                    # root with a merkle proof
-                    bridge_state_proto, merkle_proof, bitmap, leaf_height = \
-                        self.buildBridgeAnchorArgs(root)
-                    self.eth_tx.new_state_and_bridge_anchor(
-                        root, next_anchor_height, validator_indexes, sigs,
-                        bridge_state_proto, merkle_proof, bitmap, leaf_height
-                    )
-                else:
-                    # only broadcast the general state root
-                    self.eth_tx.new_state_anchor(
-                        root, next_anchor_height, validator_indexes, sigs)
+                    try:
+                        nonce_to = self.eth_oracle.functions._nonce().call()
+                        sigs, validator_indexes = \
+                            self.val_connect.get_anchor_signatures(
+                                root, next_anchor_height, nonce_to)
+                    except ValidatorMajorityError:
+                        logger.warning(
+                            "\"Failed to gather 2/3 validators signatures, "
+                            "\u23F0 waiting for next anchor...\""
+                        )
+                        self.monitor_settings_and_sleep(self.t_anchor)
+                        continue
 
-            self.monitor_settings_and_sleep(self.t_anchor)
+                    # don't broadcast if somebody else already did
+                    merged_height = \
+                        self.eth_oracle.functions._anchorHeight().call()
+                    if merged_height + self.t_anchor >= next_anchor_height:
+                        logger.warning(
+                            "\"Not yet anchor time, maybe another proposer "
+                            "already anchored\""
+                        )
+                        self.monitor_settings_and_sleep(
+                            merged_height + self.t_anchor - next_anchor_height)
+                        continue
+
+                    if self.bridge_anchoring:
+                        # broadcast the general state root and relay the bridge
+                        # root with a merkle proof
+                        bridge_state_proto, merkle_proof, bitmap, \
+                            leaf_height = self.buildBridgeAnchorArgs(root)
+                        self.eth_tx.new_state_and_bridge_anchor(
+                            root, next_anchor_height, validator_indexes, sigs,
+                            bridge_state_proto, merkle_proof, bitmap,
+                            leaf_height
+                        )
+                    else:
+                        # only broadcast the general state root
+                        self.eth_tx.new_state_anchor(
+                            root, next_anchor_height, validator_indexes, sigs)
+
+                self.monitor_settings_and_sleep(self.t_anchor)
+            except requests.exceptions.ConnectionError as e:
+                logger.warning("\"%s\"", e)
+                time.sleep(10)
+            except herapy.errors.exception.CommunicationException as e:
+                logger.warning("\"%s\"", e)
+                time.sleep(10)
 
     def monitor_settings_and_sleep(self, sleeping_time):
         """While sleeping, periodicaly check changes to the config
@@ -358,7 +370,7 @@ class EthProposerClient(threading.Thread):
     def buildBridgeAnchorArgs(
         self,
         root: bytes
-    ) -> Tuple[bytes, Tuple[bytes], bytes, int]:
+    ) -> Tuple[bytes, List[bytes], bytes, int]:
         """Build arguments to derive bridge storage root from the anchored
         state root with a merkle proof
         """
