@@ -1,2 +1,0 @@
-{"level": "INFO", "time": "2019-11-14 17:35:55,226", "service": "RequestUnfreeze", "message": "Unfreeze success for: AmPf349iHWd6kQGU45BxFzFCzEDu75Y3FqFPd4WBMteFq4mtDuZd"
-{"level": "WARNING", "time": "2019-11-14 17:35:56,100", "service": "RequestUnfreeze", "message": "Unfreezable (0 aer) doesn't cover fee for: AmPf349iHWd6kQGU45BxFzFCzEDu75Y3FqFPd4WBMteFq4mtDuZd"

@@ -54,8 +54,9 @@ file_formatter = logging.Formatter(
 stream_formatter = logging.Formatter('%(message)s')
 
 
-root_dir = os.path.dirname(__file__)
-file_handler = logging.FileHandler(root_dir + '/logs/unfreeze.log')
+log_file_path = 'logs/unfreeze.log'
+os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+file_handler = logging.FileHandler(log_file_path)
 file_handler.setFormatter(file_formatter)
 
 stream_handler = logging.StreamHandler()

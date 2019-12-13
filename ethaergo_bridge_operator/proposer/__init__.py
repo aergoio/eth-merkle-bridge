@@ -11,9 +11,9 @@ file_formatter = logging.Formatter(
 )
 stream_formatter = logging.Formatter("%(name)s: %(message)s")
 
-
-root_dir = os.path.dirname(os.path.dirname(__file__))
-file_handler = logging.FileHandler(root_dir + '/logs/proposer.log')
+log_file_path = 'logs/proposer.log'
+os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+file_handler = logging.FileHandler(log_file_path)
 file_handler.setFormatter(file_formatter)
 
 stream_handler = logging.StreamHandler()
