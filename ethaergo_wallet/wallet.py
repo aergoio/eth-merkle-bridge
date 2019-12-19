@@ -120,7 +120,7 @@ class EthAergoWallet(WalletConfig):
         balance = eth_u.get_balance(token_owner, erc20_address, w3,
                                     erc20_abi)
         logger.info(
-            "\U0001f4b0 %s balance on destination before transfer : %s",
+            "\U0001f4b0 %s balance on origin before transfer : %s",
             asset_name, balance/10**18
         )
         if balance < amount:
@@ -252,7 +252,7 @@ class EthAergoWallet(WalletConfig):
         balance = eth_u.get_balance(token_owner, token_pegged, w3,
                                     minted_erc20_abi)
         logger.info(
-            "\U0001f4b0 %s balance on destination before transfer : %s",
+            "\U0001f4b0 %s balance on origin before transfer : %s",
             asset_name, balance/10**18
         )
         if balance < amount:
@@ -522,7 +522,7 @@ class EthAergoWallet(WalletConfig):
         if balance < amount + gas_limit * self.aergo_gas_price:
             raise InsufficientBalanceError("not enough token balance")
         logger.info(
-            "\U0001f4b0 %s balance on sidechain before transfer: %s",
+            "\U0001f4b0 %s balance on origin before transfer: %s",
             asset_name, balance/10**18
         )
 
@@ -708,7 +708,7 @@ class EthAergoWallet(WalletConfig):
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
         logger.info(
-            "\U0001f4b0 %s balance on sidechain before transfer: %s",
+            "\U0001f4b0 %s balance on origin before transfer: %s",
             asset_name, balance/10**18
         )
 

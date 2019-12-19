@@ -4,6 +4,6 @@ RUN git clone https://github.com/aergoio/eth-merkle-bridge.git home/eth-merkle-b
 
 WORKDIR /home/eth-merkle-bridge
 
-RUN ls .. && pwd && pip install -r requirements.txt 
+RUN pip install -r requirements.txt 
 
 ENTRYPOINT ["python3", "-m"]

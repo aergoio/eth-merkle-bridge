@@ -1,65 +1,56 @@
 {
     "networks": {
-        "aergo-local": {
+        "aergo-testnet": {
             "bridges": {
-                "eth-poa-local": {
-                    "addr": "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
-                    "oracle": "AmgQdbUqDuoX5krsmvSEHc9X3apBuXyJTQ4mimfWzejEsYScTo3f",
-                    "t_anchor": 6,
-                    "t_final": 4,
-                    "unfreeze_fee": 1000
+                "ropsten": {
+                    "addr": "Amh76FdT5Q8rmeJxVb31GQubZ4nWQK4HzgbvE1u9jehQTXPg8Ksv",
+                    "oracle": "AmgtAN3EyQGZ9LQ66BEpYptbcvohhPDSdDbQRWJYKbynfPijWHtu",
+                    "t_anchor": 30,
+                    "t_final": 100,
+                    "unfreeze_fee": 2000000000000000000
                 }
             },
-            "ip": "localhost:7845",
+            "ip": "testnet-api.aergo.io:7845",
             "providers": [
-                "localhost:7845",
-                "localhost:7845"
+                "testnet-api.aergo.io:7845",
+                "testnet-api.aergo.io:7845"
             ],
             "tokens": {
                 "aergo": {
                     "addr": "aergo",
                     "pegs": {}
-                },
-                "token1": {
-                    "addr": "AmgpYGMMPEnb7ukcJkhpGCGJXwqEq2MgpneN47hHrbBS7C3AjDke",
-                    "pegs": {}
                 }
             },
             "type": "aergo"
         },
-        "eth-poa-local": {
+        "ropsten": {
             "bridges": {
-                "aergo-local": {
-                    "addr": "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
+                "aergo-testnet": {
+                    "addr": "0xd6d81a49527ec42Ed5E5a60B86F316E683991116",
                     "bridge_abi": "contracts/solidity/bridge_abi.txt",
                     "minted_abi": "contracts/solidity/minted_erc20_abi.txt",
-                    "oracle": "0x5b9fd5f3e14F0F886AD11aCc24Ff53823Bf9bdb5",
+                    "oracle": "0xE29a642e6A6e31DC532248BF50E8aC18436BeE05",
                     "oracle_abi": "contracts/solidity/oracle_abi.txt",
-                    "t_anchor": 7,
-                    "t_final": 5
+                    "t_anchor": 900,
+                    "t_final": 30
                 }
             },
-            "ip": "http://localhost:8545",
-            "isPOA": true,
+            "ip": "https://ropsten.infura.io/v3/732b5c5fedda448d96a9e0e7c49759fb",
+            "isPOA": false,
             "providers": [
-                "http://localhost:8545",
-                "http://localhost:8545"
+                "https://ropsten.infura.io/v3/732b5c5fedda448d96a9e0e7c49759fb",
+                "https://ropsten.infura.io/v3/732b5c5fedda448d96a9e0e7c49759fb"
             ],
             "tokens": {
                 "aergo_erc20": {
                     "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
+                    "addr": "0x9b132615129867f747C26e58FEcdea8eF2b55Bb2",
                     "pegs": {
-                        "aergo-local": "aergo"
+                        "aergo-testnet": "aergo"
                     }
                 },
                 "ether": {
                     "addr": "ether",
-                    "pegs": {}
-                },
-                "test_erc20": {
-                    "abi": "contracts/solidity/aergo_erc20_abi.txt",
-                    "addr": "0x3f79E699eBb125054E425BD2cce38225CB861664",
                     "pegs": {}
                 }
             },
@@ -68,79 +59,51 @@
     },
     "validators": [
         {
-            "addr": "AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ",
-            "eth-addr": "0x210467b3849a408c3a3bEE14b4627aa57F342134",
+            "addr": "AmPgYhwmmHFFpBa6JM9goCKnSjjUo1m8GpmzHv44CCBnguqSGTXU",
+            "eth-addr": "0xb708407e8C5eB26ac7ABB879D1faa14bE1C1aB51",
             "ip": "localhost:9841"
         },
         {
-            "addr": "AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ",
-            "eth-addr": "0x210467b3849a408c3a3bEE14b4627aa57F342134",
+            "addr": "AmMcJqLha2sqcj3RVvBjXzRd3xpXhqUqLzxiWKSr8Pw4g6HEo99d",
+            "eth-addr": "0x53d1C1Dd339eD171b65ca218c151F3aF07a9D00C",
             "ip": "localhost:9842"
         },
         {
-            "addr": "AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ",
-            "eth-addr": "0x210467b3849a408c3a3bEE14b4627aa57F342134",
+            "addr": "AmNTQXDuh2ru4UxjcYzjeHKQALSkVnwujz7uUTLeL3imAC14hSPb",
+            "eth-addr": "0x319537c10637a647b70C77A1e47Ec188494F529a",
             "ip": "localhost:9843"
+        },
+        {
+            "addr": "AmMPAiLDrAtWfjpun6Xq2Sa3oeujYZthqGj17HMrPLwEwKCL7heu",
+            "eth-addr": "0xaA47d6D75078c25ae599E91f34118BfE8702B604",
+            "ip": "localhost:9844"
+        },
+        {
+            "addr": "AmPsSmY3GGBHaSbxyE2KCPEpx7eKuR9Qq9YXy39hyTxxbrgDFzgf",
+            "eth-addr": "0xe64D39A707669F0EE0753F8b360885249a76beB4",
+            "ip": "localhost:9845"
+        },
+        {
+            "addr": "AmQ2dUW954FaVEvDTEg24e3fbRe8RthwC4inqbLuvkZ2Bf7efHw9",
+            "eth-addr": "0x6BEA066306C2aE1155204C8276AAfD612C7dF1f2",
+            "ip": "localhost:9846"
+        },
+        {
+            "addr": "AmNVfniaYoXi3Asz2CbrDRGF9aQnuECi9aPhimoYEvgrcvGdqT95",
+            "eth-addr": "0x724f1e290760ce3e8DF2402Fb65F423eb5752d8f",
+            "ip": "localhost:9847"
+        },
+        {
+            "addr": "AmMo4udLXHfc67UocEEg2yA4jRF5hcvrs1mNSHkppmDVKJpe3AQQ",
+            "eth-addr": "0x4c62065bbEcB32289f1Bc66547b237ef34a5777e",
+            "ip": "localhost:9848"
+        },
+        {
+            "addr": "AmPvt6zJnD8svEU5QpfkU9G1fy6KGLK1EGHTpiGxgGPkLbq2w4NL",
+            "eth-addr": "0x8ef1B49b3A8BfDfD6b1216a7cc4f7A2aCa872074",
+            "ip": "localhost:9849"
         }
     ],
-    "wallet": {
-        "bridge-vault": {
-            "addr": "AmM6Db1e8PbDAbCfKgD4s3SfM8xJfkTvEaLZK4exVuWFnYL34S93",
-            "priv_key": "47hxG12EStVwAG6ww5DYRKaKqWB47JhmRwK6kTW9hXbN79Chh2cQAwx4qYxmYvnD3Ys9f5c1x"
-        },
-        "broadcaster": {
-            "addr": "AmPiFGxLvETrs13QYrHUiYoFqAqqWv7TKYXG21zC8TJfJTDHc7HJ",
-            "priv_key": "47T5iXRL4M9mhCZqzxzbWUxhwnE7oDvreBkJuNRADL2DppJDroz1TcEiJF4p9qh6X6Z2ynEMo"
-        },
-        "default": {
-            "addr": "AmNMFbiVsqy6vg4njsTjgy7bKPFHFYhLV4rzQyrENUS9AM1e3tw5",
-            "priv_key": "47CLj29W96rS9SsizUz4pueeuTT2GcSpkoAsvVC3USLzQ5kKTWKmz1WLKnqor2ET7hPd73TC9"
-        },
-        "default2": {
-            "addr": "AmNyNPEqeXPfdHeECMNhsH1QcnZsqCtDAudjgFyG5qpasN6tyLPE",
-            "priv_key": "47PZc88CguT8Vm5MJXR7FAy9ewDmnHhyU6w8r2GgRpciz55wUieQVacPaVgUZP7yZGMYEs9BD"
-        },
-        "proposer": {
-            "addr": "AmPxVdu993eosN3UjnPDdN3wb7TNbHeiHDvn2dvZUcH8KXDK3RLU",
-            "priv_key": "47sDAWjMFTP7r2JP2BJ29PJRfY13yUTtVvoLjAf8knhH4GryQrpMJoTqscDjed1YPHVZXY4sN"
-        },
-        "receiver": {
-            "addr": "AmPf349iHWd6kQGU45BxFzFCzEDu75Y3FqFPd4WBMteFq4mtDuZd",
-            "priv_key": "47HzJAwuTV1akJPtsBWm4saJaQAgKgq1qSeeKfaFHnMxhjPM5ipPY8EZ3gDVRQ4oLizx1qhwh"
-        },
-        "validator": {
-            "addr": "AmNLjcxUDmxeGZL7F8bqyaGt3zqog5HAoJmFBEZAx1RvfTKLSBsQ",
-            "priv_key": "47wwDRMKXH4serxiNQcrtMSxHsGt9qX6wZTt9XNUcABBokLYpUtKuYue1ujmsBLvzy9DcD84i"
-        }
-    },
-    "wallet-eth": {
-        "broadcaster": {
-            "addr": "0x1aBDc1d5568CBb639FA605E2A155480f151C0E55",
-            "keystore": "keystore/UTC--2018-12-27T07-43-50.585671000Z--1abdc1d5568cbb639fa605e2a155480f151c0e55"
-        },
-        "default": {
-            "addr": "0xfec3C905BcD3d9A5471452E53F82106844CB1E76",
-            "keystore": "keystore/UTC--2019-05-13T09-23-35.377701000Z--fec3c905bcd3d9a5471452e53f82106844cb1e76"
-        },
-        "default2": {
-            "addr": "0x429C2388caD780f8e801849cb5F1aa76389727cd",
-            "keystore": "keystore/UTC--2019-05-13T09-26-18.058577000Z--429c2388cad780f8e801849cb5f1aa76389727cd"
-        },
-        "proposer": {
-            "addr": "0xc19b69591141443676a3EE56fbf1d3EA869d53D8",
-            "keystore": "keystore/UTC--2019-05-13T09-26-29.993150000Z--c19b69591141443676a3ee56fbf1d3ea869d53d8"
-        },
-        "receiver": {
-            "addr": "0x7Acb4A265bF759eC772510C2465Fb7c8F4EaF54e",
-            "keystore": "keystore/UTC--2019-05-13T09-26-38.701134000Z--7acb4a265bf759ec772510c2465fb7c8f4eaf54e"
-        },
-        "test": {
-            "addr": "0xF1BF3497D98EaD7F6a1BB9EE6DfbdE9D448d7062",
-            "keystore": "keystore/UTC--2019-05-13T09-26-46.916719000Z--f1bf3497d98ead7f6a1bb9ee6dfbde9d448d7062"
-        },
-        "validator": {
-            "addr": "0x210467b3849a408c3a3bEE14b4627aa57F342134",
-            "keystore": "keystore/UTC--2019-05-13T09-26-54.907966000Z--210467b3849a408c3a3bee14b4627aa57f342134"
-        }
-    }
+    "wallet": {},
+    "wallet-eth": {}
 }
