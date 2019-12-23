@@ -52,7 +52,7 @@ class SingleDataSource():
         with open(root_path + bridge_abi_path, "r") as f:
             bridge_abi = f.read()
         eth_bridge_addr = (config_data['networks'][eth_net]['bridges']
-                                [aergo_net]['addr'])
+                           [aergo_net]['addr'])
         self.eth_bridge = self.web3.eth.contract(
             address=eth_bridge_addr,
             abi=bridge_abi

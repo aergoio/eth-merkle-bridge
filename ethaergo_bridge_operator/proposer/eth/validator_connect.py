@@ -127,7 +127,7 @@ class EthValConnect():
             logger.warning(e)
             return None
         if approval.error:
-            logger.warning("\"%s\"", approval.error)
+            logger.warning("\"%s by validator %s\"", approval.error, idx)
             return None
         if approval.address != self.config_data['validators'][idx]['eth-addr']:
             # check nothing is wrong with validator address
