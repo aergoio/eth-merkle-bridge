@@ -109,6 +109,6 @@ if __name__ == '__main__':
             privkey_name=args.privkey_name,
             anchoring_on=args.anchoring_on,
             auto_update=args.auto_update,
-            oracle_update=False  # diseabled by default for safety
+            oracle_update=args.oracle_update
         )
         proposer.run()
