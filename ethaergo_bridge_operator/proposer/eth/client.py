@@ -10,6 +10,7 @@ from typing import (
 
 
 import aergo.herapy as herapy
+import web3
 from web3 import (
     Web3,
 )
@@ -254,6 +255,9 @@ class EthProposerClient(threading.Thread):
             except herapy.errors.exception.CommunicationException as e:
                 logger.warning("\"%s\"", e)
                 time.sleep(10)
+            except web3.exceptions.TimeExhausted as e:
+                logger.warning("\"%s\"", e)
+                time.sleep(self.t_anchor)
 
     def monitor_settings_and_sleep(self, sleeping_time):
         """While sleeping, periodicaly check changes to the config

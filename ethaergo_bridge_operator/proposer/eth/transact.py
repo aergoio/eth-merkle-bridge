@@ -60,7 +60,8 @@ class EthTx():
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
         tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
-        receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
+        receipt = self.web3.eth.waitForTransactionReceipt(
+            tx_hash, timeout=300, poll_latency=1)
 
         if receipt.status == 1:
             logger.info(
@@ -101,7 +102,8 @@ class EthTx():
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
         tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
-        receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
+        receipt = self.web3.eth.waitForTransactionReceipt(
+            tx_hash, timeout=300, poll_latency=1)
 
         if receipt.status == 1:
             logger.info(
@@ -131,7 +133,8 @@ class EthTx():
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
         tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
-        receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
+        receipt = self.web3.eth.waitForTransactionReceipt(
+            tx_hash, timeout=300, poll_latency=1)
 
         if receipt.status == 1:
             logger.info("\"\U0001f58b Set new validators update success\"")
@@ -159,7 +162,8 @@ class EthTx():
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
         tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
-        receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
+        receipt = self.web3.eth.waitForTransactionReceipt(
+            tx_hash, timeout=300, poll_latency=1)
 
         if receipt.status == 1:
             logger.info("\"\u231B tAnchorUpdate success\"")
@@ -187,7 +191,8 @@ class EthTx():
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
         tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
-        receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
+        receipt = self.web3.eth.waitForTransactionReceipt(
+            tx_hash, timeout=300, poll_latency=1)
 
         if receipt.status == 1:
             logger.info("\"\u231B tFinalUpdate success\"")
@@ -227,7 +232,8 @@ class EthTx():
         })
         signed = self.proposer_acct.sign_transaction(construct_txn)
         tx_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction)
-        receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
+        receipt = self.web3.eth.waitForTransactionReceipt(
+            tx_hash, timeout=300, poll_latency=1)
 
         if receipt.status == 1:
             logger.info("\"\U0001f58b Set new oracle update success\"")

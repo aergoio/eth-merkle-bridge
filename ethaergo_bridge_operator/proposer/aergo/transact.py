@@ -49,6 +49,10 @@ class AergoTx():
             return
 
         result = self.hera.wait_tx_result(tx.tx_hash)
+        if result is None:
+            logger.warning(
+                "\"Transaction not found. Tx hash: %s\"", tx.tx_hash)
+            return
         if result.status != herapy.TxResultStatus.SUCCESS:
             logger.warning(
                 "\"Anchor failed: already anchored, or invalid "
@@ -86,6 +90,10 @@ class AergoTx():
             return
 
         result = self.hera.wait_tx_result(tx.tx_hash)
+        if result is None:
+            logger.warning(
+                "\"Transaction not found. Tx hash: %s\"", tx.tx_hash)
+            return
         if result.status != herapy.TxResultStatus.SUCCESS:
             logger.warning(
                 "\"Anchor failed: already anchored, or invalid "
@@ -113,6 +121,10 @@ class AergoTx():
             return False
 
         result = self.hera.wait_tx_result(tx.tx_hash)
+        if result is None:
+            logger.warning(
+                "\"Transaction not found. Tx hash: %s\"", tx.tx_hash)
+            return
         if result.status != herapy.TxResultStatus.SUCCESS:
             logger.warning(
                 "\"Set new validators failed : nonce already used, or "
@@ -144,6 +156,10 @@ class AergoTx():
             return False
 
         result = self.hera.wait_tx_result(tx.tx_hash)
+        if result is None:
+            logger.warning(
+                "\"Transaction not found. Tx hash: %s\"", tx.tx_hash)
+            return
         if result.status != herapy.TxResultStatus.SUCCESS:
             logger.warning(
                 "\"Set %s failed: nonce already used, or invalid "
@@ -170,6 +186,10 @@ class AergoTx():
             return False
 
         result = self.hera.wait_tx_result(tx.tx_hash)
+        if result is None:
+            logger.warning(
+                "\"Transaction not found. Tx hash: %s\"", tx.tx_hash)
+            return
         if result.status != herapy.TxResultStatus.SUCCESS:
             logger.warning(
                 "\"Set new oracle failed : nonce already used, or "
