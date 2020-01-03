@@ -140,6 +140,6 @@ if __name__ == '__main__':
             validator_index=args.validator_index,
             anchoring_on=args.anchoring_on,
             auto_update=args.auto_update,
-            oracle_update=False  # diseabled by default for safety
+            oracle_update=args.oracle_update
         )
         validator.run()
