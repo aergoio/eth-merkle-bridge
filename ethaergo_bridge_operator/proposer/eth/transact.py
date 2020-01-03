@@ -25,6 +25,8 @@ class EthTx():
         t_anchor: int,
     ):
         self.eth_gas_price = eth_gas_price  # gWei
+        # minimum gas price needs to be large enough for anchors to be mined quickly
+        self.min_gas_price = eth_gas_price
         self.t_anchor = t_anchor
         self.web3 = web3
 
@@ -37,6 +39,17 @@ class EthTx():
         self.proposer_acct = self.web3.eth.account.from_key(privkey)
 
         logger.info("\"Proposer Address: %s\"", self.proposer_acct.address)
+
+    def change_gas_price(self, ratio):
+        """ Change the gas price by ratio.
+            For example, set ratio = 1.4 to raise by 40%
+        """
+        max_gas_price = 50
+        new_gas_price = self.eth_gas_price * ratio
+        if (new_gas_price > self.min_gas_price
+                and new_gas_price < max_gas_price):
+            self.eth_gas_price = new_gas_price
+            logger.info("\"Changed gas price to: %s\"", self.eth_gas_price)
 
     def new_state_anchor(
         self,

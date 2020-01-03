@@ -247,8 +247,12 @@ class EthProposerClient(threading.Thread):
                         # only broadcast the general state root
                         self.eth_tx.new_state_anchor(
                             root, next_anchor_height, validator_indexes, sigs)
+                    # lower gas price by 10% after every successful anchor
+                    # until min_gas_price is reached
+                    self.eth_tx.change_gas_price(0.9)
 
                 self.monitor_settings_and_sleep(self.t_anchor)
+
             except requests.exceptions.ConnectionError as e:
                 logger.warning("\"%s\"", e)
                 time.sleep(10)
@@ -257,6 +261,13 @@ class EthProposerClient(threading.Thread):
                 time.sleep(10)
             except web3.exceptions.TimeExhausted as e:
                 logger.warning("\"%s\"", e)
+                time.sleep(self.t_anchor)
+            except ValueError as e:
+                logger.warning("\"%s\"", str(e))
+                if str(e) == "{'code': -32000, 'message': 'replacement transaction underpriced'}":
+                    self.eth_tx.change_gas_price(1.4)
+                # skip to the next anchor if tx not mined
+                # users will also wait for lower gas fees to transfer assets
                 time.sleep(self.t_anchor)
 
     def monitor_settings_and_sleep(self, sleeping_time):
