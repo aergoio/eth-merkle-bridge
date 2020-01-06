@@ -14,7 +14,7 @@ validator0:
 		-v $(PWD)/validator0.json:/home/eth-merkle-bridge/config.json \
 		-v $(PWD)/logs:/home/eth-merkle-bridge/logs \
 		-p 9845:9845 \
-		paouvrard/ethaergo_operator:0.3.3 \
+		paouvrard/ethaergo_operator:0.3.4 \
 		ethaergo_bridge_operator.validator.server \
 		-c './config.json' -a 'aergo-testnet' -e 'ropsten' \
 		--validator_index 0 --privkey_name "validator0" --anchoring_on
@@ -25,7 +25,7 @@ validator1:
 		-v $(PWD)/validator1.json:/home/eth-merkle-bridge/config.json \
 		-v $(PWD)/logs:/home/eth-merkle-bridge/logs \
 		-p 9845:9845 \
-		paouvrard/ethaergo_operator:0.3.3 \
+		paouvrard/ethaergo_operator:0.3.4 \
 		ethaergo_bridge_operator.validator.server \
 		-c './config.json' -a 'aergo-testnet' -e 'ropsten' \
 		--validator_index 1 --privkey_name "validator1" --anchoring_on
@@ -37,7 +37,7 @@ proposer:
 		-v $(PWD)/keystore:/home/eth-merkle-bridge/keystore \
 		-v $(PWD)/proposer.json:/home/eth-merkle-bridge/config.json \
 		-v $(PWD)/logs:/home/eth-merkle-bridge/logs \
-		paouvrard/ethaergo_operator:0.3.3 \
+		paouvrard/ethaergo_operator:0.3.4 \
 		ethaergo_bridge_operator.proposer.client \
 		-c './config.json' -a 'aergo-testnet' -e 'ropsten' \
 		--eth_block_time 10 --privkey_name "proposer" --anchoring_on
@@ -49,9 +49,9 @@ unfreeze_service:
 		-v $(PWD)/testnet_config.json:/home/eth-merkle-bridge/config.json \
 		-v $(PWD)/logs:/home/eth-merkle-bridge/logs \
 		-p 7891:7891 \
-		paouvrard/ethaergo_operator:0.3.3 \
+		paouvrard/ethaergo_operator:0.3.4 \
 		unfreeze_service.server \
-		-ip '0.0.0.0:7891' -c './config.json' -a 'aergo-local' -e 'eth-poa-local' \
+		-ip '0.0.0.0:7891' -c './config.json' -a 'aergo-testnet' -e 'ropsten' \
 		--privkey_name "broadcaster"
 
 unfreeze_proxy:
