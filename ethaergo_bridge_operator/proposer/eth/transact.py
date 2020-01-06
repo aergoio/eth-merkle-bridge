@@ -44,7 +44,7 @@ class EthTx():
         """ Change the gas price by ratio.
             For example, set ratio = 1.4 to raise by 40%
         """
-        max_gas_price = 50
+        max_gas_price = 70
         new_gas_price = self.eth_gas_price * ratio
         if (new_gas_price > self.min_gas_price
                 and new_gas_price < max_gas_price):
