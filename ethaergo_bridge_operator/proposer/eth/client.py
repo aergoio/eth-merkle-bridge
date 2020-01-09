@@ -3,6 +3,7 @@ from getpass import getpass
 import requests
 import threading
 import time
+import traceback
 from typing import (
     Tuple,
     List,
@@ -253,22 +254,27 @@ class EthProposerClient(threading.Thread):
 
                 self.monitor_settings_and_sleep(self.t_anchor)
 
-            except requests.exceptions.ConnectionError as e:
-                logger.warning("\"%s\"", e)
-                time.sleep(10)
-            except herapy.errors.exception.CommunicationException as e:
-                logger.warning("\"%s\"", e)
-                time.sleep(10)
-            except web3.exceptions.TimeExhausted as e:
-                logger.warning("\"%s\"", e)
+            except requests.exceptions.ConnectionError:
+                logger.warning("\"%s\"", traceback.format_exc())
+                time.sleep(self.t_anchor / 10)
+            except herapy.errors.exception.CommunicationException:
+                logger.warning("\"%s\"", traceback.format_exc())
+                time.sleep(self.t_anchor / 10)
+            except web3.exceptions.TimeExhausted:
+                logger.warning("\"%s\"", traceback.format_exc())
                 time.sleep(self.t_anchor)
             except ValueError as e:
-                logger.warning("\"%s\"", str(e))
+                logger.warning("\"%s\"", traceback.format_exc())
                 if str(e) == "{'code': -32000, 'message': 'replacement transaction underpriced'}":
                     self.eth_tx.change_gas_price(1.4)
                 # skip to the next anchor if tx not mined
                 # users will also wait for lower gas fees to transfer assets
                 time.sleep(self.t_anchor)
+            except TypeError:
+                # This TypeError can be raised when the aergo node is
+                # restarting and lib is None
+                logger.warning("\"%s\"", traceback.format_exc())
+                time.sleep(self.t_anchor / 10)
 
     def monitor_settings_and_sleep(self, sleeping_time):
         """While sleeping, periodicaly check changes to the config

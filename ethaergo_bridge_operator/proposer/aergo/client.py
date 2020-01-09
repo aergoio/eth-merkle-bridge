@@ -3,6 +3,7 @@ from getpass import getpass
 import requests
 import time
 import threading
+import traceback
 from typing import (
     Tuple,
     List,
@@ -253,12 +254,12 @@ class AergoProposerClient(threading.Thread):
 
                 self.monitor_settings_and_sleep(
                     self.t_anchor * self.eth_block_time)
-            except requests.exceptions.ConnectionError as e:
-                logger.warning("\"%s\"", e)
-                time.sleep(10)
-            except herapy.errors.exception.CommunicationException as e:
-                logger.warning("\"%s\"", e)
-                time.sleep(10)
+            except requests.exceptions.ConnectionError:
+                logger.warning("\"%s\"", traceback.format_exc())
+                time.sleep(self.t_anchor / 10)
+            except herapy.errors.exception.CommunicationException:
+                logger.warning("\"%s\"", traceback.format_exc())
+                time.sleep(self.t_anchor / 10)
 
     def monitor_settings_and_sleep(self, sleeping_time):
         """While sleeping, periodicaly check changes to the config
