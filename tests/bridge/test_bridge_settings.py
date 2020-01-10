@@ -342,8 +342,6 @@ def test_unfreeze_fee_update(bridge_wallet):
 
 
 def test_oracle_update(bridge_wallet):
-    eth_block_time = 1
-
     # connect providers
     hera = herapy.Aergo()
     hera.connect(bridge_wallet.config_data('networks', 'aergo-local', 'ip'))
@@ -367,26 +365,14 @@ def test_oracle_update(bridge_wallet):
     encrypted_key = bridge_wallet.config_data('wallet', 'default', 'priv_key')
     hera.import_account(encrypted_key, '1234')
 
-    with open("./contracts/solidity/oracle_abi.txt", "r") as f:
-        oracle_abi = f.read()
     with open("./contracts/solidity/bridge_abi.txt", "r") as f:
         bridge_abi = f.read()
 
-    t_anchor_eth = bridge_wallet.config_data(
-        'networks', 'eth-poa-local', 'bridges', 'aergo-local', 't_anchor'
-    )
-    t_anchor_aergo = bridge_wallet.config_data(
-        'networks', 'aergo-local', 'bridges', 'eth-poa-local', 't_anchor'
-    )
     aergo_oracle_addr = bridge_wallet.config_data(
         'networks', 'aergo-local', 'bridges', 'eth-poa-local', 'oracle'
     )
     eth_oracle_addr = bridge_wallet.config_data(
         'networks', 'eth-poa-local', 'bridges', 'aergo-local', 'oracle')
-    eth_oracle = w3.eth.contract(
-        address=eth_oracle_addr,
-        abi=oracle_abi
-    )
     aergo_bridge = bridge_wallet.config_data(
         'networks', 'aergo-local', 'bridges', 'eth-poa-local', 'addr')
     eth_bridge_addr = bridge_wallet.config_data(
@@ -397,12 +383,6 @@ def test_oracle_update(bridge_wallet):
     )
 
     # change oracle to 'default' account
-    aergo_nonce_before = int(
-        hera.query_sc_state(
-            aergo_oracle_addr, ["_sv__nonce"]
-        ).var_proofs[0].value
-    )
-    eth_nonce_before = eth_oracle.functions._nonce().call()
     new_oracle_aergo = bridge_wallet.config_data('wallet', 'default', 'addr')
     new_oracle_eth = bridge_wallet.config_data('wallet-eth', 'default', 'addr')
     bridge_wallet.config_data(
@@ -415,25 +395,17 @@ def test_oracle_update(bridge_wallet):
     )
     bridge_wallet.save_config()
 
-    # wait for changes to be reflected
-    nonce = aergo_nonce_before
-    while nonce <= aergo_nonce_before + 1:
-        time.sleep(t_anchor_aergo * eth_block_time)
-        nonce = int(
-            hera.query_sc_state(aergo_oracle_addr, ["_sv__nonce"])
-            .var_proofs[0].value
-        )
-    nonce = eth_nonce_before
-    while nonce <= eth_nonce_before + 1:
-        time.sleep(t_anchor_eth)
-        nonce = eth_oracle.functions._nonce().call()
-    time.sleep(2)
-
+    # wait for oracle to update
     oracle_aergo = query_aergo_oracle(hera, aergo_bridge)
     oracle_eth = eth_bridge.functions._oracle().call()
 
-    assert oracle_aergo == new_oracle_aergo
-    assert oracle_eth == new_oracle_eth
+    while oracle_aergo != new_oracle_aergo:
+        time.sleep(5)
+        oracle_aergo = query_aergo_oracle(hera, aergo_bridge)
+
+    while oracle_eth != new_oracle_eth:
+        time.sleep(5)
+        oracle_eth = eth_bridge.functions._oracle().call()
 
     bridge_wallet.config_data(
         'networks', 'eth-poa-local', 'bridges', 'aergo-local', 'oracle',
