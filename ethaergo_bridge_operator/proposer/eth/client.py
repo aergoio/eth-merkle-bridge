@@ -140,11 +140,23 @@ class EthProposerClient(threading.Thread):
         with open(root_path + keystore, "r") as f:
             encrypted_key = f.read()
         if privkey_pwd is None:
-            privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\n"
-                                  "Password: ".format(privkey_name))
-        self.eth_tx = EthTx(
-            self.web3, encrypted_key, privkey_pwd, eth_oracle_address,
-            oracle_abi, eth_gas_price, self.t_anchor)
+            while True:
+                try:
+                    privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\n"
+                                          "Password: ".format(privkey_name))
+                    self.eth_tx = EthTx(
+                        self.web3, encrypted_key, privkey_pwd,
+                        eth_oracle_address, oracle_abi, eth_gas_price,
+                        self.t_anchor
+                    )
+                    break
+                except ValueError:
+                    logger.info("\"Wrong password, try again\"")
+        else:
+            self.eth_tx = EthTx(
+                self.web3, encrypted_key, privkey_pwd, eth_oracle_address,
+                oracle_abi, eth_gas_price, self.t_anchor
+            )
 
         logger.info("\"Connect to EthValidators\"")
         self.val_connect = EthValConnect(
@@ -175,7 +187,7 @@ class EthProposerClient(threading.Thread):
         """ Gathers signatures from validators, verifies them, and if 2/3 majority
         is acquired, set the new anchored root in eth_bridge.
         """
-        logger.info("\"Start Eth proposer\"")
+        logger.info("\"Run Eth proposer\"")
         while True:  # anchor a new root
             try:
                 # Get last merge information

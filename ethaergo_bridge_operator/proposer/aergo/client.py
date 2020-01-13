@@ -11,6 +11,9 @@ from typing import (
 )
 
 import aergo.herapy as herapy
+from aergo.herapy.errors.general_exception import (
+    GeneralException as HeraException,
+)
 
 from ethaergo_bridge_operator.op_utils import (
     query_aergo_tempo,
@@ -118,16 +121,29 @@ class AergoProposerClient(threading.Thread):
             self.t_final, self.t_anchor
         )
 
+        sender_priv_key = config_data['wallet'][privkey_name]['priv_key']
         if privkey_name is None:
             privkey_name = 'proposer'
         if privkey_pwd is None:
-            privkey_pwd = getpass("Decrypt exported private key '{}'\n"
-                                  "Password: ".format(privkey_name))
-        sender_priv_key = config_data['wallet'][privkey_name]['priv_key']
-        self.aergo_tx = AergoTx(
-            self.hera, sender_priv_key, privkey_pwd, self.aergo_oracle,
-            aergo_gas_price, self.t_anchor, eth_block_time
-        )
+            while True:
+                try:
+                    privkey_pwd = getpass(
+                        "Decrypt Aergo exported private key '{}'\nPassword: "
+                        .format(privkey_name)
+                    )
+                    self.aergo_tx = AergoTx(
+                        self.hera, sender_priv_key, privkey_pwd,
+                        self.aergo_oracle, aergo_gas_price, self.t_anchor,
+                        eth_block_time
+                    )
+                    break
+                except HeraException:
+                    logger.info("\"Wrong password, try again\"")
+        else:
+            self.aergo_tx = AergoTx(
+                self.hera, sender_priv_key, privkey_pwd, self.aergo_oracle,
+                aergo_gas_price, self.t_anchor, eth_block_time
+            )
 
         logger.info("\"Connect to AergoValidators\"")
         self.val_connect = AergoValConnect(
@@ -162,6 +178,7 @@ class AergoProposerClient(threading.Thread):
         """ Gathers signatures from validators, verifies them, and if 2/3 majority
         is acquired, set the new anchored root in aergo_bridge.
         """
+        logger.info("\"Run Aergo proposer\"")
         while True:  # anchor a new root
             try:
                 # Get last merge information

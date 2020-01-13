@@ -1,6 +1,10 @@
 from getpass import getpass
 import hashlib
 
+from aergo.herapy.errors.general_exception import (
+    GeneralException as HeraException,
+)
+
 from web3._utils.encoding import (
     pad_bytes,
 )
@@ -81,12 +85,24 @@ class ValidatorService(BridgeOperatorServicer):
         if privkey_name is None:
             privkey_name = 'validator'
         if privkey_pwd is None:
-            privkey_pwd = getpass("Decrypt Aergo and Ethereum accounts '{}'\n"
-                                  "Password: ".format(privkey_name))
-        self.eth_signer = EthSigner(
-            root_path, config_data, privkey_name, privkey_pwd)
-        self.aergo_signer = AergoSigner(
-            config_data, privkey_name, privkey_pwd)
+            while True:
+                try:
+                    privkey_pwd = getpass("Decrypt Aergo and Ethereum accounts '{}'\n"
+                                          "Password: ".format(privkey_name))
+                    self.eth_signer = EthSigner(
+                        root_path, config_data, privkey_name, privkey_pwd)
+                    self.aergo_signer = AergoSigner(
+                        config_data, privkey_name, privkey_pwd)
+                    break
+                except ValueError:
+                    logger.info("\"Wrong password for Eth key, try again\"")
+                except HeraException:
+                    logger.info("\"Wrong password for Aergo key, try again\"")
+        else:
+            self.eth_signer = EthSigner(
+                root_path, config_data, privkey_name, privkey_pwd)
+            self.aergo_signer = AergoSigner(
+                config_data, privkey_name, privkey_pwd)
         # record private key for signing EthAnchor
         logger.info(
             "\"Aergo validator Address: %s\"", self.aergo_signer.address)
