@@ -123,8 +123,9 @@ class EthValConnect():
             approval = getattr(self.stubs[idx], rpc_service)(request)
         except grpc.RpcError as e:
             logger.warning(
-                "\"Failed to connect to validator %s (RpcError)\"", idx)
-            logger.warning(e)
+                "\"Failed to connect to validator %s (RpcError: %s)\"", idx,
+                e.code()
+            )
             return None
         if approval.error:
             logger.warning("\"%s by validator %s\"", approval.error, idx)

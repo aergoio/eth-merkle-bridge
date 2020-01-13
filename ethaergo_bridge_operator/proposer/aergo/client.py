@@ -1,5 +1,6 @@
 import argparse
 from getpass import getpass
+import json
 import requests
 import time
 import threading
@@ -255,10 +256,26 @@ class AergoProposerClient(threading.Thread):
                 self.monitor_settings_and_sleep(
                     self.t_anchor * self.eth_block_time)
             except requests.exceptions.ConnectionError:
-                logger.warning("\"%s\"", traceback.format_exc())
+                logger.warning(
+                    "%s",
+                    {"Web3 ConnectionError":
+                        json.dumps(traceback.format_exc())}
+                )
                 time.sleep(self.t_anchor / 10)
             except herapy.errors.exception.CommunicationException:
-                logger.warning("\"%s\"", traceback.format_exc())
+                logger.warning(
+                    "%s",
+                    {
+                        "Hera CommunicationException":
+                            json.dumps(traceback.format_exc())
+                    }
+                )
+                time.sleep(self.t_anchor / 10)
+            except:
+                logger.warning(
+                    "%s",
+                    {"UNKNOWN ERROR": json.dumps(traceback.format_exc())}
+                )
                 time.sleep(self.t_anchor / 10)
 
     def monitor_settings_and_sleep(self, sleeping_time):

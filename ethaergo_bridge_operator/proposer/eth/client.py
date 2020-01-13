@@ -1,5 +1,6 @@
 import argparse
 from getpass import getpass
+import json
 import requests
 import threading
 import time
@@ -255,25 +256,55 @@ class EthProposerClient(threading.Thread):
                 self.monitor_settings_and_sleep(self.t_anchor)
 
             except requests.exceptions.ConnectionError:
-                logger.warning("\"%s\"", traceback.format_exc())
+                logger.warning(
+                    "%s",
+                    {"Web3 ConnectionError":
+                        json.dumps(traceback.format_exc())}
+                )
                 time.sleep(self.t_anchor / 10)
             except herapy.errors.exception.CommunicationException:
-                logger.warning("\"%s\"", traceback.format_exc())
+                logger.warning(
+                    "%s",
+                    {"Hera CommunicationException":
+                        json.dumps(traceback.format_exc())}
+                )
                 time.sleep(self.t_anchor / 10)
             except web3.exceptions.TimeExhausted:
-                logger.warning("\"%s\"", traceback.format_exc())
+                logger.warning(
+                    "%s",
+                    {"Web3 receipt TimeExhausted":
+                        json.dumps(traceback.format_exc())}
+                )
                 time.sleep(self.t_anchor)
             except ValueError as e:
-                logger.warning("\"%s\"", traceback.format_exc())
                 if str(e) == "{'code': -32000, 'message': 'replacement transaction underpriced'}":
+                    logger.warning(
+                        "%s",
+                        {"Eth tx underpriced":
+                            json.dumps(traceback.format_exc())}
+                    )
                     self.eth_tx.change_gas_price(1.4)
+                else:
+                    logger.warning(
+                        "%s",
+                        {"UNKNOWN ValueError": json.dumps(traceback.format_exc())}
+                    )
                 # skip to the next anchor if tx not mined
                 # users will also wait for lower gas fees to transfer assets
                 time.sleep(self.t_anchor)
             except TypeError:
                 # This TypeError can be raised when the aergo node is
                 # restarting and lib is None
-                logger.warning("\"%s\"", traceback.format_exc())
+                logger.warning(
+                    "%s",
+                    {"LIB == None?": json.dumps(traceback.format_exc())}
+                )
+                time.sleep(self.t_anchor / 10)
+            except:
+                logger.warning(
+                    "%s",
+                    {"UNKNOWN ERROR": json.dumps(traceback.format_exc())}
+                )
                 time.sleep(self.t_anchor / 10)
 
     def monitor_settings_and_sleep(self, sleeping_time):

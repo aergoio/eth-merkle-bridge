@@ -39,6 +39,7 @@ class AergoTx():
         sigs: List[str],
     ) -> None:
         """Anchor a new state root on chain"""
+        self.hera.get_account()
         tx, result = self.hera.call_sc(
             self.aergo_oracle, "newStateAnchor",
             args=[root, next_anchor_height, validator_indexes, sigs]
@@ -78,6 +79,7 @@ class AergoTx():
         """Anchor a new state root and update bridge anchor on chain"""
         bridge_nonce, bridge_balance, bridge_root, bridge_code_hash = \
             bridge_contract_state
+        self.hera.get_account()
         tx, result = self.hera.call_sc(
             self.aergo_oracle, "newStateAndBridgeAnchor",
             args=[stateRoot, next_anchor_height, validator_indexes, sigs,
@@ -109,6 +111,7 @@ class AergoTx():
 
     def set_validators(self, new_validators, validator_indexes, sigs):
         """Update validators on chain"""
+        self.hera.get_account()
         tx, result = self.hera.call_sc(
             self.aergo_oracle, "validatorsUpdate",
             args=[new_validators, validator_indexes, sigs]
@@ -144,6 +147,7 @@ class AergoTx():
         emoticon
     ) -> bool:
         """Call contract_function with num"""
+        self.hera.get_account()
         tx, result = self.hera.call_sc(
             self.aergo_oracle, contract_function,
             args=[num, validator_indexes, sigs]
@@ -174,6 +178,7 @@ class AergoTx():
 
     def set_oracle(self, new_oracle, validator_indexes, sigs):
         """Update oracle on chain"""
+        self.hera.get_account()
         tx, result = self.hera.call_sc(
             self.aergo_oracle, "oracleUpdate",
             args=[new_oracle, validator_indexes, sigs]
