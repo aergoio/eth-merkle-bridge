@@ -64,6 +64,9 @@ if __name__ == '__main__':
         '--privkey_name', type=str, help='Name of account in config file '
         'to sign anchors', required=False)
     parser.add_argument(
+        '--privkey_pwd', type=str, help='Password to decrypt privkey_name'
+        '(Eth and Aergo Keys need the same password)', required=False)
+    parser.add_argument(
         '--anchoring_on', dest='anchoring_on', action='store_true',
         help='Enable anchoring (can be diseabled when wanting to only update '
              'settings)'
@@ -97,7 +100,7 @@ if __name__ == '__main__':
         proposer = ProposerClient(
             args.config_file_path, args.aergo, args.eth, args.eth_block_time,
             args.aergo_gas_price, args.eth_gas_price,
-            privkey_name=args.privkey_name, privkey_pwd='1234',
+            privkey_name=args.privkey_name, privkey_pwd=args.privkey_pwd,
             anchoring_on=True, auto_update=True, oracle_update=True
         )
         proposer.run()
@@ -107,6 +110,7 @@ if __name__ == '__main__':
             args.config_file_path, args.aergo, args.eth, args.eth_block_time,
             args.aergo_gas_price, args.eth_gas_price,
             privkey_name=args.privkey_name,
+            privkey_pwd=args.privkey_pwd,
             anchoring_on=args.anchoring_on,
             auto_update=args.auto_update,
             oracle_update=args.oracle_update
