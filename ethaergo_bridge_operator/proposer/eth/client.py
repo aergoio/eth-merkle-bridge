@@ -133,6 +133,10 @@ class EthProposerClient(threading.Thread):
             "\"%s (t_final=%s ) -> %s : t_anchor=%s\"", aergo_net,
             self.t_final, eth_net, self.t_anchor
         )
+        if not anchoring_on and not auto_update:
+            # if anchoring and auto update are off, use proposer as monitoring
+            # system
+            return
 
         if privkey_name is None:
             privkey_name = 'proposer'
@@ -215,6 +219,13 @@ class EthProposerClient(threading.Thread):
                     time.sleep(5)
                     continue
 
+                if not self.anchoring_on and not self.auto_update:
+                    logger.info(
+                        "\"Anchoring height reached waiting for anchor...\""
+                    )
+                    time.sleep(30)
+                    continue
+
                 if self.anchoring_on:
                     logger.info(
                         "\"\U0001f58b Gathering validator signatures for: "
@@ -265,7 +276,10 @@ class EthProposerClient(threading.Thread):
                     # until min_gas_price is reached
                     self.eth_tx.change_gas_price(0.9)
 
-                self.monitor_settings_and_sleep(self.t_anchor)
+                if self.auto_update:
+                    self.monitor_settings_and_sleep(self.t_anchor)
+                else:
+                    time.sleep(self.t_anchor)
 
             except requests.exceptions.ConnectionError:
                 logger.warning(
@@ -326,18 +340,15 @@ class EthProposerClient(threading.Thread):
         just not give signatures.
 
         """
-        if self.auto_update:
-            start = time.time()
+        start = time.time()
+        self.monitor_settings()
+        while time.time()-start < sleeping_time-10:
+            # check the config file every 10 seconds
+            time.sleep(10)
             self.monitor_settings()
-            while time.time()-start < sleeping_time-10:
-                # check the config file every 10 seconds
-                time.sleep(10)
-                self.monitor_settings()
-            remaining = sleeping_time - (time.time() - start)
-            if remaining > 0:
-                time.sleep(remaining)
-        else:
-            time.sleep(sleeping_time)
+        remaining = sleeping_time - (time.time() - start)
+        if remaining > 0:
+            time.sleep(remaining)
 
     def monitor_settings(self):
         """Check if a modification of bridge settings is requested by seeing

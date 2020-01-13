@@ -68,3 +68,6 @@ protoc:
 		--python_out=. \
 		--grpc_python_out=. \
 		./proto/unfreeze_service/*.proto
+
+monitor_testnet_bridge:
+	python3 -m ethaergo_bridge_operator.proposer.client -c './configs/testnet/testnet_config.json' -a 'aergo-testnet' -e 'ropsten' --eth_block_time 10
