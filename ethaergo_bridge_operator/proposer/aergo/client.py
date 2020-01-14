@@ -126,9 +126,9 @@ class AergoProposerClient(threading.Thread):
             # system
             return
 
-        sender_priv_key = config_data['wallet'][privkey_name]['priv_key']
         if privkey_name is None:
             privkey_name = 'proposer'
+        sender_priv_key = config_data['wallet'][privkey_name]['priv_key']
         if privkey_pwd is None:
             while True:
                 try:
