@@ -26,17 +26,18 @@ class ProposerClient:
         auto_update: bool = False,
         oracle_update: bool = False,
         bridge_anchoring: bool = True,
-        root_path: str = './'
+        root_path: str = './',
+        eco: bool = False,
     ) -> None:
         self.t_eth_client = EthProposerClient(
             config_file_path, aergo_net, eth_net, privkey_name,
             privkey_pwd, anchoring_on, auto_update, oracle_update,
-            root_path, eth_gas_price, bridge_anchoring
+            root_path, eth_gas_price, bridge_anchoring, eco
         )
         self.t_aergo_client = AergoProposerClient(
             config_file_path, aergo_net, eth_net, eth_block_time, privkey_name,
             privkey_pwd, anchoring_on, auto_update, oracle_update,
-            aergo_gas_price, bridge_anchoring
+            aergo_gas_price, bridge_anchoring, root_path, eco
         )
 
     def run(self):
@@ -75,6 +76,10 @@ if __name__ == '__main__':
         '--auto_update', dest='auto_update', action='store_true',
         help='Update bridge contract when settings change in config file')
     parser.add_argument(
+        '--eco', dest='eco', action='store_true',
+        help='In eco mode, anchoring will only be done when lock/burn/freeze '
+        'events happen in the bridge contract')
+    parser.add_argument(
         '--oracle_update', dest='oracle_update', action='store_true',
         help='Update bridge contract when validators or oracle addr '
              'change in config file'
@@ -101,7 +106,8 @@ if __name__ == '__main__':
             args.config_file_path, args.aergo, args.eth, args.eth_block_time,
             args.aergo_gas_price, args.eth_gas_price,
             privkey_name=args.privkey_name, privkey_pwd=args.privkey_pwd,
-            anchoring_on=True, auto_update=True, oracle_update=True
+            anchoring_on=True, auto_update=True, oracle_update=True,
+            eco=args.eco
         )
         proposer.run()
     else:
@@ -113,6 +119,7 @@ if __name__ == '__main__':
             privkey_pwd=args.privkey_pwd,
             anchoring_on=args.anchoring_on,
             auto_update=args.auto_update,
-            oracle_update=args.oracle_update
+            oracle_update=args.oracle_update,
+            eco=args.eco
         )
         proposer.run()

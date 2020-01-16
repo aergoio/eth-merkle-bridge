@@ -75,7 +75,8 @@ class EthProposerClient(threading.Thread):
         oracle_update: bool = False,
         root_path: str = './',
         eth_gas_price: int = None,
-        bridge_anchoring: bool = True
+        bridge_anchoring: bool = True,
+        eco: bool = False,
     ) -> None:
         threading.Thread.__init__(self, name="EthProposerClient")
         if eth_gas_price is None:
@@ -88,6 +89,8 @@ class EthProposerClient(threading.Thread):
         self.auto_update = auto_update
         self.oracle_update = oracle_update
         self.bridge_anchoring = bridge_anchoring
+        self.eco = eco
+
         logger.info("\"Connect Aergo and Ethereum providers\"")
         self.hera = herapy.Aergo()
         self.hera.connect(config_data['networks'][aergo_net]['ip'])
@@ -210,6 +213,17 @@ class EthProposerClient(threading.Thread):
 
                 # Wait for the next anchor time
                 next_anchor_height = self.wait_next_anchor(merged_height_from)
+
+                if self.eco:
+                    # only anchor if a lock / burn event happened on ethereum
+                    if self.skip_anchor(
+                        merged_height_from, next_anchor_height):
+                        logger.info(
+                            "\"Anchor skipped (no lock/burn/freeze events "
+                            "occured)\"")
+                        self.monitor_settings_and_sleep(self.t_anchor)
+                        continue
+
                 # Get root of next anchor to broadcast
                 block = self.hera.get_block_headers(
                     block_height=next_anchor_height, list_size=1)
@@ -332,6 +346,29 @@ class EthProposerClient(threading.Thread):
                     {"UNKNOWN ERROR": json.dumps(traceback.format_exc())}
                 )
                 time.sleep(self.t_anchor / 10)
+
+    def skip_anchor(self, last_anchor, next_anchor):
+        lock_events = self.hera.get_events(
+            self.aergo_bridge, "lock", start_block_no=last_anchor,
+            end_block_no=next_anchor
+        )
+        if len(lock_events) > 0:
+            return False
+
+        burn_events = self.hera.get_events(
+            self.aergo_bridge, "burn", start_block_no=last_anchor,
+            end_block_no=next_anchor
+        )
+        if len(burn_events) > 0:
+            return False
+
+        freeze_events = self.hera.get_events(
+            self.aergo_bridge, "freeze", start_block_no=last_anchor,
+            end_block_no=next_anchor
+        )
+        if len(freeze_events) > 0:
+            return False
+        return True
 
     def monitor_settings_and_sleep(self, sleeping_time):
         """While sleeping, periodicaly check changes to the config

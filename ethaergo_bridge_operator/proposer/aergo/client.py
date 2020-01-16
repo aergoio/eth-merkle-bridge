@@ -79,7 +79,9 @@ class AergoProposerClient(threading.Thread):
         auto_update: bool = False,
         oracle_update: bool = False,
         aergo_gas_price: int = None,
-        bridge_anchoring: bool = True
+        bridge_anchoring: bool = True,
+        root_path: str = './',
+        eco: bool = False
     ) -> None:
         threading.Thread.__init__(self, name="AergoProposerClient")
         if aergo_gas_price is None:
@@ -94,6 +96,8 @@ class AergoProposerClient(threading.Thread):
         self.auto_update = auto_update
         self.oracle_update = oracle_update
         self.bridge_anchoring = bridge_anchoring
+        self.eco = eco
+
         logger.info("\"Connect Aergo and Ethereum providers\"")
         self.hera = herapy.Aergo()
         self.hera.connect(config_data['networks'][aergo_net]['ip'])
@@ -105,8 +109,17 @@ class AergoProposerClient(threading.Thread):
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         assert self.web3.isConnected()
 
-        self.eth_bridge = (config_data['networks'][eth_net]['bridges']
-                           [aergo_net]['addr'])
+        eth_bridge_abi_path = (config_data['networks'][eth_net]['bridges']
+                               [aergo_net]['bridge_abi'])
+        with open(root_path + eth_bridge_abi_path, "r") as f:
+            eth_bridge_abi = f.read()
+        self.eth_bridge_addr = (config_data['networks'][eth_net]['bridges']
+                                [aergo_net]['addr'])
+        self.eth_bridge = self.web3.eth.contract(
+            address=self.eth_bridge_addr,
+            abi=eth_bridge_abi
+        )
+
         self.aergo_bridge = (config_data['networks'][aergo_net]['bridges']
                              [eth_net]['addr'])
         self.aergo_oracle = (config_data['networks'][aergo_net]['bridges']
@@ -211,6 +224,17 @@ class AergoProposerClient(threading.Thread):
 
                 # Wait for the next anchor time
                 next_anchor_height = self.wait_next_anchor(merged_height_from)
+
+                if self.eco:
+                    # only anchor if a lock / burn event happened on ethereum
+                    if self.skip_anchor(
+                        merged_height_from, next_anchor_height):
+                        logger.info(
+                            "\"Anchor skipped (no lock/burn events occured)\"")
+                        self.monitor_settings_and_sleep(
+                            self.t_anchor * self.eth_block_time)
+                        continue
+
                 # Get root of next anchor to broadcast
                 root = \
                     self.web3.eth.getBlock(next_anchor_height).stateRoot.hex()
@@ -310,6 +334,18 @@ class AergoProposerClient(threading.Thread):
                     {"UNKNOWN ERROR": json.dumps(traceback.format_exc())}
                 )
                 time.sleep(self.t_anchor / 10)
+
+    def skip_anchor(self, last_anchor, next_anchor):
+        lock_events = self.eth_bridge.events.lockEvent.createFilter(
+            fromBlock=last_anchor, toBlock=next_anchor).get_all_entries()
+        if len(lock_events) > 0:
+            return False
+
+        burn_events = self.eth_bridge.events.burnEvent.createFilter(
+            fromBlock=last_anchor, toBlock=next_anchor).get_new_entries()
+        if len(burn_events) > 0:
+            return False
+        return True
 
     def monitor_settings_and_sleep(self, sleeping_time):
         """While sleeping, periodicaly check changes to the config
@@ -455,7 +491,7 @@ class AergoProposerClient(threading.Thread):
         state root with a merkle proof
         """
         state = self.web3.eth.getProof(
-            self.eth_bridge, [], next_anchor_height)
+            self.eth_bridge_addr, [], next_anchor_height)
         bridge_nonce = \
             "0x" if state.nonce == 0 else "0x{:02x}".format(state.nonce)
         bridge_balance = \
@@ -502,7 +538,7 @@ class AergoProposerClient(threading.Thread):
         print("0x" + rlp_account.hex())
         print(bridge_contract_state)
         trie_key = keccak(bytes.fromhex(state.address[2:]))
-        print("key:", self.eth_bridge)
+        print("key:", self.eth_bridge_addr)
         root = keccak(state.accountProof[0])
         print("root1:", root.hex())
         print(merkle_proof)
