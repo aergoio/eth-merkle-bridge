@@ -116,9 +116,11 @@ class UnfreezeService(UnfreezeServiceServicer):
         if privkey_pwd is None:
             privkey_pwd = getpass("Decrypt exported private key '{}'\n"
                                   "Password: ".format(privkey_name))
-        sender_priv_key = \
-            config_data['wallet'][privkey_name]['priv_key']
-        self.hera.import_account(sender_priv_key, privkey_pwd)
+        keystore_path = \
+            config_data['wallet'][privkey_name]['keystore']
+        with open(root_path + keystore_path, "r") as f:
+            keystore = f.read()
+        self.hera.import_account_from_keystore(keystore, privkey_pwd)
         self.address = str(self.hera.account.address)
         logger.info("\"Unfreezer Address: %s\"", self.address)
 

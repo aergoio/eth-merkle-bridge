@@ -141,16 +141,18 @@ class AergoProposerClient(threading.Thread):
 
         if privkey_name is None:
             privkey_name = 'proposer'
-        sender_priv_key = config_data['wallet'][privkey_name]['priv_key']
+        keystore_path = config_data["wallet"][privkey_name]['keystore']
+        with open(root_path + keystore_path, "r") as f:
+            keystore = f.read()
         if privkey_pwd is None:
             while True:
                 try:
                     privkey_pwd = getpass(
-                        "Decrypt Aergo exported private key '{}'\nPassword: "
+                        "Decrypt Aergo keystore: '{}'\nPassword: "
                         .format(privkey_name)
                     )
                     self.aergo_tx = AergoTx(
-                        self.hera, sender_priv_key, privkey_pwd,
+                        self.hera, keystore, privkey_pwd,
                         self.aergo_oracle, aergo_gas_price, self.t_anchor,
                         eth_block_time
                     )
@@ -159,7 +161,7 @@ class AergoProposerClient(threading.Thread):
                     logger.info("\"Wrong password, try again\"")
         else:
             self.aergo_tx = AergoTx(
-                self.hera, sender_priv_key, privkey_pwd, self.aergo_oracle,
+                self.hera, keystore, privkey_pwd, self.aergo_oracle,
                 aergo_gas_price, self.t_anchor, eth_block_time
             )
 
@@ -227,8 +229,8 @@ class AergoProposerClient(threading.Thread):
 
                 if self.eco:
                     # only anchor if a lock / burn event happened on ethereum
-                    if self.skip_anchor(
-                        merged_height_from, next_anchor_height):
+                    if self.skip_anchor(merged_height_from,
+                                        next_anchor_height):
                         logger.info(
                             "\"Anchor skipped (no lock/burn events occured)\"")
                         self.monitor_settings_and_sleep(

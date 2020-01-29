@@ -2,11 +2,15 @@ import aergo.herapy as herapy
 
 
 class AergoSigner():
-    def __init__(self, config_data, privkey_name, privkey_pwd):
-        aergo_privkey = \
-            config_data['wallet'][privkey_name]['priv_key']
+    def __init__(
+        self,
+        keystore: str,
+        privkey_name: str,
+        privkey_pwd: str
+    ) -> None:
         self.hera = herapy.Aergo()
-        self.hera.import_account(aergo_privkey, privkey_pwd)
+        self.hera.import_account_from_keystore(
+            keystore, privkey_pwd, skip_state=True)
         self.address = str(self.hera.account.address)
 
     def sign(self, h: bytes):

@@ -14,7 +14,7 @@ class AergoTx():
     def __init__(
         self,
         hera: herapy.Aergo,
-        encrypted_key: str,
+        keystore: str,
         privkey_pwd: str,
         aergo_oracle: str,
         aergo_gas_price: int,
@@ -27,7 +27,7 @@ class AergoTx():
         self.hera = hera
         self.aergo_oracle = aergo_oracle
 
-        self.hera.import_account(encrypted_key, privkey_pwd)
+        self.hera.import_account_from_keystore(keystore, privkey_pwd)
         logger.info(
             "\"Proposer Address: %s\"", self.hera.account.address)
 

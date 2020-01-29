@@ -354,16 +354,18 @@ def test_oracle_update(bridge_wallet):
     assert w3.isConnected()
 
     # set eth signer
-    keystore = bridge_wallet.config_data("wallet-eth", 'default', 'keystore')
-    with open(keystore, "r") as f:
-        encrypted_key = f.read()
+    keystore_path = bridge_wallet.config_data("wallet-eth", 'default', 'keystore')
+    with open(keystore_path, "r") as f:
+        keystore = f.read()
 
-    eth_privkey = w3.eth.account.decrypt(encrypted_key, '1234')
+    eth_privkey = w3.eth.account.decrypt(keystore, '1234')
     signer_acct = w3.eth.account.from_key(eth_privkey)
 
     # set aergo signer
-    encrypted_key = bridge_wallet.config_data('wallet', 'default', 'priv_key')
-    hera.import_account(encrypted_key, '1234')
+    keystore_path = bridge_wallet.config_data('wallet', 'default', 'keystore')
+    with open(keystore_path, "r") as f:
+        keystore = f.read()
+    hera.import_account_from_keystore(keystore, '1234')
 
     with open("./contracts/solidity/bridge_abi.txt", "r") as f:
         bridge_abi = f.read()

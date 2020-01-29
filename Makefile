@@ -3,7 +3,7 @@
 # Shortcuts for development and testing
 
 docker-aergo:
-	docker build --build-arg GIT_TAG=3f24ea32ddeb27dd1b86671d1622ab2108a1f42e -t aergo/node ./docker_test_nodes/aergo
+	# docker build --build-arg GIT_TAG=3f24ea32ddeb27dd1b86671d1622ab2108a1f42e -t aergo/node ./docker_test_nodes/aergo
 	docker-compose -f ./docker_test_nodes/aergo/docker-compose.yml up
 
 docker-eth:

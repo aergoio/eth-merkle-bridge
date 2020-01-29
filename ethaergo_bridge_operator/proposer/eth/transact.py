@@ -17,7 +17,7 @@ class EthTx():
     def __init__(
         self,
         web3: Web3,
-        encrypted_key: str,
+        keystore: str,
         privkey_pwd: str,
         oracle_addr: str,
         oracle_abi: str,
@@ -25,7 +25,8 @@ class EthTx():
         t_anchor: int,
     ):
         self.eth_gas_price = eth_gas_price  # gWei
-        # minimum gas price needs to be large enough for anchors to be mined quickly
+        # minimum gas price needs to be large enough for anchors to be mined
+        # quickly
         self.min_gas_price = eth_gas_price
         self.t_anchor = t_anchor
         self.web3 = web3
@@ -35,7 +36,7 @@ class EthTx():
             abi=oracle_abi
         )
 
-        privkey = self.web3.eth.account.decrypt(encrypted_key, privkey_pwd)
+        privkey = self.web3.eth.account.decrypt(keystore, privkey_pwd)
         self.proposer_acct = self.web3.eth.account.from_key(privkey)
 
         logger.info("\"Proposer Address: %s\"", self.proposer_acct.address)
