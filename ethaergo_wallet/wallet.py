@@ -873,9 +873,7 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
         skip_state: bool = False
     ) -> herapy.Aergo:
-        """ Return aergo provider with new account created with
-        priv_key
-        """
+        """ Return aergo provider with account loaded from keystore """
         keystore_path = self.config_data('wallet', privkey_name, 'keystore')
         with open(self.root_path + keystore_path, "r") as f:
             keystore = f.read()
