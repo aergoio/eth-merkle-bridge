@@ -110,9 +110,9 @@ class ValidatorService(BridgeOperatorServicer):
                     logger.info("\"Wrong password for Aergo key, try again\"")
         else:
             self.eth_signer = EthSigner(
-                root_path, config_data, privkey_name, privkey_pwd)
+                eth_keystore, privkey_name, privkey_pwd)
             self.aergo_signer = AergoSigner(
-                root_path, config_data, privkey_name, privkey_pwd)
+                aergo_keystore, privkey_name, privkey_pwd)
         # record private key for signing EthAnchor
         logger.info(
             "\"Aergo validator Address: %s\"", self.aergo_signer.address)
