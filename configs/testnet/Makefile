@@ -60,3 +60,12 @@ unfreeze_proxy:
 		-p 8080:8080 \
 		-v $(PWD)/envoy.yaml:/etc/envoy/envoy.yaml \
 		envoyproxy/envoy:latest
+
+
+cli:
+	docker run -it --rm --name ethaergo_cli \
+		-v $(PWD)/keystore:/home/eth-merkle-bridge/keystore \
+		-v $(PWD)/proposer.json:/home/eth-merkle-bridge/config.json \
+		-v $(PWD)/logs:/home/eth-merkle-bridge/logs \
+		paouvrard/ethaergo_operator:0.3.5 \
+		ethaergo_cli.main
