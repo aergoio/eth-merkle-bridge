@@ -1,7 +1,5 @@
 from getpass import getpass
-import json
-
-import aergo.herapy as herapy
+from aergo_wallet.wallet import AergoWallet
 
 
 def freeze_aergo(
@@ -22,19 +20,12 @@ def freeze_aergo(
     if privkey_pwd is None:
         privkey_pwd = getpass("Decrypt Aergo private key '{}'\nPassword: "
                               .format(bridge_vault))
-    with open(config_file_path, "r") as f:
-        config_data = json.load(f)
-    aergo_bridge = \
-        config_data['networks'][aergo_net]['bridges'][eth_net]['addr']
 
-    keystore_path = config_data["wallet"][bridge_vault]['keystore']
-    with open(keystore_path, "r") as f:
-        keystore = f.read()
-
-    hera = herapy.Aergo()
-    hera.connect(config_data['networks'][aergo_net]['ip'])
-    hera.import_account_from_keystore(keystore, privkey_pwd)
-    hera.send_payload(to_address=aergo_bridge, amount=amount, payload=None)
+    w = AergoWallet(config_file_path)
+    aergo_bridge = w.config_data('networks', aergo_net, 'bridges', eth_net,
+                                 'addr')
+    w.transfer(amount, aergo_bridge, 'aergo', aergo_net,
+               privkey_name=bridge_vault, privkey_pwd=privkey_pwd)
 
 
 if __name__ == '__main__':
