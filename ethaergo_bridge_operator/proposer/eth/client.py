@@ -501,19 +501,24 @@ if __name__ == '__main__':
     # Add arguments
     parser.add_argument(
         '-c', '--config_file_path', type=str, help='Path to config.json',
-        required=True)
+        required=True
+    )
     parser.add_argument(
         '-a', '--aergo', type=str, help='Name of Aergo network in config file',
-        required=True)
+        required=True
+    )
     parser.add_argument(
         '-e', '--eth', type=str, required=True,
-        help='Name of Ethereum network in config file')
+        help='Name of Ethereum network in config file'
+    )
     parser.add_argument(
         '--eth_block_time', type=int, help='Average Ethereum block time',
-        required=True)
+        required=True
+    )
     parser.add_argument(
         '--privkey_name', type=str, help='Name of account in config file '
-        'to sign anchors', required=False)
+        'to sign anchors', required=False
+    )
     parser.add_argument(
         '--anchoring_on', dest='anchoring_on', action='store_true',
         help='Enable anchoring (can be diseabled when wanting to only update '
@@ -521,7 +526,8 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--auto_update', dest='auto_update', action='store_true',
-        help='Update bridge contract when settings change in config file')
+        help='Update bridge contract when settings change in config file'
+    )
     parser.add_argument(
         '--oracle_update', dest='oracle_update', action='store_true',
         help='Update bridge contract when validators or oracle addr '
@@ -529,7 +535,14 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--eth_gas_price', type=int,
-        help='Gas price (gWei) to use in transactions', required=False)
+        help='Gas price (gWei) to use in transactions', required=False
+    )
+    parser.add_argument(
+        '--eco', dest='eco', action='store_true',
+        help='In eco mode, anchoring will only be done when lock/burn/freeze '
+        'events happen in the bridge contract'
+    )
+
     parser.set_defaults(anchoring_on=False)
     parser.set_defaults(auto_update=False)
     parser.set_defaults(oracle_update=False)
@@ -542,6 +555,7 @@ if __name__ == '__main__':
         anchoring_on=args.anchoring_on,
         auto_update=args.auto_update,
         oracle_update=args.oracle_update,
-        eth_gas_price=args.eth_gas_price
+        eth_gas_price=args.eth_gas_price,
+        eco=args.eco,
     )
     proposer.run()
