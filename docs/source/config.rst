@@ -94,8 +94,8 @@ It can be created and updated manually of with the help of the cli.
         ],
         "wallet": { // list of Aergo wallets
             "default": { // name of wallet
-                "addr": "AmNMFbiVsqy6vg4njsTjgy7bKPFHFYhLV4rzQyrENUS9AM1e3tw5", // address matching private key
-                "priv_key": "47CLj29W96rS9SsizUz4pueeuTT2GcSpkoAsvVC3USLzQ5kKTWKmz1WLKnqor2ET7hPd73TC9" // encrypted private key
+                "addr": "AmNPWDJMjU4g98Scm4AikW8JwQMGwWMztM7Qy8ggxNTkhgZMJHFp", // address matching private key
+                "keystore": "keystore/AmNPWDJMjU4g98Scm4AikW8JwQMGwWMztM7Qy8ggxNTkhgZMJHFp__2020-01-20T04:13:06__keystore.json" // path to json keystore
             }
         },
         "wallet-eth": { // list of Ethereum wallets
