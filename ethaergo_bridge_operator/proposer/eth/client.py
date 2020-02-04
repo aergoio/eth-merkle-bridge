@@ -293,10 +293,7 @@ class EthProposerClient(threading.Thread):
                     # until min_gas_price is reached
                     self.eth_tx.change_gas_price(0.9)
 
-                if self.auto_update:
-                    self.monitor_settings_and_sleep(self.t_anchor)
-                else:
-                    time.sleep(self.t_anchor)
+                self.monitor_settings_and_sleep(self.t_anchor)
 
             except requests.exceptions.ConnectionError:
                 logger.warning(
@@ -381,15 +378,18 @@ class EthProposerClient(threading.Thread):
         just not give signatures.
 
         """
-        start = time.time()
-        self.monitor_settings()
-        while time.time()-start < sleeping_time-10:
-            # check the config file every 10 seconds
-            time.sleep(10)
+        if self.auto_update:
+            start = time.time()
             self.monitor_settings()
-        remaining = sleeping_time - (time.time() - start)
-        if remaining > 0:
-            time.sleep(remaining)
+            while time.time()-start < sleeping_time-10:
+                # check the config file every 10 seconds
+                time.sleep(10)
+                self.monitor_settings()
+            remaining = sleeping_time - (time.time() - start)
+            if remaining > 0:
+                time.sleep(remaining)
+        else:
+            time.sleep(sleeping_time)
 
     def monitor_settings(self):
         """Check if a modification of bridge settings is requested by seeing

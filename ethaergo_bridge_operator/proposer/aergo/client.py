@@ -310,11 +310,8 @@ class AergoProposerClient(threading.Thread):
                         self.aergo_tx.new_state_anchor(
                             root, next_anchor_height, validator_indexes, sigs)
 
-                if self.auto_update:
-                    self.monitor_settings_and_sleep(
-                        self.t_anchor * self.eth_block_time)
-                else:
-                    time.sleep(self.t_anchor * self.eth_block_time)
+                self.monitor_settings_and_sleep(
+                    self.t_anchor * self.eth_block_time)
 
             except requests.exceptions.ConnectionError:
                 logger.warning(
@@ -358,15 +355,18 @@ class AergoProposerClient(threading.Thread):
         just not give signatures.
 
         """
-        start = time.time()
-        self.monitor_settings()
-        while time.time()-start < sleeping_time-10:
-            # check the config file every 10 seconds
-            time.sleep(10)
+        if self.auto_update:
+            start = time.time()
             self.monitor_settings()
-        remaining = sleeping_time - (time.time() - start)
-        if remaining > 0:
-            time.sleep(remaining)
+            while time.time()-start < sleeping_time-10:
+                # check the config file every 10 seconds
+                time.sleep(10)
+                self.monitor_settings()
+            remaining = sleeping_time - (time.time() - start)
+            if remaining > 0:
+                time.sleep(remaining)
+        else:
+            time.sleep(sleeping_time)
 
     def monitor_settings(self):
         """Check if a modification of bridge settings is requested by seeing
