@@ -3,7 +3,7 @@
 # Shortcuts for development and testing
 
 docker-aergo:
-	docker build --build-arg GIT_TAG=3f24ea32ddeb27dd1b86671d1622ab2108a1f42e -t aergo/node ./docker_test_nodes/aergo
+	# docker build --build-arg GIT_TAG=3f24ea32ddeb27dd1b86671d1622ab2108a1f42e -t aergo/node ./docker_test_nodes/aergo
 	docker-compose -f ./docker_test_nodes/aergo/docker-compose.yml up
 
 docker-eth:
@@ -70,4 +70,4 @@ protoc:
 		./proto/unfreeze_service/*.proto
 
 monitor_testnet_bridge:
-	python3 -m ethaergo_bridge_operator.proposer.client -c './configs/testnet/testnet_config.json' -a 'aergo-testnet' -e 'ropsten' --eth_block_time 10
+	python3 -m ethaergo_bridge_operator.proposer.client -c './configs/testnet/testnet_config.json' -a 'aergo-testnet' -e 'ropsten' --eth_block_time 10 --eth_eco

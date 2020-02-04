@@ -349,6 +349,11 @@ class EthProposerClient(threading.Thread):
                 time.sleep(self.t_anchor / 10)
 
     def skip_anchor(self, last_anchor, next_anchor):
+        if next_anchor - last_anchor > 10000:
+            # prevent aergo's too large block range error when anchor on eth
+            # didn't happen for over 10.000 blocks (max block range of
+            # get_events is 10.000) -> happens on 1st wait_next_anchor()
+            last_anchor = next_anchor - 10000
         lock_events = self.hera.get_events(
             self.aergo_bridge, "lock", start_block_no=last_anchor,
             end_block_no=next_anchor

@@ -29,7 +29,7 @@
                     "t_final": 30
                 }
             },
-            "ip": "https://ropsten.infura.io/v3/732b5c5fedda448d96a9e0e7c49759fb",
+            "ip": "http://13.209.186.203:8545",
             "isPOA": false,
             "providers": [
                 "https://ropsten.infura.io/v3/732b5c5fedda448d96a9e0e7c49759fb",
