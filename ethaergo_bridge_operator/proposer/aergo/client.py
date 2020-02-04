@@ -228,9 +228,12 @@ class AergoProposerClient(threading.Thread):
                 if self.eco:
                     # only anchor if a lock / burn event happened on ethereum
                     if self.skip_anchor(
-                        merged_height_from, next_anchor_height):
+                            merged_height_from, next_anchor_height):
                         logger.info(
-                            "\"Anchor skipped (no lock/burn events occured)\"")
+                            "\"Anchor skipped (no lock/burn events occured), "
+                            "wait until next anchor time: %ss...\"",
+                            self.t_anchor * self.eth_block_time
+                        )
                         self.monitor_settings_and_sleep(
                             self.t_anchor * self.eth_block_time)
                         continue
@@ -244,6 +247,7 @@ class AergoProposerClient(threading.Thread):
                     continue
 
                 if not self.anchoring_on and not self.auto_update:
+                    # monitoring
                     logger.info(
                         "\"Anchoring height reached waiting for anchor...\""
                     )

@@ -217,10 +217,12 @@ class EthProposerClient(threading.Thread):
                 if self.eco:
                     # only anchor if a lock / burn event happened on ethereum
                     if self.skip_anchor(
-                        merged_height_from, next_anchor_height):
+                            merged_height_from, next_anchor_height):
                         logger.info(
                             "\"Anchor skipped (no lock/burn/freeze events "
-                            "occured)\"")
+                            "occured), wait until next anchor time: %ss...\"",
+                            self.t_anchor
+                        )
                         self.monitor_settings_and_sleep(self.t_anchor)
                         continue
 
@@ -234,6 +236,7 @@ class EthProposerClient(threading.Thread):
                     continue
 
                 if not self.anchoring_on and not self.auto_update:
+                    # monitoring
                     logger.info(
                         "\"Anchoring height reached waiting for anchor...\""
                     )
@@ -327,7 +330,8 @@ class EthProposerClient(threading.Thread):
                 else:
                     logger.warning(
                         "%s",
-                        {"UNKNOWN ValueError": json.dumps(traceback.format_exc())}
+                        {"UNKNOWN ValueError": json.dumps(
+                            traceback.format_exc())}
                     )
                 # skip to the next anchor if tx not mined
                 # users will also wait for lower gas fees to transfer assets
