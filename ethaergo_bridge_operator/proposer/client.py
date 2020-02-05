@@ -98,51 +98,26 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--eco', dest='eco', action='store_true',
-        help='In eco mode, anchoring will only be done when lock/burn/freeze '
-        'events happen in the bridge contracts'
+        help="In eco mode, anchoring will be skipped when lock/burn/freeze "
+        "events don't happen in the bridge contracts"
     )
     parser.add_argument(
         '--eth_eco', dest='eth_eco', action='store_true',
-        help='In eco mode, anchoring on Ethereum will only be done when lock/burn/freeze '
-        'events happen in the bridge contracts on Aergo'
-    )
-    parser.add_argument(
-        '--local_test', dest='local_test', action='store_true',
-        help='Start proposer with password for testing'
+        help="In eco mode, anchoring on Ethereum will be skipped when "
+        "lock/burn/freeze events don't happen in the bridge contracts on Aergo"
     )
 
-    parser.set_defaults(anchoring_on=False)
-    parser.set_defaults(auto_update=False)
-    parser.set_defaults(oracle_update=False)
-    parser.set_defaults(local_test=False)
-    parser.set_defaults(eth_gas_price=None)
-    parser.set_defaults(aergo_gas_price=None)
     args = parser.parse_args()
 
-    if args.local_test:
-        proposer = ProposerClient(
-            args.config_file_path, args.aergo, args.eth, args.eth_block_time,
-            args.aergo_gas_price, args.eth_gas_price,
-            privkey_name=args.privkey_name,
-            privkey_pwd=args.privkey_pwd,
-            anchoring_on=True,
-            auto_update=True,
-            oracle_update=True,
-            eco=args.eco,
-            eth_eco=args.eth_eco
-        )
-        proposer.run()
-    else:
-        # oracle update not supported by cli for safety
-        proposer = ProposerClient(
-            args.config_file_path, args.aergo, args.eth, args.eth_block_time,
-            args.aergo_gas_price, args.eth_gas_price,
-            privkey_name=args.privkey_name,
-            privkey_pwd=args.privkey_pwd,
-            anchoring_on=args.anchoring_on,
-            auto_update=args.auto_update,
-            oracle_update=args.oracle_update,
-            eco=args.eco,
-            eth_eco=args.eth_eco
-        )
-        proposer.run()
+    proposer = ProposerClient(
+        args.config_file_path, args.aergo, args.eth, args.eth_block_time,
+        args.aergo_gas_price, args.eth_gas_price,
+        privkey_name=args.privkey_name,
+        privkey_pwd=args.privkey_pwd,
+        anchoring_on=args.anchoring_on,
+        auto_update=args.auto_update,
+        oracle_update=args.oracle_update,
+        eco=args.eco,
+        eth_eco=args.eth_eco
+    )
+    proposer.run()

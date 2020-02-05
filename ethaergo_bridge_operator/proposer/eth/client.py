@@ -548,14 +548,10 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--eco', dest='eco', action='store_true',
-        help='In eco mode, anchoring will only be done when lock/burn/freeze '
-        'events happen in the bridge contract'
+        help="In eco mode, anchoring will be skipped when lock/burn/freeze "
+        "events don't happen in the bridge contract"
     )
 
-    parser.set_defaults(anchoring_on=False)
-    parser.set_defaults(auto_update=False)
-    parser.set_defaults(oracle_update=False)
-    parser.set_defaults(eth_gas_price=None)
     args = parser.parse_args()
 
     proposer = EthProposerClient(
