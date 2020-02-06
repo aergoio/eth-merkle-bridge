@@ -1,8 +1,6 @@
-# aergo-herapy==2.0.0
-git+git://github.com/aergoio/herapy.git@d0d65b0a6e940bddac62b295a25eec0854003a2b#egg=aergo-herapy
+aergo-herapy==2.0.1
 web3==5.4.0
-# git+git://github.com/aergoio/merkle-bridge.git@v0.3.0#egg=merkle-bridge
-git+git://github.com/aergoio/merkle-bridge.git@78670ce9facc214a0957166fcbe8ba09b293575d
+git+git://github.com/aergoio/merkle-bridge.git@v0.4.0#egg=merkle-bridge
 trie==1.4.0
 PyInquirer
 pyfiglet
