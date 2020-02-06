@@ -127,9 +127,11 @@ def mint(
     balance = int.from_bytes(lock_proof.storageProof[0].value, "big")
     ubig_balance = {'_bignum': str(balance)}
     # call unlock on aergo_to with the burn proof from aergo_from
-    tx, result = aergo_to.call_sc(bridge_to, "mint",
-                                  args=[receiver, ubig_balance,
-                                        token_origin[2:].lower(), ap])
+    tx, result = aergo_to.call_sc(
+        bridge_to, "mint",
+        args=[receiver, ubig_balance, token_origin[2:].lower(), ap],
+        gas_limit=gas_limit, gas_price=gas_price
+    )
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Mint asset Tx commit failed : {}".format(result))
 
@@ -237,9 +239,11 @@ def unlock(
     balance = int.from_bytes(burn_proof.storageProof[0].value, "big")
     ubig_balance = {'_bignum': str(balance)}
     # call unlock on aergo_to with the burn proof from aergo_from
-    tx, result = aergo_to.call_sc(bridge_to, "unlock",
-                                  args=[receiver, ubig_balance,
-                                        token_origin, ap])
+    tx, result = aergo_to.call_sc(
+        bridge_to, "unlock",
+        args=[receiver, ubig_balance, token_origin, ap],
+        gas_limit=gas_limit, gas_price=gas_price
+    )
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Unlock asset Tx commit failed : {}".format(result))
 
@@ -267,8 +271,10 @@ def unfreeze(
     balance = int.from_bytes(lock_proof.storageProof[0].value, "big")
     ubig_balance = {'_bignum': str(balance)}
     # call unlock on aergo_to with the burn proof from aergo_from
-    tx, result = aergo_to.call_sc(bridge_to, "unfreeze",
-                                  args=[receiver, ubig_balance, ap])
+    tx, result = aergo_to.call_sc(
+        bridge_to, "unfreeze", args=[receiver, ubig_balance, ap],
+        gas_limit=gas_limit, gas_price=gas_price
+    )
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Unfreeze asset Tx commit failed : {}".format(result))
 

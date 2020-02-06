@@ -190,7 +190,7 @@ class EthAergoWallet(WalletConfig):
             logger.info("Pegged token unknow by wallet")
             save_pegged_token_address = True
 
-        gas_limit = 0
+        gas_limit = 300000
         aer_balance = aergo_u.get_balance(tx_sender, 'aergo', aergo_to)
         if aer_balance < gas_limit*self.aergo_gas_price:
             err = "not enough aer balance to pay tx fee"
@@ -311,7 +311,7 @@ class EthAergoWallet(WalletConfig):
             asset_name, balance/10**18
         )
 
-        gas_limit = 0
+        gas_limit = 300000
         if receiver != tx_sender:
             aer_balance = aergo_u.get_balance(tx_sender, 'aergo', aergo_to)
             if aer_balance < gas_limit*self.aergo_gas_price:
@@ -375,7 +375,7 @@ class EthAergoWallet(WalletConfig):
             asset_name, balance/10**18
         )
 
-        gas_limit = 0
+        gas_limit = 300000
         aer_balance = aergo_u.get_balance(tx_sender, 'aergo', aergo_to)
         if aer_balance < gas_limit*self.aergo_gas_price:
             err = "not enough aer balance to pay tx fee"
@@ -517,7 +517,7 @@ class EthAergoWallet(WalletConfig):
         sender = str(aergo_from.account.address)
         bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
 
-        gas_limit = 0
+        gas_limit = 300000
         balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
         if balance < amount + gas_limit * self.aergo_gas_price:
             raise InsufficientBalanceError("not enough token balance")
@@ -567,7 +567,7 @@ class EthAergoWallet(WalletConfig):
         bridge_from = self.get_bridge_contract_address(from_chain, to_chain)
         asset_address = self.get_asset_address(asset_name, from_chain)
 
-        gas_limit = 0
+        gas_limit = 300000
         balance = aergo_u.get_balance(sender, asset_address, aergo_from)
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
@@ -703,7 +703,7 @@ class EthAergoWallet(WalletConfig):
         token_pegged = self.get_asset_address(asset_name, from_chain,
                                               asset_origin_chain=to_chain)
 
-        gas_limit = 0
+        gas_limit = 300000
         balance = aergo_u.get_balance(sender, token_pegged, aergo_from)
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")

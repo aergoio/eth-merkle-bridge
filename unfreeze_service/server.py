@@ -174,9 +174,12 @@ class UnfreezeService(UnfreezeServiceServicer):
         ubig_balance = {'_bignum': str(balance)}
 
         # call unfreeze tx
+        gas_limit = 300000
+        gas_price = 0
         tx, result = self.hera.call_sc(
             self.bridge_aergo, "unfreeze",
-            args=[account_ref.receiver, ubig_balance, ap]
+            args=[account_ref.receiver, ubig_balance, ap],
+            gas_limit=gas_limit, gas_price=gas_price
         )
         if result.status != herapy.CommitStatus.TX_OK:
             logger.warning("\"Error: tx failed: %s\"", result.json())

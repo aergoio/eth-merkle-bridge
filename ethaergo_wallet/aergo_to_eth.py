@@ -52,7 +52,8 @@ def lock(
         )
     args = (bridge_from, {"_bignum": str(value)}, receiver[2:].lower())
     tx, result = aergo_from.call_sc(
-        asset, "transfer", args=args, amount=0
+        asset, "transfer", args=args, amount=0, gas_limit=gas_limit,
+        gas_price=gas_price
     )
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Lock asset Tx commit failed : {}".format(result))
@@ -170,7 +171,10 @@ def burn(
             "token_pegged {} must be an Aergo address".format(token_pegged)
         )
     args = (receiver[2:].lower(), {"_bignum": str(value)}, token_pegged)
-    tx, result = aergo_from.call_sc(bridge_from, "burn", args=args)
+    tx, result = aergo_from.call_sc(
+        bridge_from, "burn", args=args, gas_limit=gas_limit,
+        gas_price=gas_price
+    )
 
     if result.status != herapy.CommitStatus.TX_OK:
         raise TxError("Burn asset Tx commit failed : {}".format(result))
@@ -280,7 +284,8 @@ def freeze(
         )
     args = (receiver[2:].lower(), {"_bignum": str(value)})
     tx, result = aergo_from.call_sc(
-        bridge_from, "freeze", amount=value, args=args
+        bridge_from, "freeze", amount=value, args=args, gas_limit=gas_limit,
+        gas_price=gas_price
     )
 
     if result.status != herapy.CommitStatus.TX_OK:
