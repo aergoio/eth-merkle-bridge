@@ -31,7 +31,7 @@ deploy_test_bridge:
 	python3 -m ethaergo_bridge_operator.test_setup.arc1_deployer
 
 proposer:
-	python3 -m ethaergo_bridge_operator.proposer.client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 1 --privkey_name "proposer" --privkey_pwd "1234" --local_test
+	python3 -m ethaergo_bridge_operator.proposer.client -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --eth_block_time 1 --privkey_name "proposer" --privkey_pwd "1234" --anchoring_on --auto_update --oracle_update
 
 validator:
 	python3 -m ethaergo_bridge_operator.validator.server -c './test_config.json' -a 'aergo-local' -e 'eth-poa-local' --validator_index 1 --privkey_name "validator" --local_test
@@ -70,4 +70,12 @@ protoc:
 		./proto/unfreeze_service/*.proto
 
 monitor_testnet_bridge:
-	python3 -m ethaergo_bridge_operator.proposer.client -c './configs/testnet/testnet_config.json' -a 'aergo-testnet' -e 'ropsten' --eth_block_time 10
+	# python3 -m ethaergo_bridge_operator.proposer.client -c './configs/testnet/testnet_config.json' -a 'aergo-testnet' -e 'ropsten' --eth_block_time 10 --eco
+	docker run -it --rm --name ethaergo_proposer \
+		-v $(PWD)/keystore:/home/eth-merkle-bridge/keystore \
+		-v $(PWD)/configs/testnet/testnet_config.json:/home/eth-merkle-bridge/config.json \
+		-v $(PWD)/logs:/home/eth-merkle-bridge/logs \
+		paouvrard/ethaergo_operator:latest \
+		ethaergo_bridge_operator.proposer.client \
+		-c './config.json' -a 'aergo-testnet' -e 'ropsten' \
+		--eth_block_time 10 --eth_eco

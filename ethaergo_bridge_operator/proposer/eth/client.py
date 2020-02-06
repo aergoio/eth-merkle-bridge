@@ -216,11 +216,13 @@ class EthProposerClient(threading.Thread):
 
                 if self.eco:
                     # only anchor if a lock / burn event happened on ethereum
-                    if self.skip_anchor(merged_height_from,
-                                        next_anchor_height):
+                    if self.skip_anchor(
+                            merged_height_from, next_anchor_height):
                         logger.info(
                             "\"Anchor skipped (no lock/burn/freeze events "
-                            "occured)\"")
+                            "occured), wait until next anchor time: %ss...\"",
+                            self.t_anchor
+                        )
                         self.monitor_settings_and_sleep(self.t_anchor)
                         continue
 
@@ -234,6 +236,7 @@ class EthProposerClient(threading.Thread):
                     continue
 
                 if not self.anchoring_on and not self.auto_update:
+                    # monitoring
                     logger.info(
                         "\"Anchoring height reached waiting for anchor...\""
                     )
@@ -290,10 +293,7 @@ class EthProposerClient(threading.Thread):
                     # until min_gas_price is reached
                     self.eth_tx.change_gas_price(0.9)
 
-                if self.auto_update:
-                    self.monitor_settings_and_sleep(self.t_anchor)
-                else:
-                    time.sleep(self.t_anchor)
+                self.monitor_settings_and_sleep(self.t_anchor)
 
             except requests.exceptions.ConnectionError:
                 logger.warning(
@@ -349,6 +349,11 @@ class EthProposerClient(threading.Thread):
                 time.sleep(self.t_anchor / 10)
 
     def skip_anchor(self, last_anchor, next_anchor):
+        if next_anchor - last_anchor > 10000:
+            # prevent aergo's too large block range error when anchor on eth
+            # didn't happen for over 10.000 blocks (max block range of
+            # get_events is 10.000) -> happens on 1st wait_next_anchor()
+            last_anchor = next_anchor - 10000
         lock_events = self.hera.get_events(
             self.aergo_bridge, "lock", start_block_no=last_anchor,
             end_block_no=next_anchor
@@ -378,15 +383,18 @@ class EthProposerClient(threading.Thread):
         just not give signatures.
 
         """
-        start = time.time()
-        self.monitor_settings()
-        while time.time()-start < sleeping_time-10:
-            # check the config file every 10 seconds
-            time.sleep(10)
+        if self.auto_update:
+            start = time.time()
             self.monitor_settings()
-        remaining = sleeping_time - (time.time() - start)
-        if remaining > 0:
-            time.sleep(remaining)
+            while time.time()-start < sleeping_time-10:
+                # check the config file every 10 seconds
+                time.sleep(10)
+                self.monitor_settings()
+            remaining = sleeping_time - (time.time() - start)
+            if remaining > 0:
+                time.sleep(remaining)
+        else:
+            time.sleep(sleeping_time)
 
     def monitor_settings(self):
         """Check if a modification of bridge settings is requested by seeing
@@ -502,19 +510,24 @@ if __name__ == '__main__':
     # Add arguments
     parser.add_argument(
         '-c', '--config_file_path', type=str, help='Path to config.json',
-        required=True)
+        required=True
+    )
     parser.add_argument(
         '-a', '--aergo', type=str, help='Name of Aergo network in config file',
-        required=True)
+        required=True
+    )
     parser.add_argument(
         '-e', '--eth', type=str, required=True,
-        help='Name of Ethereum network in config file')
+        help='Name of Ethereum network in config file'
+    )
     parser.add_argument(
         '--eth_block_time', type=int, help='Average Ethereum block time',
-        required=True)
+        required=True
+    )
     parser.add_argument(
         '--privkey_name', type=str, help='Name of account in config file '
-        'to sign anchors', required=False)
+        'to sign anchors', required=False
+    )
     parser.add_argument(
         '--anchoring_on', dest='anchoring_on', action='store_true',
         help='Enable anchoring (can be diseabled when wanting to only update '
@@ -522,7 +535,8 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--auto_update', dest='auto_update', action='store_true',
-        help='Update bridge contract when settings change in config file')
+        help='Update bridge contract when settings change in config file'
+    )
     parser.add_argument(
         '--oracle_update', dest='oracle_update', action='store_true',
         help='Update bridge contract when validators or oracle addr '
@@ -530,11 +544,14 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--eth_gas_price', type=int,
-        help='Gas price (gWei) to use in transactions', required=False)
-    parser.set_defaults(anchoring_on=False)
-    parser.set_defaults(auto_update=False)
-    parser.set_defaults(oracle_update=False)
-    parser.set_defaults(eth_gas_price=None)
+        help='Gas price (gWei) to use in transactions', required=False
+    )
+    parser.add_argument(
+        '--eco', dest='eco', action='store_true',
+        help="In eco mode, anchoring will be skipped when lock/burn/freeze "
+        "events don't happen in the bridge contract"
+    )
+
     args = parser.parse_args()
 
     proposer = EthProposerClient(
@@ -543,6 +560,7 @@ if __name__ == '__main__':
         anchoring_on=args.anchoring_on,
         auto_update=args.auto_update,
         oracle_update=args.oracle_update,
-        eth_gas_price=args.eth_gas_price
+        eth_gas_price=args.eth_gas_price,
+        eco=args.eco,
     )
     proposer.run()

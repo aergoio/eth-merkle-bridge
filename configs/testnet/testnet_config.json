@@ -5,8 +5,8 @@
                 "ropsten": {
                     "addr": "Amh76FdT5Q8rmeJxVb31GQubZ4nWQK4HzgbvE1u9jehQTXPg8Ksv",
                     "oracle": "AmgtAN3EyQGZ9LQ66BEpYptbcvohhPDSdDbQRWJYKbynfPijWHtu",
-                    "t_anchor": 30,
-                    "t_final": 100,
+                    "t_anchor": 25,
+                    "t_final": 80,
                     "unfreeze_fee": 2000000000000000000
                 }
             },
@@ -29,11 +29,11 @@
                     "t_final": 30
                 }
             },
-            "ip": "https://ropsten.infura.io/v3/732b5c5fedda448d96a9e0e7c49759fb",
+            "ip": "http://13.209.186.203:8545",
             "isPOA": false,
             "providers": [
                 "https://ropsten.infura.io/v3/732b5c5fedda448d96a9e0e7c49759fb",
-                "https://ropsten.infura.io/v3/732b5c5fedda448d96a9e0e7c49759fb"
+                "http://13.209.186.203:8545"
             ],
             "type": "ethereum"
         }
