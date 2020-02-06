@@ -84,15 +84,25 @@ class ValidatorService(BridgeOperatorServicer):
 
         if privkey_name is None:
             privkey_name = 'validator'
+
+        keystore_path = config_data["wallet-eth"][privkey_name]['keystore']
+        with open(root_path + keystore_path, "r") as f:
+            eth_keystore = f.read()
+        keystore_path = config_data["wallet"][privkey_name]['keystore']
+        with open(root_path + keystore_path, "r") as f:
+            aergo_keystore = f.read()
+
         if privkey_pwd is None:
             while True:
                 try:
-                    privkey_pwd = getpass("Decrypt Aergo and Ethereum accounts '{}'\n"
-                                          "Password: ".format(privkey_name))
+                    privkey_pwd = getpass(
+                        "Decrypt Aergo and Ethereum accounts '{}'\nPassword: "
+                        .format(privkey_name)
+                    )
                     self.eth_signer = EthSigner(
-                        root_path, config_data, privkey_name, privkey_pwd)
+                        eth_keystore, privkey_name, privkey_pwd)
                     self.aergo_signer = AergoSigner(
-                        config_data, privkey_name, privkey_pwd)
+                        aergo_keystore, privkey_name, privkey_pwd)
                     break
                 except ValueError:
                     logger.info("\"Wrong password for Eth key, try again\"")
@@ -100,9 +110,9 @@ class ValidatorService(BridgeOperatorServicer):
                     logger.info("\"Wrong password for Aergo key, try again\"")
         else:
             self.eth_signer = EthSigner(
-                root_path, config_data, privkey_name, privkey_pwd)
+                eth_keystore, privkey_name, privkey_pwd)
             self.aergo_signer = AergoSigner(
-                config_data, privkey_name, privkey_pwd)
+                aergo_keystore, privkey_name, privkey_pwd)
         # record private key for signing EthAnchor
         logger.info(
             "\"Aergo validator Address: %s\"", self.aergo_signer.address)

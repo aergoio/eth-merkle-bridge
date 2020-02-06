@@ -873,25 +873,27 @@ class EthAergoWallet(WalletConfig):
         privkey_pwd: str = None,
         skip_state: bool = False
     ) -> herapy.Aergo:
-        """ Return aergo provider with new account created with
-        priv_key
-        """
-        exported_privkey = self.config_data('wallet', privkey_name, 'priv_key')
+        """ Return aergo provider with account loaded from keystore """
+        keystore_path = self.config_data('wallet', privkey_name, 'keystore')
+        with open(self.root_path + keystore_path, "r") as f:
+            keystore = f.read()
         aergo = self.connect_aergo(network_name)
         if privkey_pwd is None:
-            logger.info("Decrypt exported private key '%s'", privkey_name)
             while True:
                 try:
-                    privkey_pwd = getpass("Password: ")
-                    aergo.import_account(exported_privkey, privkey_pwd,
-                                         skip_state=skip_state)
+                    privkey_pwd = getpass(
+                        "Decrypt Aergo keystore: '{}'\nPassword: "
+                        .format(privkey_name)
+                    )
+                    aergo.import_account_from_keystore(
+                        keystore, privkey_pwd, skip_state=skip_state)
                 except GeneralException:
                     logger.info("Wrong password, try again")
                     continue
                 break
         else:
-            aergo.import_account(exported_privkey, privkey_pwd,
-                                 skip_state=skip_state)
+            aergo.import_account_from_keystore(
+                keystore, privkey_pwd, skip_state=skip_state)
         return aergo
 
     def get_web3(

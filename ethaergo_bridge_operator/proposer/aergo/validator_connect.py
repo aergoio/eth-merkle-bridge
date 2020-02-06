@@ -67,7 +67,7 @@ class AergoValConnect():
         # create all channels with validators
         self.channels: List[grpc._channel.Channel] = []
         self.stubs: List[BridgeOperatorStub] = []
-        assert len(current_validators) == len(self.config_data['validators']), \
+        assert len(current_validators) == len(self.config_data['validators']),\
             "Validators in config file must match bridge validators " \
             "when starting (current validators connection needed to make "\
             "updates).\nExpected validators: {}".format(current_validators)

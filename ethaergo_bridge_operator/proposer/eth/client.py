@@ -143,16 +143,16 @@ class EthProposerClient(threading.Thread):
 
         if privkey_name is None:
             privkey_name = 'proposer'
-        keystore = config_data["wallet-eth"][privkey_name]['keystore']
-        with open(root_path + keystore, "r") as f:
-            encrypted_key = f.read()
+        keystore_path = config_data["wallet-eth"][privkey_name]['keystore']
+        with open(root_path + keystore_path, "r") as f:
+            keystore = f.read()
         if privkey_pwd is None:
             while True:
                 try:
                     privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\n"
                                           "Password: ".format(privkey_name))
                     self.eth_tx = EthTx(
-                        self.web3, encrypted_key, privkey_pwd,
+                        self.web3, keystore, privkey_pwd,
                         eth_oracle_address, oracle_abi, eth_gas_price,
                         self.t_anchor
                     )
@@ -161,7 +161,7 @@ class EthProposerClient(threading.Thread):
                     logger.info("\"Wrong password, try again\"")
         else:
             self.eth_tx = EthTx(
-                self.web3, encrypted_key, privkey_pwd, eth_oracle_address,
+                self.web3, keystore, privkey_pwd, eth_oracle_address,
                 oracle_abi, eth_gas_price, self.t_anchor
             )
 
@@ -327,8 +327,8 @@ class EthProposerClient(threading.Thread):
                 else:
                     logger.warning(
                         "%s",
-                        {"UNKNOWN ValueError": json.dumps(
-                            traceback.format_exc())}
+                        {"UNKNOWN ValueError":
+                         json.dumps(traceback.format_exc())}
                     )
                 # skip to the next anchor if tx not mined
                 # users will also wait for lower gas fees to transfer assets

@@ -262,7 +262,7 @@ def prompt_providers():
     return providers
 
 
-def prompt_eth_privkey():
+def prompt_eth_keystore():
     """Prompt use to input a new ethereum private key.
 
     Returns:
@@ -275,13 +275,13 @@ def prompt_eth_privkey():
         questions = [
             {
                 'type': 'input',
-                'name': 'privkey_name',
+                'name': 'account_name',
                 'message': 'Give your key a short descriptive name'
             },
             {
                 'type': 'input',
                 'name': 'privkey',
-                'message': 'Path to json keystore'
+                'message': 'Path to Ethereum keystore'
             },
             {
                 'type': 'input',
@@ -290,7 +290,7 @@ def prompt_eth_privkey():
             }
         ]
         answers = inquirer.prompt(questions, style=aergo_style)
-        privkey_name = answers['privkey_name']
+        account_name = answers['account_name']
         privkey_path = answers['privkey']
         addr = answers['addr']
         try:
@@ -299,40 +299,47 @@ def prompt_eth_privkey():
             break
         except (IsADirectoryError, FileNotFoundError):
             print("Invalid key path")
-    return privkey_name, addr, privkey_path
+    return account_name, addr, privkey_path
 
 
-def prompt_aergo_privkey():
+def prompt_aergo_keystore():
     """Prompt user to input a new aergo private key.
 
     Returns:
         - name of the key
         - address of the key
-        - encrypted private key
+        - path to keystore
 
     """
-    questions = [
-        {
-            'type': 'input',
-            'name': 'privkey_name',
-            'message': 'Give your key a short descriptive name'
-        },
-        {
-            'type': 'input',
-            'name': 'privkey',
-            'message': 'Encrypted exported key string'
-        },
-        {
-            'type': 'input',
-            'name': 'addr',
-            'message': 'Aergo address matching private key'
-        }
-    ]
-    answers = inquirer.prompt(questions, style=aergo_style)
-    privkey = answers['privkey']
-    privkey_name = answers['privkey_name']
-    addr = answers['addr']
-    return privkey_name, addr, privkey
+    while 1:
+        questions = [
+            {
+                'type': 'input',
+                'name': 'account_name',
+                'message': 'Give your key a short descriptive name'
+            },
+            {
+                'type': 'input',
+                'name': 'privkey',
+                'message': 'Path to Aergo Keystore'
+            },
+            {
+                'type': 'input',
+                'name': 'addr',
+                'message': 'Aergo address matching private key'
+            }
+        ]
+        answers = inquirer.prompt(questions, style=aergo_style)
+        privkey_path = answers['privkey']
+        account_name = answers['account_name']
+        addr = answers['addr']
+        try:
+            with open(privkey_path, "r") as f:
+                f.read()
+            break
+        except (IsADirectoryError, FileNotFoundError):
+            print("Invalid key path")
+    return account_name, addr, privkey_path
 
 
 def prompt_new_asset(networks):

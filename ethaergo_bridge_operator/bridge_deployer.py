@@ -68,17 +68,20 @@ def deploy_bridge(
     if privkey_pwd is None:
         privkey_pwd = getpass("Decrypt Aergo private key '{}'\nPassword: "
                               .format(privkey_name))
-    sender_priv_key = config_data['wallet'][privkey_name]['priv_key']
-    aergo.import_account(sender_priv_key, privkey_pwd)
+
+    keystore_path = config_data['wallet'][privkey_name]['keystore']
+    with open(keystore_path, "r") as f:
+        keystore = f.read()
+    aergo.import_account_from_keystore(keystore, privkey_pwd)
     print("  > Sender Address Aergo: {}".format(aergo.account.address))
 
-    keystore = config_data["wallet-eth"][privkey_name]['keystore']
-    with open(keystore, "r") as f:
-        encrypted_key = f.read()
+    keystore_path = config_data["wallet-eth"][privkey_name]['keystore']
+    with open(keystore_path, "r") as f:
+        keystore = f.read()
     if privkey_pwd is None:
         privkey_pwd = getpass("Decrypt Ethereum keystore '{}'\nPassword: "
                               .format(privkey_name))
-    privkey = w3.eth.account.decrypt(encrypted_key, privkey_pwd)
+    privkey = w3.eth.account.decrypt(keystore, privkey_pwd)
     acct = w3.eth.account.from_key(privkey)
     sender = acct.address
     print("  > Sender Address Ethereum: {}".format(sender))

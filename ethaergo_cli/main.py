@@ -19,8 +19,8 @@ from ethaergo_cli.utils import (
     prompt_deposit_height,
     prompt_new_bridge,
     prompt_new_network,
-    prompt_eth_privkey,
-    prompt_aergo_privkey,
+    prompt_eth_keystore,
+    prompt_aergo_keystore,
     prompt_new_asset,
     prompt_new_validators,
     prompt_file_path,
@@ -277,7 +277,7 @@ class EthMerkleBridgeCli():
                             'value': 'B'
                         },
                         {
-                            'name': 'Register new encrypted private key',
+                            'name': 'Register new keystore path',
                             'value': 'K'
                         },
                         {
@@ -417,24 +417,24 @@ class EthMerkleBridgeCli():
         new_config['wallet'] = {}
         print("Register a private key for {}".format(net1))
         if net1_type == 'ethereum':
-            name, addr, privkey_path = prompt_eth_privkey()
-            privkey_path = os.path.relpath(privkey_path, self.root_path)
+            name, addr, keystore_path = prompt_eth_keystore()
+            keystore_path = os.path.relpath(keystore_path, self.root_path)
             new_config['wallet-eth'][name] = {"addr": addr,
-                                              "keystore": privkey_path}
+                                              "keystore": keystore_path}
         else:
-            name, addr, privkey = prompt_aergo_privkey()
+            name, addr, keystore_path = prompt_aergo_keystore()
             new_config['wallet'][name] = {"addr": addr,
-                                          "priv_key": privkey}
+                                          "keystore": keystore_path}
         print("Register a private key for {}".format(net2))
         if net2_type == 'ethereum':
-            name, addr, privkey_path = prompt_eth_privkey()
-            privkey_path = os.path.relpath(privkey_path, self.root_path)
+            name, addr, keystore_path = prompt_eth_keystore()
+            keystore_path = os.path.relpath(keystore_path, self.root_path)
             new_config['wallet-eth'][name] = {"addr": addr,
-                                              "keystore": privkey_path}
+                                              "keystore": keystore_path}
         else:
-            name, addr, privkey = prompt_aergo_privkey()
+            name, addr, keystore_path = prompt_aergo_keystore()
             new_config['wallet'][name] = {"addr": addr,
-                                          "priv_key": privkey}
+                                          "keystore": keystore_path}
 
         questions = [
             {
@@ -562,10 +562,11 @@ class EthMerkleBridgeCli():
             'Aergo'
         )
         if is_eth_key:
-            name, addr, privkey_path = prompt_eth_privkey()
-            privkey_path = os.path.relpath(privkey_path, self.root_path)
+            name, addr, keystore_path = prompt_eth_keystore()
+            keystore_path = os.path.relpath(keystore_path, self.root_path)
         else:
-            name, addr, privkey = prompt_aergo_privkey()
+            name, addr, keystore_path = prompt_aergo_keystore()
+            keystore_path = os.path.relpath(keystore_path, self.root_path)
 
         try:
             self.wallet.config_data('wallet', name)
@@ -576,11 +577,14 @@ class EthMerkleBridgeCli():
 
         if is_eth_key:
             self.wallet.config_data(
-                'wallet-eth', name, value={'addr': addr,
-                                           'keystore': privkey_path})
+                'wallet-eth', name,
+                value={'addr': addr, 'keystore': keystore_path}
+            )
         else:
             self.wallet.config_data(
-                'wallet', name, value={'addr': addr, 'priv_key': privkey})
+                'wallet', name,
+                value={'addr': addr, 'keystore': keystore_path}
+            )
         self.wallet.save_config()
 
     def register_new_validators(self):
