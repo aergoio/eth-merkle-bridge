@@ -70,10 +70,10 @@ protoc:
 		./proto/unfreeze_service/*.proto
 
 monitor_testnet_bridge:
-	# python3 -m ethaergo_bridge_operator.proposer.client -c './configs/testnet/testnet_config.json' -a 'aergo-testnet' -e 'ropsten' --eth_block_time 10 --eco
+	# python3 -m ethaergo_bridge_operator.proposer.client -c './configs/testnet/testnet_config_proposer.json' -a 'aergo-testnet' -e 'ropsten' --eth_block_time 10 --eco
 	docker run -it --rm --name ethaergo_proposer \
 		-v $(PWD)/keystore:/home/eth-merkle-bridge/keystore \
-		-v $(PWD)/configs/testnet/testnet_config.json:/home/eth-merkle-bridge/config.json \
+		-v $(PWD)/configs/testnet/testnet_config_proposer.json:/home/eth-merkle-bridge/config.json \
 		-v $(PWD)/logs:/home/eth-merkle-bridge/logs \
 		paouvrard/ethaergo_operator:latest \
 		ethaergo_bridge_operator.proposer.client \
