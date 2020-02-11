@@ -1,0 +1,74 @@
+{
+    "networks": {
+        "aergo-testnet": {
+            "bridges": {
+                "ropsten": {
+                    "addr": "Amh76FdT5Q8rmeJxVb31GQubZ4nWQK4HzgbvE1u9jehQTXPg8Ksv",
+                    "oracle": "AmgtAN3EyQGZ9LQ66BEpYptbcvohhPDSdDbQRWJYKbynfPijWHtu",
+                    "t_anchor": 25,
+                    "t_final": 80,
+                    "unfreeze_fee": 2000000000000000000
+                }
+            },
+            "ip": "13.124.44.174:7845",
+            "providers": [],
+            "type": "aergo"
+        },
+        "ropsten": {
+            "bridges": {
+                "aergo-testnet": {
+                    "addr": "0xd6d81a49527ec42Ed5E5a60B86F316E683991116",
+                    "bridge_abi": "contracts/solidity/bridge_abi.txt",
+                    "minted_abi": "contracts/solidity/minted_erc20_abi.txt",
+                    "oracle": "0xE29a642e6A6e31DC532248BF50E8aC18436BeE05",
+                    "oracle_abi": "contracts/solidity/oracle_abi.txt",
+                    "t_anchor": 900,
+                    "t_final": 30
+                }
+            },
+            "ip": "http://13.209.186.203:8545",
+            "isPOA": false,
+            "providers": [],
+            "type": "ethereum"
+        }
+    },
+    "validators": [
+        {
+            "addr": "AmN9pqBN1ri5mu5yJKMfUmqUxo72JxmxUTncjJdzbe6ySDzFwHZB",
+            "eth-addr": "0xb708407e8C5eB26ac7ABB879D1faa14bE1C1aB51",
+            "ip": "13.124.44.174:9845"
+        },
+        {
+            "addr": "AmNCrXHgm1bupnd5uTnDmiJoR2WnoJmfiC9tb2yC5XBxHD3YMFsa",
+            "eth-addr": "0x53d1C1Dd339eD171b65ca218c151F3aF07a9D00C",
+            "ip": "13.124.60.154:9845"
+        },
+        {
+            "addr": "AmND2co3m14NYfvQwAwn3nQW47CvAGcQQVVZt1FcWCEbMarzgK8z",
+            "eth-addr": "0x319537c10637a647b70C77A1e47Ec188494F529a",
+            "ip": "13.125.85.92:9845"
+        },
+        {
+            "addr": "AmNJKD2jr2yTWwnit85X6HXX6rezKkd1Tt3HKiTx9RM5LPr8KVf3",
+            "eth-addr": "0xaA47d6D75078c25ae599E91f34118BfE8702B604",
+            "ip": "54.180.57.6:9845"
+        },
+        {
+            "addr": "AmNVYEfrzw5VEDWmarn9Y66b4ShtqMkQdDrEsSBEJNQX1ypo8aUf",
+            "eth-addr": "0xe64D39A707669F0EE0753F8b360885249a76beB4",
+            "ip": "18.231.197.195:9845"
+        }
+    ],
+    "wallet": {
+        "proposer": {
+            "addr": "AmLodYzig18Z5Qrbi22TVJ9ss8vtDg418M3ajg1CYBGXWsUYZ4En",
+            "keystore": "keystore/AmLodYzig18Z5Qrbi22TVJ9ss8vtDg418M3ajg1CYBGXWsUYZ4En__2020-02-10T06:26:45__keystore.json"
+        }
+    },
+    "wallet-eth": {
+        "proposer": {
+            "addr": "0xEF27C1d9B1464E0EdbCc69B429b872eb89877Bd9",
+            "keystore": "keystore/UTC--2019-09-03T08-30-45.830Z--ef27c1d9b1464e0edbcc69b429b872eb89877bd9"
+        }
+    }
+}

@@ -1,0 +1,112 @@
+{
+    "networks": {
+        "aergo-testnet": {
+            "bridges": {
+                "ropsten": {
+                    "addr": "Amh76FdT5Q8rmeJxVb31GQubZ4nWQK4HzgbvE1u9jehQTXPg8Ksv",
+                    "oracle": "AmgtAN3EyQGZ9LQ66BEpYptbcvohhPDSdDbQRWJYKbynfPijWHtu",
+                    "t_anchor": 25,
+                    "t_final": 80,
+                    "unfreeze_fee": 2000000000000000000
+                }
+            },
+            "ip": "13.124.44.174:7845",
+            "providers": [
+                "172.17.0.1:7845",
+                "13.124.81.52:7845"
+            ],
+            "type": "aergo"
+        },
+        "ropsten": {
+            "bridges": {
+                "aergo-testnet": {
+                    "addr": "0xd6d81a49527ec42Ed5E5a60B86F316E683991116",
+                    "bridge_abi": "contracts/solidity/bridge_abi.txt",
+                    "minted_abi": "contracts/solidity/minted_erc20_abi.txt",
+                    "oracle": "0xE29a642e6A6e31DC532248BF50E8aC18436BeE05",
+                    "oracle_abi": "contracts/solidity/oracle_abi.txt",
+                    "t_anchor": 900,
+                    "t_final": 30
+                }
+            },
+            "ip": "http://13.209.186.203:8545",
+            "isPOA": false,
+            "providers": [
+                "https://ropsten.infura.io/v3/732b5c5fedda448d96a9e0e7c49759fb",
+                "http://13.209.186.203:8545"
+            ],
+            "type": "ethereum"
+        }
+    },
+    "validators": [
+        {
+            "addr": "AmN9pqBN1ri5mu5yJKMfUmqUxo72JxmxUTncjJdzbe6ySDzFwHZB",
+            "eth-addr": "0xb708407e8C5eB26ac7ABB879D1faa14bE1C1aB51",
+            "ip": "0.0.0.0:9845"
+        },
+        {
+            "addr": "AmNCrXHgm1bupnd5uTnDmiJoR2WnoJmfiC9tb2yC5XBxHD3YMFsa",
+            "eth-addr": "0x53d1C1Dd339eD171b65ca218c151F3aF07a9D00C",
+            "ip": "0.0.0.0:9845"
+        },
+        {
+            "addr": "AmND2co3m14NYfvQwAwn3nQW47CvAGcQQVVZt1FcWCEbMarzgK8z",
+            "eth-addr": "0x319537c10637a647b70C77A1e47Ec188494F529a",
+            "ip": "0.0.0.0:9845"
+        },
+        {
+            "addr": "AmNJKD2jr2yTWwnit85X6HXX6rezKkd1Tt3HKiTx9RM5LPr8KVf3",
+            "eth-addr": "0xaA47d6D75078c25ae599E91f34118BfE8702B604",
+            "ip": "0.0.0.0:9845"
+        },
+        {
+            "addr": "AmNVYEfrzw5VEDWmarn9Y66b4ShtqMkQdDrEsSBEJNQX1ypo8aUf",
+            "eth-addr": "0xe64D39A707669F0EE0753F8b360885249a76beB4",
+            "ip": "0.0.0.0:9845"
+        }
+    ],
+    "wallet": {
+        "validator0": {
+            "addr": "AmN9pqBN1ri5mu5yJKMfUmqUxo72JxmxUTncjJdzbe6ySDzFwHZB",
+            "keystore": "keystore/AmN9pqBN1ri5mu5yJKMfUmqUxo72JxmxUTncjJdzbe6ySDzFwHZB__2020-02-10T06:27:07__keystore.json"
+        },
+        "validator1": {
+            "addr": "AmNCrXHgm1bupnd5uTnDmiJoR2WnoJmfiC9tb2yC5XBxHD3YMFsa",
+            "keystore": "keystore/AmNCrXHgm1bupnd5uTnDmiJoR2WnoJmfiC9tb2yC5XBxHD3YMFsa__2020-02-10T06:26:26__keystore.json"
+        },
+        "validator2": {
+            "addr": "AmND2co3m14NYfvQwAwn3nQW47CvAGcQQVVZt1FcWCEbMarzgK8z",
+            "keystore": "keystore/AmND2co3m14NYfvQwAwn3nQW47CvAGcQQVVZt1FcWCEbMarzgK8z__2020-02-10T06:26:35__keystore.json"
+        },
+        "validator3": {
+            "addr": "AmNJKD2jr2yTWwnit85X6HXX6rezKkd1Tt3HKiTx9RM5LPr8KVf3",
+            "keystore": "keystore/AmNJKD2jr2yTWwnit85X6HXX6rezKkd1Tt3HKiTx9RM5LPr8KVf3__2020-02-10T06:26:50__keystore.json"
+        },
+        "validator4": {
+            "addr": "AmNVYEfrzw5VEDWmarn9Y66b4ShtqMkQdDrEsSBEJNQX1ypo8aUf",
+            "keystore": "keystore/AmNVYEfrzw5VEDWmarn9Y66b4ShtqMkQdDrEsSBEJNQX1ypo8aUf__2020-02-10T06:26:40__keystore.json"
+        }
+    },
+    "wallet-eth": {
+        "validator0": {
+            "addr": "0xb708407e8C5eB26ac7ABB879D1faa14bE1C1aB51",
+            "keystore": "keystore/UTC--2019-09-03T02-44-33.466Z--b708407e8c5eb26ac7abb879d1faa14be1c1ab51"
+        },
+        "validator1": {
+            "addr": "0x53d1C1Dd339eD171b65ca218c151F3aF07a9D00C",
+            "keystore": "keystore/UTC--2019-09-03T02-45-19.758Z--53d1c1dd339ed171b65ca218c151f3af07a9d00c"
+        },
+        "validator2": {
+            "addr": "0x319537c10637a647b70C77A1e47Ec188494F529a",
+            "keystore": "keystore/UTC--2019-09-03T02-45-34.951Z--319537c10637a647b70c77a1e47ec188494f529a"
+        },
+        "validator3": {
+            "addr": "0xaA47d6D75078c25ae599E91f34118BfE8702B604",
+            "keystore": "keystore/UTC--2019-09-03T02-45-47.336Z--aa47d6d75078c25ae599e91f34118bfe8702b604"
+        },
+        "validator4": {
+            "addr": "0xe64D39A707669F0EE0753F8b360885249a76beB4",
+            "keystore": "keystore/UTC--2019-09-03T02-45-59.366Z--e64d39a707669f0ee0753f8b360885249a76beb4"
+        }
+    }
+}
