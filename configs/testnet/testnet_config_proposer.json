@@ -3,8 +3,8 @@
         "aergo-testnet": {
             "bridges": {
                 "ropsten": {
-                    "addr": "Amh76FdT5Q8rmeJxVb31GQubZ4nWQK4HzgbvE1u9jehQTXPg8Ksv",
-                    "oracle": "AmgtAN3EyQGZ9LQ66BEpYptbcvohhPDSdDbQRWJYKbynfPijWHtu",
+                    "addr": "AmhKe7zBreu4jaSpRDgcwegpSgZZXiCdHBTnc6xJ5FPuwVohzoSd",
+                    "oracle": "AmhnEq3xrTEfi1DQcYj1YhzdAggfdcXnNEd7T3GrXZVnNdjnjF2N",
                     "t_anchor": 25,
                     "t_final": 80,
                     "unfreeze_fee": 2000000000000000000
@@ -12,23 +12,38 @@
             },
             "ip": "13.124.44.174:7845",
             "providers": [],
+            "tokens": {
+                "aergo": {
+                    "addr": "aergo",
+                    "pegs": {}
+                }
+            },
             "type": "aergo"
         },
         "ropsten": {
             "bridges": {
                 "aergo-testnet": {
-                    "addr": "0xd6d81a49527ec42Ed5E5a60B86F316E683991116",
+                    "addr": "0xb4B8E65522c6820c848C39d18939d059bEb2C7eC",
+                    "oracle": "0xc3a14c6fa00432E222bf5746d7966d58411b3916",
                     "bridge_abi": "contracts/solidity/bridge_abi.txt",
                     "minted_abi": "contracts/solidity/minted_erc20_abi.txt",
-                    "oracle": "0xE29a642e6A6e31DC532248BF50E8aC18436BeE05",
                     "oracle_abi": "contracts/solidity/oracle_abi.txt",
                     "t_anchor": 900,
                     "t_final": 30
                 }
             },
-            "ip": "http://13.209.186.203:8545",
+            "ip": "https://ropsten.infura.io/v3/732b5c5fedda448d96a9e0e7c49759fb",
             "isPOA": false,
             "providers": [],
+            "tokens": {
+                "aergo_erc20": {
+                    "abi": "contracts/solidity/aergo_erc20_abi.txt",
+                    "addr": "0x8620F9359b8F702A0a45246304cF1089Bda5778e",
+                    "pegs": {
+                        "aergo-testnet": "aergo"
+                    }
+                }
+            },
             "type": "ethereum"
         }
     },

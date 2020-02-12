@@ -79,3 +79,10 @@ monitor_testnet_bridge:
 		ethaergo_bridge_operator.proposer.client \
 		-c './config.json' -a 'aergo-testnet' -e 'ropsten' \
 		--eth_block_time 10 --eth_eco
+
+
+deploy_testnet_bridge:
+	# python3 -m ethaergo_bridge_operator.test_setup.erc20_deployer -c './configs/testnet/testnet_config_proposer.json' -n 'aergo_erc20' -e 'ropsten' --privkey_name "proposer"
+	# python3 -m ethaergo_bridge_operator.bridge_deployer -c './configs/testnet/testnet_config_proposer.json' -a 'aergo-testnet' -e 'ropsten' --privkey_name "proposer"
+	# python3 -m ethaergo_bridge_operator.oracle_deployer -c './configs/testnet/testnet_config_proposer.json' -a 'aergo-testnet' -e 'ropsten' --privkey_name "proposer"
+	# // transfer the aergo erc20 from the 'proposer' that deployed the token contract, to the bridge contract so that it can be unlocked
