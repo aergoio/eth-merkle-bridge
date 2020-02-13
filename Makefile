@@ -93,3 +93,6 @@ lint:
 		--exclude=*_pb2_grpc.py,*_pb2.py \
 		--ignore=E722,W503 \
 		ethaergo_bridge_operator ethaergo_wallet ethaergo_cli unfreeze_service
+
+mypy:
+	mypy -p ethaergo_bridge_operator -p ethaergo_wallet -p ethaergo_cli

@@ -163,7 +163,7 @@ class AergoTx():
         if result is None:
             logger.warning(
                 "\"Transaction not found. Tx hash: %s\"", tx.tx_hash)
-            return
+            return False
         if result.status != herapy.TxResultStatus.SUCCESS:
             logger.warning(
                 "\"Set %s failed: nonce already used, or invalid "
