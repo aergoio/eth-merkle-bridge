@@ -207,7 +207,7 @@ class EthMerkleBridgeCli():
                         )
                         if balance != 0:
                             line = [net_name, addr,
-                                    str(balance/10**18) + ' \U0001f4b0']
+                                    str(balance / 10**18) + ' \U0001f4b0']
                             lines.append(line)
                     for peg in token['pegs']:
                         pegged_network = self.wallet.config_data('networks',
@@ -218,7 +218,7 @@ class EthMerkleBridgeCli():
                             )
                             if balance != 0:
                                 line = [peg, addr,
-                                        str(balance/10**18) + ' \U0001f4b0']
+                                        str(balance / 10**18) + ' \U0001f4b0']
                                 lines.append(line)
                     print_balance_table_lines(lines, token_name,
                                               col_widths)
@@ -237,7 +237,7 @@ class EthMerkleBridgeCli():
                         )
                         if balance != 0:
                             line = [net_name, addr,
-                                    str(balance/10**18) + ' \U0001f4b0']
+                                    str(balance / 10**18) + ' \U0001f4b0']
                             lines.append(line)
                     for peg in token['pegs']:
                         pegged_network = self.wallet.config_data('networks',
@@ -249,7 +249,7 @@ class EthMerkleBridgeCli():
                             )
                             if balance != 0:
                                 line = [peg, addr,
-                                        str(balance/10**18) + ' \U0001f4b0']
+                                        str(balance / 10**18) + ' \U0001f4b0']
                                 lines.append(line)
                     print_balance_table_lines(lines, token_name,
                                               col_widths)
@@ -389,8 +389,8 @@ class EthMerkleBridgeCli():
                     oracle_abi
                 new_config['networks'][net1]['bridges'][net2]['minted_abi'] = \
                     minted_abi
-                new_config['networks'][net2]['bridges'][net1]['unfreeze_fee'] = \
-                    answers['unfreeze_fee']
+                (new_config['networks'][net2]['bridges'][net1]
+                    ['unfreeze_fee']) = answers['unfreeze_fee']
             if net2_type == 'ethereum':
                 bridge_abi, minted_abi, oracle_abi = prompt_bridge_abi_paths()
                 bridge_abi = os.path.relpath(bridge_abi, self.root_path)
@@ -401,8 +401,8 @@ class EthMerkleBridgeCli():
                     oracle_abi
                 new_config['networks'][net2]['bridges'][net1]['minted_abi'] = \
                     minted_abi
-                new_config['networks'][net1]['bridges'][net2]['unfreeze_fee'] = \
-                    answers['unfreeze_fee']
+                (new_config['networks'][net1]['bridges'][net2]
+                    ['unfreeze_fee']) = answers['unfreeze_fee']
 
         # Register bridge validators
         if promptYN('Would you like to register validators ? '
@@ -670,8 +670,8 @@ class EthMerkleBridgeCli():
                     from_chain, to_chain, asset_name,
                     amount, receiver, privkey_name
                 )
-            elif (asset_name in to_assets and
-                  from_chain in self.wallet.config_data(
+            elif (asset_name in to_assets
+                  and from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
                 # if transfering a pegged asset Burn
                 print("Burn transfer summary:\n{}".format(summary))
@@ -708,8 +708,8 @@ class EthMerkleBridgeCli():
                         from_chain, to_chain, asset_name, amount, receiver,
                         privkey_name
                     )
-            elif (asset_name in to_assets and
-                  from_chain in self.wallet.config_data(
+            elif (asset_name in to_assets
+                  and from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
                 # if transfering a pegged asset Burn
                 if asset_name == 'aergo_erc20':
@@ -829,8 +829,8 @@ class EthMerkleBridgeCli():
                         from_chain, to_chain, asset_name, receiver,
                         deposit_height, privkey_name
                     )
-            elif (asset_name in to_assets and
-                  from_chain in self.wallet.config_data(
+            elif (asset_name in to_assets
+                  and from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
                 # if transfering a pegged asset unlock
                 print("Unlock transfer summary:\n{}".format(summary))
@@ -867,8 +867,8 @@ class EthMerkleBridgeCli():
                     receiver, deposit_height,
                     privkey_name
                 )
-            elif (asset_name in to_assets and
-                  from_chain in self.wallet.config_data(
+            elif (asset_name in to_assets
+                  and from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')
                   ):
                 # if transfering a pegged asset unlock
@@ -910,8 +910,8 @@ class EthMerkleBridgeCli():
                     withdrawable, pending = self.wallet.mintable_to_aergo(
                         from_chain, to_chain, asset_name, receiver
                     )
-            elif (asset_name in to_assets and
-                  from_chain in self.wallet.config_data(
+            elif (asset_name in to_assets
+                  and from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')):
                 # if pegged asset check unlockable
                 withdrawable, pending = self.wallet.unlockable_to_aergo(
@@ -931,8 +931,8 @@ class EthMerkleBridgeCli():
                 withdrawable, pending = self.wallet.mintable_to_eth(
                     from_chain, to_chain, asset_name, receiver
                 )
-            elif (asset_name in to_assets and
-                  from_chain in self.wallet.config_data(
+            elif (asset_name in to_assets
+                  and from_chain in self.wallet.config_data(
                       'networks', to_chain, 'tokens', asset_name, 'pegs')
                   ):
                 # if pegged asset check unlockable
@@ -943,7 +943,7 @@ class EthMerkleBridgeCli():
                 print('asset not properly registered in config.json')
                 return
         print("Withdrawable: {}  Pending: {}"
-              .format(withdrawable/10**18, pending/10**18))
+              .format(withdrawable / 10**18, pending / 10**18))
 
     def prompt_commun_transfer_params(self):
         """Prompt the common parameters necessary for all transfers.

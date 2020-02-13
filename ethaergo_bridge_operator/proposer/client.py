@@ -59,8 +59,8 @@ if __name__ == '__main__':
         required=True
     )
     parser.add_argument(
-        '-e', '--eth', type=str, help='Name of Ethereum network in config file',
-        required=True
+        '-e', '--eth', type=str,
+        help='Name of Ethereum network in config file', required=True
     )
     parser.add_argument(
         '--eth_block_time', type=int, help='Average Ethereum block time',

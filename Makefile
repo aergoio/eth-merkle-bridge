@@ -86,3 +86,10 @@ deploy_testnet_bridge:
 	# python3 -m ethaergo_bridge_operator.bridge_deployer -c './configs/testnet/testnet_config_proposer.json' -a 'aergo-testnet' -e 'ropsten' --privkey_name "proposer"
 	# python3 -m ethaergo_bridge_operator.oracle_deployer -c './configs/testnet/testnet_config_proposer.json' -a 'aergo-testnet' -e 'ropsten' --privkey_name "proposer"
 	# // transfer the aergo erc20 from the 'proposer' that deployed the token contract, to the bridge contract so that it can be unlocked
+
+lint:
+	# ignote bare except E722 in proposer, ignore W503 as it will be considered best practice
+	flake8 \
+		--exclude=*_pb2_grpc.py,*_pb2.py \
+		--ignore=E722,W503 \
+		ethaergo_bridge_operator ethaergo_wallet ethaergo_cli unfreeze_service

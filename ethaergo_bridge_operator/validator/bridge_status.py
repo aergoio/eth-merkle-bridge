@@ -96,8 +96,8 @@ def check_bridge_status(
         )
         if len(aergo_vals) != len(eth_vals):
             logger.warning(
-                "\"WARNING: different number of validators on both sides of the "
-                "bridge\""
+                "\"WARNING: different number of validators on both sides of "
+                "the bridge\""
             )
         if len(config_data['validators']) != len(aergo_vals):
             logger.warning(

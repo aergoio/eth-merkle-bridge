@@ -360,7 +360,7 @@ class AergoProposerClient(threading.Thread):
         if self.auto_update:
             start = time.time()
             self.monitor_settings()
-            while time.time()-start < sleeping_time-10:
+            while time.time() - start < sleeping_time - 10:
                 # check the config file every 10 seconds
                 time.sleep(10)
                 self.monitor_settings()

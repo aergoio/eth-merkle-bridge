@@ -156,7 +156,7 @@ class AergoValConnect():
                 # convert to hex string for lua
                 sigs.append('0x' + approval.sig.hex())
                 # +1 for lua indexes
-                validator_indexes.append(i+1)
+                validator_indexes.append(i + 1)
         total_validators = len(self.config_data['validators'])
         if 3 * len(sigs) < 2 * total_validators:
             raise ValidatorMajorityError()

@@ -21,7 +21,7 @@ class AergoTx():
         t_anchor: int,
         eth_block_time: int,
     ):
-        self.aergo_gas_price= aergo_gas_price
+        self.aergo_gas_price = aergo_gas_price
         self.t_anchor = t_anchor
         self.eth_block_time = eth_block_time
         self.hera = hera

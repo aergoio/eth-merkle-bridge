@@ -78,19 +78,24 @@ if __name__ == '__main__':
         description='Test Aergo ERC20 deployer : sender receives 500M tokens')
     parser.add_argument(
         '-c', '--config_file_path', type=str, help='Path to config.json',
-        required=True)
+        required=True
+    )
     parser.add_argument(
-        '-n', '--token_name', type=str, help='Name of token to record in config.json',
-        required=True)
+        '-n', '--token_name', type=str,
+        help='Name of token to record in config.json', required=True
+    )
     parser.add_argument(
-        '-e', '--eth', type=str, help='Name of Ethereum network in config file',
-        required=True)
+        '-e', '--eth', type=str,
+        help='Name of Ethereum network in config file', required=True
+    )
     parser.add_argument(
         '--privkey_name', type=str, help='Name of account in config file '
-        'to sign deploy transaction', required=False)
+        'to sign deploy transaction', required=False
+    )
     parser.add_argument(
         '--local_test', dest='local_test', action='store_true',
-        help='Use the default privkey and password')
+        help='Use the default privkey and password'
+    )
     parser.set_defaults(local_test=False)
     args = parser.parse_args()
 

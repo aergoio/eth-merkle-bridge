@@ -317,7 +317,9 @@ class EthProposerClient(threading.Thread):
                 )
                 time.sleep(self.t_anchor)
             except ValueError as e:
-                if str(e) == "{'code': -32000, 'message': 'replacement transaction underpriced'}":
+                underpriced_err = "{'code': -32000, 'message': 'replacement " \
+                    "transaction underpriced'}"
+                if str(e) == underpriced_err:
                     logger.warning(
                         "%s",
                         {"Eth tx underpriced":
@@ -386,7 +388,7 @@ class EthProposerClient(threading.Thread):
         if self.auto_update:
             start = time.time()
             self.monitor_settings()
-            while time.time()-start < sleeping_time-10:
+            while time.time() - start < sleeping_time - 10:
                 # check the config file every 10 seconds
                 time.sleep(10)
                 self.monitor_settings()

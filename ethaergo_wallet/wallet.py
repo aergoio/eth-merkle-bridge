@@ -121,14 +121,14 @@ class EthAergoWallet(WalletConfig):
                                     erc20_abi)
         logger.info(
             "\U0001f4b0 %s balance on origin before transfer : %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
 
         gas_limit = 500000  # estimation
         eth_balance = eth_u.get_balance(token_owner, 'ether', w3)
-        if eth_balance*10**9 < gas_limit*self.eth_gas_price:
+        if eth_balance * 10**9 < gas_limit * self.eth_gas_price:
             err = "not enough eth balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -148,7 +148,7 @@ class EthAergoWallet(WalletConfig):
                                     erc20_abi)
         logger.info(
             "\U0001f4b0 remaining %s balance on origin after transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
         return lock_height, tx_hash
 
@@ -184,7 +184,7 @@ class EthAergoWallet(WalletConfig):
             balance = aergo_u.get_balance(receiver, token_pegged, aergo_to)
             logger.info(
                 "\U0001f4b0 %s balance on destination before transfer: %s",
-                asset_name, balance/10**18
+                asset_name, balance / 10**18
             )
         except KeyError:
             logger.info("Pegged token unknow by wallet")
@@ -192,7 +192,7 @@ class EthAergoWallet(WalletConfig):
 
         gas_limit = 300000
         aer_balance = aergo_u.get_balance(tx_sender, 'aergo', aergo_to)
-        if aer_balance < gas_limit*self.aergo_gas_price:
+        if aer_balance < gas_limit * self.aergo_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -211,7 +211,7 @@ class EthAergoWallet(WalletConfig):
         balance = aergo_u.get_balance(receiver, token_pegged, aergo_to)
         logger.info(
             "\U0001f4b0 %s balance on destination after transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
         aergo_to.disconnect()
 
@@ -253,14 +253,14 @@ class EthAergoWallet(WalletConfig):
                                     minted_erc20_abi)
         logger.info(
             "\U0001f4b0 %s balance on origin before transfer : %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
         if balance < amount:
             raise InsufficientBalanceError("not enough token balance")
 
         gas_limit = 200000
         eth_balance = eth_u.get_balance(token_owner, 'ether', w3)
-        if eth_balance*10**9 < gas_limit*self.eth_gas_price:
+        if eth_balance * 10**9 < gas_limit * self.eth_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -274,7 +274,7 @@ class EthAergoWallet(WalletConfig):
                                     minted_erc20_abi)
         logger.info(
             "\U0001f4b0 remaining %s balance on origin after transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
         return burn_height, tx_hash
 
@@ -308,13 +308,13 @@ class EthAergoWallet(WalletConfig):
         balance = aergo_u.get_balance(receiver, 'aergo', aergo_to)
         logger.info(
             "\U0001f4b0 %s balance on destination before transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         gas_limit = 300000
         if receiver != tx_sender:
             aer_balance = aergo_u.get_balance(tx_sender, 'aergo', aergo_to)
-            if aer_balance < gas_limit*self.aergo_gas_price:
+            if aer_balance < gas_limit * self.aergo_gas_price:
                 err = "not enough aer balance to pay tx fee"
                 raise InsufficientBalanceError(err)
 
@@ -333,7 +333,7 @@ class EthAergoWallet(WalletConfig):
         balance = aergo_u.get_balance(receiver, 'aergo', aergo_to)
         logger.info(
             "\U0001f4b0 %s balance on destination after transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
         aergo_to.disconnect()
 
@@ -372,12 +372,12 @@ class EthAergoWallet(WalletConfig):
         balance = aergo_u.get_balance(receiver, asset_address, aergo_to)
         logger.info(
             "\U0001f4b0 %s balance on destination before transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         gas_limit = 300000
         aer_balance = aergo_u.get_balance(tx_sender, 'aergo', aergo_to)
-        if aer_balance < gas_limit*self.aergo_gas_price:
+        if aer_balance < gas_limit * self.aergo_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -391,7 +391,7 @@ class EthAergoWallet(WalletConfig):
         balance = aergo_u.get_balance(receiver, asset_address, aergo_to)
         logger.info(
             "\U0001f4b0 %s balance on destination after transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         return tx_hash
@@ -523,7 +523,7 @@ class EthAergoWallet(WalletConfig):
             raise InsufficientBalanceError("not enough token balance")
         logger.info(
             "\U0001f4b0 %s balance on origin before transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         freeze_height, tx_hash, _ = aergo_to_eth.freeze(
@@ -536,7 +536,7 @@ class EthAergoWallet(WalletConfig):
         balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
         logger.info(
             "\U0001f4b0 remaining %s balance on origin after transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         aergo_from.disconnect()
@@ -573,11 +573,11 @@ class EthAergoWallet(WalletConfig):
             raise InsufficientBalanceError("not enough token balance")
         logger.info(
             "\U0001f4b0 %s balance on origin before transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         aer_balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
-        if aer_balance < gas_limit*self.aergo_gas_price:
+        if aer_balance < gas_limit * self.aergo_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -591,7 +591,7 @@ class EthAergoWallet(WalletConfig):
         balance = aergo_u.get_balance(sender, asset_address, aergo_from)
         logger.info(
             "\U0001f4b0 remaining %s balance on origin after transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         aergo_from.disconnect()
@@ -638,7 +638,7 @@ class EthAergoWallet(WalletConfig):
                                         minted_erc20_abi)
             logger.info(
                 "\U0001f4b0 %s balance on destination before transfer : %s",
-                asset_name, balance/10**18
+                asset_name, balance / 10**18
             )
         except KeyError:
             logger.info("Pegged token unknow by wallet")
@@ -646,7 +646,7 @@ class EthAergoWallet(WalletConfig):
 
         gas_limit = 2000000
         eth_balance = eth_u.get_balance(tx_sender, 'ether', w3)
-        if eth_balance*10**9 < gas_limit*self.eth_gas_price:
+        if eth_balance * 10**9 < gas_limit * self.eth_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -667,7 +667,7 @@ class EthAergoWallet(WalletConfig):
                                     minted_erc20_abi)
         logger.info(
             "\U0001f4b0 %s balance on destination after transfer : %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         aergo_from.disconnect()
@@ -709,11 +709,11 @@ class EthAergoWallet(WalletConfig):
             raise InsufficientBalanceError("not enough token balance")
         logger.info(
             "\U0001f4b0 %s balance on origin before transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         aer_balance = aergo_u.get_balance(sender, 'aergo', aergo_from)
-        if aer_balance < gas_limit*self.aergo_gas_price:
+        if aer_balance < gas_limit * self.aergo_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -727,7 +727,7 @@ class EthAergoWallet(WalletConfig):
         balance = aergo_u.get_balance(sender, token_pegged, aergo_from)
         logger.info(
             "\U0001f4b0 remaining %s balance on origin after transfer: %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         aergo_from.disconnect()
@@ -766,12 +766,12 @@ class EthAergoWallet(WalletConfig):
         balance = eth_u.get_balance(receiver, asset_address, w3, erc20_abi)
         logger.info(
             "\U0001f4b0 %s balance on destination before transfer : %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         gas_limit = 200000
         eth_balance = eth_u.get_balance(tx_sender, 'ether', w3)
-        if eth_balance*10**9 < gas_limit*self.eth_gas_price:
+        if eth_balance * 10**9 < gas_limit * self.eth_gas_price:
             err = "not enough aer balance to pay tx fee"
             raise InsufficientBalanceError(err)
 
@@ -792,7 +792,7 @@ class EthAergoWallet(WalletConfig):
                                     erc20_abi)
         logger.info(
             "\U0001f4b0 %s balance on destination after transfer : %s",
-            asset_name, balance/10**18
+            asset_name, balance / 10**18
         )
 
         aergo_from.disconnect()

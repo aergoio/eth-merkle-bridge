@@ -31,11 +31,11 @@ def verify_eth_getProof_inclusion(proof, root):
 
     class _Account(rlp.Serializable):
         fields = [
-                    ('nonce', big_endian_int),
-                    ('balance', big_endian_int),
-                    ('storage', trie_root),
-                    ('code_hash', hash32)
-                ]
+            ('nonce', big_endian_int),
+            ('balance', big_endian_int),
+            ('storage', trie_root),
+            ('code_hash', hash32)
+        ]
     acc = _Account(
         proof.nonce, proof.balance, proof.storageHash, proof.codeHash
     )
